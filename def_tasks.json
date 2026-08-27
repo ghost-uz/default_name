@@ -694,11 +694,46 @@
       "bogliq": [
         "D1-T3"
       ],
-      "holat": "todo",
+      "holat": "done",
       "qabul_mezoni": [
         "?sort=hot&category=moliya&generation=genz ishlaydi",
         "orqaga qaytganda holat saqlanadi"
-      ]
+      ],
+      "tugatilgan": "2026-08-28",
+      "natija": {
+        "yaratilgan": [
+          "apps/complaints/selectors.py — LentaFiltri, filtrni_oqish(), lenta_queryset(), yon_panel_kategoriyalari() (o'qish so'rovlari services.py dan AJRATILDI: lenta so'rovi D4-T3 qidiruvda va D5-T3 avto-postda qayta ishlatiladi)",
+          "apps/complaints/views.py — feed()",
+          "apps/complaints/urls.py + config/urls.py ulanishi; `feed` maketdan OLIB TASHLANDI",
+          "apps/complaints/templatetags/lenta.py — {% lenta_url %}",
+          "templates/complaints/feed.html — haqiqiy ma'lumotga ulandi (qattiq yozilgan 3 karta + yon panel o'chirildi)",
+          "templates/components/_category_icon.html lentada ishlatildi"
+        ],
+        "tekshirilgan": [
+          "?sort=hot&category=moliya&generation=genz — uchala filtr birga ishlaydi (test + jonli brauzer)",
+          "har bir tab/chip havolasi BOSHQA filtrlarni saqlaydi (jonli tasdiqlandi: /?sort=top&category=moliya&generation=millennial)",
+          "noto'g'ri sort/generation standartga qaytadi, 500 bermaydi (parametrlangan test)",
+          "noto'g'ri kategoriya ATAYLAB tashlanmaydi -> bo'sh natija (foydalanuvchiga yolg'on aytilmaydi)",
+          "yashirilgan va o'chirilgan postlar lentaga tushmaydi (visible() + soft delete)",
+          "anonim post lentada ismni ko'rsatmaydi (D1-T6 endi HAQIQIY sahifada)",
+          "yon panel sanog'i faqat ko'rinadiganlarni sanaydi",
+          "so'rov soni kartalar soniga bog'liq emas: mehmon <=4, kirgan <=8 (django_assert_max_num_queries)",
+          "bo'sh holat matni filtrga qarab o'zgaradi"
+        ],
+        "qarorlar": [
+          "Holat FAQAT URL'da (sessiya/cookie EMAS): aks holda filtrlangan lentani ulashib bo'lmaydi va 'orqaga' tugmasi filtrni yo'qotadi.",
+          "{% lenta_url %} tegi: maketdagi `href=\"?sort=new\"` boshqa BARCHA parametrlarni yo'q qilardi — foydalanuvchi 'Moliya + Gen Z' tanlab tabni bosса filtri jimgina tushib ketardi.",
+          "'Yechilgan' maketda saralash tabi, amalda FILTR (status=solved) — kod shuni ochiq aytadi.",
+          "Har bir saralash `-id` bilan tugaydi (tenglikni uzish): usiz kursor bo'yicha sahifalash (D1-T12) buziladi — element ikki marta ko'rinadi yoki tushib qoladi.",
+          "'Yana yuklash' tugmasi ATAYLAB olib tashlandi (D1-T12 gacha): ishlamaydigan tugma 'sayt buzuq' degan taassurot beradi.",
+          "Maketdagi inline mobil nav olib tashlandi — base.html allaqachon _bottom_nav.html ni qo'shadi, ikkitasi birga render bo'lardi (alohida maketda base.html yo'q edi, shuning uchun sezilmagan)."
+        ],
+        "topilgan_xatolar": [
+          "⚠️ VAQT YEDI (jonli brauzerda topildi): `annotate()` GROUP BY hosil qilganda Django 3.1 dan beri `Meta.ordering` ni JIMGINA tashlaydi -> SQL'da ORDER BY umuman yo'q -> yon paneldagi kategoriyalar tasodifiy tartibda. Ogohlantirish ham, xato ham yo'q. Birlik testlar ushlamadi (ular SANOQNI tekshirardi, TARTIBNI emas). Tuzatildi: ochiq `.order_by('order','name')` + tartibga qaraydigan test.",
+          "⚠️ RUSCHA SIZIB CHIQISH: `LocaleMiddleware` tilni `Accept-Language` dan oladi (`LANGUAGE_CODE` faqat ZAXIRA). `LANGUAGES` da `ru` bor edi, lekin `locale/` bo'sh va shablonlar `{% trans %}` ga o'ralmagan -> ruscha brauzerli mehmon 'yarim-yarim' sahifa ko'rardi: '2 минуты oldin'. O'zbekistonda bu ENG KENG TARQALGAN holat. Ruscha ro'yxatdan olib tashlandi + guard test (apps/common/tests/test_settings.py) — tilni tarjimadan OLDIN e'lon qilib bo'lmaydi.",
+          "Maket guard testlari SimpleTestCase dan TestCase ga o'tdi: `/` endi bazaga tegadigan haqiqiy sahifa. Testlar o'chirilmadi — ular endi haqiqiy sahifani ham qoplaydi (nonce, bitta h1, skip-link, shablon sintaksisi sizmasligi)."
+        ]
+      }
     },
     {
       "id": "D1-T8",
@@ -711,7 +746,7 @@
       "bogliq": [
         "D1-T5"
       ],
-      "holat": "todo",
+      "holat": "done",
       "fayllar": [
         "frontend/static/js/app.js"
       ],
@@ -719,7 +754,49 @@
         "CSRF himoyalangan",
         "javob faqat ovoz blokini qaytaradi",
         "kirmagan foydalanuvchida ovoz o'zgarmaydi"
-      ]
+      ],
+      "tugatilgan": "2026-08-28",
+      "natija": {
+        "yaratilgan": [
+          "apps/common/vote_views.py — ovoz_ruxsati(), ovoz_qiymatini_oqish(), ovozdan_keyingi_manzil(), htmx_sorovimi() (umumiy qism; `common` ilovalarni import qilmaydi)",
+          "apps/complaints/views.py — dard_ovoz(); apps/solutions/views.py — yechim_ovoz()",
+          "templates/components/_vote.html — <form> + hx-post (maketdagi <button> lar o'rniga)",
+          "static/js/vendor/htmx.min.js — HTMX 2.0.4 VENDORLANDI (CDN emas)",
+          "base.html — htmx skripti, hx-headers CSRF, data-guest",
+          "static/js/app.js — IS_GUEST endi DOM'dan, ovoz ishlovchisi DELEGATSIYAGA o'tdi"
+        ],
+        "tekshirilgan": [
+          "⭐ JONLI BRAUZER: ovoz +1 -> almashtirish -> ball 1 dan -1 ga (AYNAN 2 birlik), sahifa yangilanmadi (1 ta navigatsiya yozuvi)",
+          "⭐ JONLI BRAUZER: ALMASHTIRILGAN kartadagi tugma ham ishlaydi (delegatsiya tuzatishi)",
+          "⭐ JONLI BRAUZER: mehmon bosganda sahifada qoladi, tugma yonida login popover chiqadi, ovoz o'zgarmaydi",
+          "⭐ JONLI BRAUZER: desktop ustuni va mobil qatordagi ikkala sanoq SINXRON (karta almashtirilgani uchun)",
+          "CSRF himoyalangan (enforce_csrf_checks=True bilan 403)",
+          "kirmagan: HTMX'da 401, JS'siz 302 -> /kirish/?next=...",
+          "bloklangan foydalanuvchi 403 (is_banned != is_active)",
+          "GET bilan ovoz berib bo'lmaydi (405)",
+          "javob butun sahifani emas, kartani qaytaradi (<!doctype> yo'q)",
+          "yashirilgan/o'chirilgan postga ovoz 404",
+          "noto'g'ri qiymat (0, 5, -2, 'up', '', '1.5') -> 400",
+          "ochiq yo'naltirish yo'q (begona HTTP_REFERER e'tiborsiz qoldiriladi)",
+          "yechim ovozi so'ralgan layoutni qaytaradi"
+        ],
+        "qarorlar": [
+          "⚠️ Yo'nalish URL'da EMAS, POST TANASIDA (`qiymat=+1|-1`) — tavsifdan farq qiladi. Sabab: maketdagi ovoz bloki BITTA vote_url bilan ishlaydi va ikkala tugma bitta formaga tegishli. `<button name=\"qiymat\" value=\"1\">` — JavaScript'siz ham ishlaydigan yagona yo'l; URL'ga ko'chirilsa har tugmaga alohida forma kerak bo'lardi va sanoq ular orasida tura olmasdi.",
+          "⚠️ <form> + hx-post (progressiv yaxshilanish): HTMX yuklanmasa yoki bloklansa ovoz berish YO'QOLMAYDI, sekinlashadi xolos (POST -> 302).",
+          "⚠️ Javob BUTUN KARTANI qaytaradi, 'faqat ovoz bloki'ni emas: kartada ovoz bloki IKKI marta turadi (desktop ustuni + mobil qator, CSS bilan almashadi, ikkalasi ham DOM'da). Faqat bittasini almashtirsak, telefon burilganda 'ovozim yo'qoldi' holati chiqardi. Karta baribir butun sahifa emas — mezonning maqsadi bajarilgan.",
+          "⚠️ `@login_required` ISHLATILMADI: u 302 qaytaradi, HTMX esa yo'naltirishni kuzatib BUTUN LOGIN SAHIFASINI ovoz blokining o'rniga qo'yardi. Kirmagan foydalanuvchiga 401 kerak.",
+          "Mehmonda `hx-post` UMUMAN qo'yilmaydi: app.js login taklifini ko'rsatadi (hal qilingan C varianti), server esa 401 bilan ikkinchi qatlamni beradi.",
+          "HTMX VENDORLANDI: D2-T9 da CSP tashqi skriptni bloklaydi + CDN uzilishi butun ovoz berishni o'chirardi.",
+          "Optimistik UI SAQLANDI: app.js darhol yangilaydi, HTMX serverdan kelgan karta bilan OXIRGI SO'ZNI aytadi."
+        ],
+        "topilgan_xatolar": [
+          "⚠️⚠️ VAQT YEDI VA SOXTA XATO YARATDI: `runserver` statik faylga `Cache-Control` YUBORMAYDI (faqat `Last-Modified`). Sarlavhasiz brauzer RFC 9111 bo'yicha EVRISTIK keshlaydi va tahrirlangan `app.js` ni QAYTA SO'RAMAYDI. Natijada brauzerda ESKI kod ishladi va mavjud bo'lmagan 'mehmon xatosi' qidirildi. Uni faqat `performance.getEntriesByType('resource')` dagi `transferSize: 0` fosh qildi (keshdagi 15908 bayt, haqiqiysi 21981).",
+          "Birinchi urinish `Cache-Control: no-store` qo'yadigan middleware edi va U ISHLAMADI: `runserver` statik fayllarni `StaticFilesHandler` orqali beradi, u esa middleware zanjirini BUTUNLAY CHETLAB O'TADI. Ishlamaydigan tuzatish saqlanmadi.",
+          "Yechim: `{% static_v %}` tegi (apps/common/templatetags/statik.py) — DEV'da manzilga fayl mtime'ini qo'shadi, PRODDA hech nima qo'shmaydi (u yerda hash + immutable kesh). Guard test: base.html dagi BARCHA statik havola versiyalangan bo'lishi shart.",
+          "mypy: `list` INVARIANT — `list[Complaint]` `list[Model]` o'rniga o'tmaydi. `Sequence` (kovariant) ga o'tildi.",
+          "`user_vote` `VotableModel` da e'lon qilindi (maydon emas, oddiy sinf atributi): shablon lug'atni o'zgaruvchi kalit bilan indekslay olmaydi, dinamik atribut esa mypy'dan o'tmaydi."
+        ]
+      }
     },
     {
       "id": "D1-T9",

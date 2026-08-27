@@ -129,6 +129,38 @@ birinchi kalitga yopishtirib yuboradi.
 
 ---
 
+### ⚠️ Statik fayl keshi (dev)
+
+Shablonlarda `{% static %}` emas, **`{% static_v %}`** ishlatiladi:
+
+```django
+{% load statik %}
+<script src="{% static_v 'js/app.js' %}" defer></script>
+```
+
+Sabab: `runserver` statik faylga `Cache-Control` **yubormaydi**, faqat
+`Last-Modified`. Sarlavhasiz brauzer evristik keshlaydi va tahrirlangan
+`app.js` ni **qayta so'ramaydi** — natijada eski kod ishlaydi, kodda esa
+yangisi turadi. Xato mavjud bo'lmagan joyda qidiriladi.
+
+`{% static_v %}` dev'da manzilga fayl `mtime` ini qo'shadi
+(`?v=1787864301`), prodda esa hech nima qo'shmaydi — u yerda fayllar hash
+bilan nomlanadi va nginx ularni `immutable` bilan beradi.
+
+⚠️ Middleware bilan hal qilib **bo'lmaydi**: `runserver` statik fayllarni
+`StaticFilesHandler` orqali beradi, u esa middleware zanjirini butunlay
+chetlab o'tadi.
+
+### HTMX
+
+`static/js/vendor/htmx.min.js` — **vendorlangan** (CDN emas): D2-T9 da CSP
+tashqi skriptni bloklaydi, bundan tashqari CDN uzilishi ovoz berishni
+o'chirib qo'yardi.
+
+Ovoz bloki (`components/_vote.html`) — oddiy `<form>`, HTMX faqat ustiga
+qo'shilgan qatlam. JavaScript yuklanmasa ovoz berish **yo'qolmaydi**,
+sekinlashadi xolos (POST → 302).
+
 ## Sozlamalar
 
 ```bash
@@ -367,12 +399,14 @@ Faqat **`CI holati`** tekshiruvini tanlang, alohida job'larni emas.
 | D1-T4 | `Solution` — bitta muammoda bitta qabul qilingan yechim (baza kafolati) |
 | D1-T5 | `ComplaintVote` / `SolutionVote` + `cast_vote()` |
 | D1-T6 | Anonimlik invarianti — `public_author` + guard testlar |
+| D1-T7 | Lenta: Qaynoq/Yangi/Eng yaxshi/Yechilgan + kategoriya va avlod filtri (holat URL'da) |
+| D1-T8 | HTMX ovoz berish — `<form>` ustiga qo'shilgan qatlam, JS'siz ham ishlaydi |
 
 **D0-T10 qisman:** barcha fayllar tayyor va lokal repetitsiyada tekshirilgan;
 server hali olinmagan. Ketma-ketlik: [`DEPLOY.md`](DEPLOY.md).
 
-Keyingi: **M1** ko'rinishlari — D1-T7 (lenta), D1-T8 (HTMX ovoz),
-D1-T9/T10 (formalar), D1-T1 (Telegram login).
+Keyingi: **M1** — D1-T1 (Telegram login), D1-T9/T10 (formalar),
+D1-T11 (hot_score + Celery beat), D1-T12 (kursor sahifalash), D1-T14 (N+1).
 
 ---
 

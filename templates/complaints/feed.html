@@ -1,375 +1,97 @@
 {% extends 'base.html' %}
+{% load lenta %}
 
-{% block title %}Qaynoq dardlar — Dard.uz{% endblock %}
+{% block title %}{{ sarlavha }} — Dard.uz{% endblock %}
 {% block description %}Dard.uz — hayotiy muammolaringiz bilan o'rtoqlashing va real tajribaga asoslangan yechim toping.{% endblock %}
-
-{# active_nav: feed — ko'rinishdan kontekstda beriladi #}
 
 {% block content %}
 <div class="mx-auto grid max-w-[1400px] gap-6 px-4 py-6 lg:px-6 xl:grid-cols-[220px_minmax(0,1fr)_320px] lg:grid-cols-[minmax(0,1fr)_320px]">
-      <!-- ---------- Chap ustun: kategoriyalar (faqat ≥1280px) ---------- -->
+
+      {% comment %} ---------- Chap ustun: kategoriyalar (faqat ≥1280px) ---------- {% endcomment %}
       <aside class="hidden xl:block">
         <div class="sticky top-22">
           <h2 class="mb-3 px-3 text-[11px] font-bold uppercase tracking-wider text-fg-muted">Kategoriyalar</h2>
           <nav class="flex flex-col gap-0.5" aria-label="Kategoriyalar">
-            <a href="#" class="flex items-center gap-2.5 rounded-lg bg-surface-2 px-3 py-2 text-sm font-semibold text-fg">
-              <svg class="h-4 w-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m3 11 18-8-8 18-2-7z"/></svg>
+            {% comment %}
+              ⚠️ Havolalar `{% lenta_url %}` orqali: oddiy `?category=moliya`
+                 boshqa filtrlarni (saralash, avlod) JIMGINA o'chirib yuborardi.
+            {% endcomment %}
+            <a href="{% lenta_url category='' %}"
+               class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors {% if not filtr.category %}bg-surface-2 font-semibold text-fg{% else %}text-fg-muted hover:bg-surface-2 hover:text-fg{% endif %}"
+               {% if not filtr.category %}aria-current="page"{% endif %}>
+              <svg class="h-4 w-4 {% if not filtr.category %}text-primary{% endif %}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m3 11 18-8-8 18-2-7z"/></svg>
               Hammasi
-              <span class="tnum ml-auto text-xs text-fg-muted">12 480</span>
             </a>
-            <a href="#" class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-fg-muted transition-colors hover:bg-surface-2 hover:text-fg">
-              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
-              Karyera <span class="tnum ml-auto text-xs">3 210</span>
-            </a>
-            <a href="#" class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-fg-muted transition-colors hover:bg-surface-2 hover:text-fg">
-              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M19 14c1.5-1.5 2-3.2 2-5a7 7 0 0 0-14 0c0 1.8.5 3.5 2 5l5 6z"/></svg>
-              Munosabatlar <span class="tnum ml-auto text-xs">2 940</span>
-            </a>
-            <a href="#" class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-fg-muted transition-colors hover:bg-surface-2 hover:text-fg">
-              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-              Moliya <span class="tnum ml-auto text-xs">1 875</span>
-            </a>
-            <a href="#" class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-fg-muted transition-colors hover:bg-surface-2 hover:text-fg">
-              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M22 10 12 5 2 10l10 5z"/><path d="M6 12v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5"/></svg>
-              O'qish <span class="tnum ml-auto text-xs">1 620</span>
-            </a>
-            <a href="#" class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-fg-muted transition-colors hover:bg-surface-2 hover:text-fg">
-              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 12h4l2 6 4-14 2 8h6"/></svg>
-              Sog'liq <span class="tnum ml-auto text-xs">1 108</span>
-            </a>
-            <a href="#" class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-fg-muted transition-colors hover:bg-surface-2 hover:text-fg">
-              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
-              Uy-joy <span class="tnum ml-auto text-xs">986</span>
-            </a>
-            <a href="#" class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-fg-muted transition-colors hover:bg-surface-2 hover:text-fg">
-              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3v18M5 7h14M7 7l-3 7a3.5 3.5 0 0 0 6 0zM17 7l-3 7a3.5 3.5 0 0 0 6 0z"/></svg>
-              Huquq <span class="tnum ml-auto text-xs">741</span>
-            </a>
+
+            {% for kategoriya in kategoriyalar %}
+              <a href="{% lenta_url category=kategoriya.slug %}"
+                 class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors {% if filtr.category == kategoriya.slug %}bg-surface-2 font-semibold text-fg{% else %}text-fg-muted hover:bg-surface-2 hover:text-fg{% endif %}"
+                 {% if filtr.category == kategoriya.slug %}aria-current="page"{% endif %}>
+                {% include "components/_category_icon.html" with icon=kategoriya.icon classes="h-4 w-4" %}
+                <span class="min-w-0 truncate">{{ kategoriya.name }}</span>
+                <span class="tnum ml-auto text-xs text-fg-muted">{{ kategoriya.postlar_soni }}</span>
+              </a>
+            {% endfor %}
           </nav>
 
           <a href="{% url 'category_list' %}" class="mt-2 block px-3 py-2 text-sm font-semibold text-primary hover:underline">Barchasi →</a>
         </div>
       </aside>
 
-      <!-- ---------- Markaz: lenta ---------- -->
+      {% comment %} ---------- Markaz: lenta ---------- {% endcomment %}
       <main id="main" class="min-w-0">
         <div class="mb-5">
-          <h1 class="text-2xl font-extrabold sm:text-[28px]">Qaynoq dardlar</h1>
-          <p class="mt-1 text-[15px] text-fg-muted">
-            Bugun <strong class="tnum font-semibold text-fg">248</strong> ta yangi muammo,
-            <strong class="tnum font-semibold text-solved">612</strong> ta yechim yozildi.
-          </p>
+          <h1 class="text-2xl font-extrabold sm:text-[28px]">{{ sarlavha }}</h1>
         </div>
 
-        <!-- Saralash — URL bilan bog'lanadi (deep linking) -->
+        {% comment %}
+          Saralash — holat URL'da (deep linking). Kategoriya va avlod
+          filtrlari SAQLANADI: `{% lenta_url %}` faqat `sort` ni almashtiradi.
+        {% endcomment %}
         <div class="mb-3 flex items-center gap-1 overflow-x-auto border-b border-line pb-px">
-          <a href="?sort=hot" class="relative shrink-0 px-3.5 py-2.5 text-sm font-semibold text-fg after:absolute after:inset-x-2 after:-bottom-px after:h-0.5 after:bg-primary" aria-current="page">
-            Qaynoq
-          </a>
-          <a href="?sort=new" class="shrink-0 px-3.5 py-2.5 text-sm font-medium text-fg-muted transition-colors hover:text-fg">Yangi</a>
-          <a href="?sort=top" class="shrink-0 px-3.5 py-2.5 text-sm font-medium text-fg-muted transition-colors hover:text-fg">Eng yaxshi</a>
-          <a href="?sort=solved" class="shrink-0 px-3.5 py-2.5 text-sm font-medium text-fg-muted transition-colors hover:text-fg">Yechilgan</a>
+          {% for kalit, yorliq in tablar %}
+            {% if kalit == filtr.sort %}
+              <a href="{% lenta_url sort=kalit %}" class="relative shrink-0 px-3.5 py-2.5 text-sm font-semibold text-fg after:absolute after:inset-x-2 after:-bottom-px after:h-0.5 after:bg-primary" aria-current="page">{{ yorliq }}</a>
+            {% else %}
+              <a href="{% lenta_url sort=kalit %}" class="shrink-0 px-3.5 py-2.5 text-sm font-medium text-fg-muted transition-colors hover:text-fg">{{ yorliq }}</a>
+            {% endif %}
+          {% endfor %}
         </div>
 
-        <!-- Avlod filtri (generation_tag) -->
+        {% comment %}
+          Avlod filtri. Maketda `<button>` edi — endi `<a>`: holat URL'da
+          bo'lishi kerak (D1-T7), tugma esa manzilni o'zgartirmaydi.
+        {% endcomment %}
         <div class="mb-5 flex items-center gap-2 overflow-x-auto pb-1" role="group" aria-label="Avlod bo'yicha filtr">
           <span class="shrink-0 pr-1 text-xs font-semibold uppercase tracking-wider text-fg-muted">Avlod</span>
-          <button type="button" class="chip chip-active shrink-0" aria-pressed="true">Hammasi</button>
-          <button type="button" class="chip shrink-0" aria-pressed="false">
-            <span class="h-2 w-2 rounded-full bg-genz" aria-hidden="true"></span> Gen&nbsp;Z
-          </button>
-          <button type="button" class="chip shrink-0" aria-pressed="false">
-            <span class="h-2 w-2 rounded-full bg-mil" aria-hidden="true"></span> Millennial
-          </button>
-          <button type="button" class="chip shrink-0" aria-pressed="false">
-            <span class="h-2 w-2 rounded-full bg-boom" aria-hidden="true"></span> Boomer
-          </button>
+          <a href="{% lenta_url generation='' %}" class="chip shrink-0 {% if not filtr.generation %}chip-active{% endif %}" {% if not filtr.generation %}aria-current="page"{% endif %}>Hammasi</a>
+          {% for kalit, yorliq in avlodlar %}
+            <a href="{% lenta_url generation=kalit %}" class="chip shrink-0 {% if filtr.generation == kalit %}chip-active{% endif %}" {% if filtr.generation == kalit %}aria-current="page"{% endif %}>
+              <span class="h-2 w-2 rounded-full {% if kalit == 'genz' %}bg-genz{% elif kalit == 'millennial' %}bg-mil{% else %}bg-boom{% endif %}" aria-hidden="true"></span>
+              {{ yorliq }}
+            </a>
+          {% endfor %}
         </div>
 
-        {% comment %} ======= KARTALAR RO'YXATI =======
-             Django: {% for complaint in complaints %} ... {% endfor %}
-             HTMX:   hx-get="{% url 'feed' %}?page=2" hx-trigger="revealed" hx-swap="afterend"
-        {% endcomment %}
         <div class="flex flex-col gap-3" id="feed">
-          <!-- KARTA 1 — yechilgan -->
-          <article class="card card-hover stagger overflow-hidden" style="--i: 0">
-            <div class="flex">
-              <!-- Ovoz ustuni: faqat ≥640px. Mobilda pastki qatorga tushadi. -->
-              <div class="hidden shrink-0 flex-col items-center gap-0.5 border-r border-line bg-surface-2/40 px-2 py-4 sm:flex">
-                {% comment %} Django/HTMX: hx-post="{% url 'vote' c.pk 'up' %}" hx-swap="outerHTML" {% endcomment %}
-                <button type="button" class="vote-btn vote-up" data-vote="up" aria-pressed="false" aria-label="Yoqdi — ovoz berish">
-                  <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 15 7-7 7 7"/></svg>
-                </button>
-                <span class="tnum text-sm font-bold" data-vote-count>1 284</span>
-                <button type="button" class="vote-btn vote-down" data-vote="down" aria-pressed="false" aria-label="Yoqmadi">
-                  <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m19 9-7 7-7-7"/></svg>
-                </button>
-              </div>
-
-              <div class="min-w-0 flex-1 p-4">
-                <!-- Meta qator -->
-                <div class="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-[13px] text-fg-muted">
-                  <a href="#" class="chip !py-0.5 hover:border-line-strong hover:text-fg">Munosabatlar</a>
-                  <span class="badge-genz">Gen Z</span>
-                  <span class="text-line-strong" aria-hidden="true">·</span>
-                  <span class="inline-flex items-center gap-1.5">
-                    <span class="grid h-5 w-5 place-items-center rounded-full bg-surface-2 text-[10px] font-bold text-fg-muted" aria-hidden="true">A</span>
-                    Anonim
-                  </span>
-                  <span class="text-line-strong" aria-hidden="true">·</span>
-                  <time datetime="2026-08-24T09:12">4 soat oldin</time>
-                </div>
-
-                <h2 class="text-[17px] font-bold leading-snug sm:text-lg">
-                  <a href="{% url 'complaint_detail' 'namuna' %}" class="transition-colors hover:text-primary">
-                    25 yoshdaman, ota-onam «endi turmushga chiq» deb har kuni bosim o'tkazyapti
-                  </a>
-                </h2>
-
-                <p class="clamp-2 mt-1.5 text-[15px] text-fg-muted">
-                  Magistraturaga hujjat topshirmoqchiman, lekin uydagilar «yoshing o'tib ketyapti» deb
-                  tinim bermayapti. Qanday qilib ularni xafa qilmasdan o'z qarorimni tushuntirsam bo'ladi?
-                  Shu holatdan chiqqanlar bormi?
-                </p>
-
-                <!-- Footer harakatlar -->
-                <div class="mt-3 flex flex-wrap items-center gap-1">
-                  <!-- Mobil ovoz -->
-                  <div class="mr-1 flex items-center gap-0.5 sm:hidden">
-                    <button type="button" class="vote-btn vote-up" data-vote="up" aria-pressed="false" aria-label="Yoqdi">
-                      <svg class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 15 7-7 7 7"/></svg>
-                    </button>
-                    <span class="tnum px-1 text-sm font-bold" data-vote-count>1 284</span>
-                    <button type="button" class="vote-btn vote-down" data-vote="down" aria-pressed="false" aria-label="Yoqmadi">
-                      <svg class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m19 9-7 7-7-7"/></svg>
-                    </button>
-                  </div>
-
-                  <a href="{% url 'complaint_detail' 'namuna' %}" class="btn-ghost btn-sm">
-                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                    <span class="tnum">47</span> yechim
-                  </a>
-                  <button type="button" class="btn-ghost btn-sm" data-toast="Havola nusxalandi">
-                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v14"/></svg>
-                    Ulashish
-                  </button>
-                  <button type="button" class="btn-ghost btn-sm" data-toast="Saqlanganlarga qo'shildi" aria-label="Saqlash">
-                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21 12 16 5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
-                  </button>
-
-                  <span class="badge-solved ml-auto">
-                    <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m20 6-11 11-5-5"/></svg>
-                    Yechilgan
-                  </span>
-                </div>
-              </div>
-            </div>
-          </article>
-
-          <!-- KARTA 2 — boost qilingan (monetizatsiya) -->
-          <article class="card card-hover stagger overflow-hidden border-karma-icon/40" style="--i: 1">
-            <div class="flex items-center gap-1.5 border-b border-line bg-karma-bg px-4 py-1.5 text-[11px] font-bold uppercase tracking-wider text-karma">
-              <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m13 2-9 12h7l-1 8 9-12h-7z"/></svg>
-              Shoshilinch — muallif tomonidan ko'targan
-            </div>
-            <div class="flex">
-              <div class="hidden shrink-0 flex-col items-center gap-0.5 border-r border-line bg-surface-2/40 px-2 py-4 sm:flex">
-                <button type="button" class="vote-btn vote-up" data-vote="up" aria-pressed="false" aria-label="Yoqdi — ovoz berish">
-                  <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 15 7-7 7 7"/></svg>
-                </button>
-                <span class="tnum text-sm font-bold" data-vote-count>318</span>
-                <button type="button" class="vote-btn vote-down" data-vote="down" aria-pressed="false" aria-label="Yoqmadi">
-                  <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m19 9-7 7-7-7"/></svg>
-                </button>
-              </div>
-              <div class="min-w-0 flex-1 p-4">
-                <div class="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-[13px] text-fg-muted">
-                  <a href="#" class="chip !py-0.5 hover:border-line-strong hover:text-fg">Huquq</a>
-                  <span class="badge-mil">Millennial</span>
-                  <span class="text-line-strong" aria-hidden="true">·</span>
-                  <a href="{% url 'profile' 'sardor92' %}" class="inline-flex items-center gap-1.5 hover:text-fg">
-                    <span class="grid h-5 w-5 place-items-center rounded-full bg-primary text-[10px] font-bold text-on-primary" aria-hidden="true">S</span>
-                    Sardor_92
-                  </a>
-                  <span class="text-line-strong" aria-hidden="true">·</span>
-                  <time datetime="2026-08-24T11:40">1 soat oldin</time>
-                </div>
-                <h2 class="text-[17px] font-bold leading-snug sm:text-lg">
-                  <a href="{% url 'complaint_detail' 'namuna' %}" class="transition-colors hover:text-primary">
-                    Ish beruvchi 3 oydan beri maosh bermayapti, shartnoma qo'lda yozilgan. Nima qilay?
-                  </a>
-                </h2>
-                <p class="clamp-2 mt-1.5 text-[15px] text-fg-muted">
-                  Rasmiy ishga joylashmaganman, faqat qo'lda yozilgan kelishuv bor. Direktor «pul kelsa
-                  beraman» deydi. Mehnat inspeksiyasiga murojaat qilsam natija bo'ladimi yoki sudga
-                  berish kerakmi?
-                </p>
-                <div class="mt-3 flex flex-wrap items-center gap-1">
-                  <div class="mr-1 flex items-center gap-0.5 sm:hidden">
-                    <button type="button" class="vote-btn vote-up" data-vote="up" aria-pressed="false" aria-label="Yoqdi">
-                      <svg class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 15 7-7 7 7"/></svg>
-                    </button>
-                    <span class="tnum px-1 text-sm font-bold" data-vote-count>318</span>
-                    <button type="button" class="vote-btn vote-down" data-vote="down" aria-pressed="false" aria-label="Yoqmadi">
-                      <svg class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m19 9-7 7-7-7"/></svg>
-                    </button>
-                  </div>
-                  <a href="{% url 'complaint_detail' 'namuna' %}" class="btn-ghost btn-sm">
-                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                    <span class="tnum">12</span> yechim
-                  </a>
-                  <button type="button" class="btn-ghost btn-sm" data-toast="Havola nusxalandi">
-                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v14"/></svg>
-                    Ulashish
-                  </button>
-                  <span class="ml-auto inline-flex items-center gap-1 text-[13px] text-fg-muted">
-                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7"/><circle cx="12" cy="12" r="3"/></svg>
-                    <span class="tnum">8.4k</span>
-                  </span>
-                </div>
-              </div>
-            </div>
-          </article>
-
-          <!-- KARTA 3 — ekspert javob bergan -->
-          <article class="card card-hover stagger overflow-hidden" style="--i: 2">
-            <div class="flex">
-              <div class="hidden shrink-0 flex-col items-center gap-0.5 border-r border-line bg-surface-2/40 px-2 py-4 sm:flex">
-                <button type="button" class="vote-btn vote-up" data-vote="up" aria-pressed="true" aria-label="Yoqdi — ovoz berilgan">
-                  <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 15 7-7 7 7"/></svg>
-                </button>
-                <span class="tnum text-sm font-bold text-upvote" data-vote-count>902</span>
-                <button type="button" class="vote-btn vote-down" data-vote="down" aria-pressed="false" aria-label="Yoqmadi">
-                  <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m19 9-7 7-7-7"/></svg>
-                </button>
-              </div>
-              <div class="min-w-0 flex-1 p-4">
-                <div class="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-[13px] text-fg-muted">
-                  <a href="#" class="chip !py-0.5 hover:border-line-strong hover:text-fg">Moliya</a>
-                  <span class="badge-mil">Millennial</span>
-                  <span class="text-line-strong" aria-hidden="true">·</span>
-                  <a href="{% url 'profile' 'sardor92' %}" class="inline-flex items-center gap-1.5 hover:text-fg">
-                    <span class="grid h-5 w-5 place-items-center rounded-full bg-surface-2 text-[10px] font-bold text-fg-muted" aria-hidden="true">M</span>
-                    Malika_T
-                  </a>
-                  <span class="text-line-strong" aria-hidden="true">·</span>
-                  <time datetime="2026-08-23T18:05">Kecha</time>
-                </div>
-                <h2 class="text-[17px] font-bold leading-snug sm:text-lg">
-                  <a href="{% url 'complaint_detail' 'namuna' %}" class="transition-colors hover:text-primary">
-                    Ipoteka olsammi yoki yana 3 yil ijarada yashab, pul yig'aymi?
-                  </a>
-                </h2>
-                <p class="clamp-2 mt-1.5 text-[15px] text-fg-muted">
-                  Oylik daromadim 9 mln so'm, ijaraga 3.5 mln to'layman. Bank 18% bilan taklif qilyapti.
-                  Hisob-kitob qilsam foiz juda ko'p chiqyapti, lekin ijara ham «bekorga ketgan pul» kabi…
-                </p>
-                <div class="mt-3 flex flex-wrap items-center gap-1">
-                  <div class="mr-1 flex items-center gap-0.5 sm:hidden">
-                    <button type="button" class="vote-btn vote-up" data-vote="up" aria-pressed="true" aria-label="Yoqdi">
-                      <svg class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 15 7-7 7 7"/></svg>
-                    </button>
-                    <span class="tnum px-1 text-sm font-bold text-upvote" data-vote-count>902</span>
-                    <button type="button" class="vote-btn vote-down" data-vote="down" aria-pressed="false" aria-label="Yoqmadi">
-                      <svg class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m19 9-7 7-7-7"/></svg>
-                    </button>
-                  </div>
-                  <a href="{% url 'complaint_detail' 'namuna' %}" class="btn-ghost btn-sm">
-                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                    <span class="tnum">63</span> yechim
-                  </a>
-                  <span class="badge-pro">
-                    <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 2.6 6.6L22 9.3l-5 4.6 1.3 7.1L12 17.8 5.7 21l1.3-7.1-5-4.6 7.4-.7z"/></svg>
-                    Ekspert javob berdi
-                  </span>
-                </div>
-              </div>
-            </div>
-          </article>
-
-          <!-- KARTA 4 — Boomer -->
-          <article class="card card-hover stagger overflow-hidden" style="--i: 3">
-            <div class="flex">
-              <div class="hidden shrink-0 flex-col items-center gap-0.5 border-r border-line bg-surface-2/40 px-2 py-4 sm:flex">
-                <button type="button" class="vote-btn vote-up" data-vote="up" aria-pressed="false" aria-label="Yoqdi — ovoz berish">
-                  <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 15 7-7 7 7"/></svg>
-                </button>
-                <span class="tnum text-sm font-bold" data-vote-count>556</span>
-                <button type="button" class="vote-btn vote-down" data-vote="down" aria-pressed="false" aria-label="Yoqmadi">
-                  <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m19 9-7 7-7-7"/></svg>
-                </button>
-              </div>
-              <div class="min-w-0 flex-1 p-4">
-                <div class="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-[13px] text-fg-muted">
-                  <a href="#" class="chip !py-0.5 hover:border-line-strong hover:text-fg">Munosabatlar</a>
-                  <span class="badge-boom">Boomer</span>
-                  <span class="text-line-strong" aria-hidden="true">·</span>
-                  <span class="inline-flex items-center gap-1.5">
-                    <span class="grid h-5 w-5 place-items-center rounded-full bg-surface-2 text-[10px] font-bold text-fg-muted" aria-hidden="true">A</span>
-                    Anonim
-                  </span>
-                  <span class="text-line-strong" aria-hidden="true">·</span>
-                  <time datetime="2026-08-23T08:30">2 kun oldin</time>
-                </div>
-                <h2 class="text-[17px] font-bold leading-snug sm:text-lg">
-                  <a href="{% url 'complaint_detail' 'namuna' %}" class="transition-colors hover:text-primary">
-                    Nevaralarim men bilan gaplashishni xohlamaydi — butun kun telefonda
-                  </a>
-                </h2>
-                <p class="clamp-2 mt-1.5 text-[15px] text-fg-muted">
-                  67 yoshdaman. Bolalarim shaharda, nevaralarim yozda keladi. Lekin kelganda ham
-                  telefondan boshlarini ko'tarishmaydi. Ular bilan qanday qilib til topishishim mumkin?
-                </p>
-                <div class="mt-3 flex flex-wrap items-center gap-1">
-                  <div class="mr-1 flex items-center gap-0.5 sm:hidden">
-                    <button type="button" class="vote-btn vote-up" data-vote="up" aria-pressed="false" aria-label="Yoqdi">
-                      <svg class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 15 7-7 7 7"/></svg>
-                    </button>
-                    <span class="tnum px-1 text-sm font-bold" data-vote-count>556</span>
-                    <button type="button" class="vote-btn vote-down" data-vote="down" aria-pressed="false" aria-label="Yoqmadi">
-                      <svg class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m19 9-7 7-7-7"/></svg>
-                    </button>
-                  </div>
-                  <a href="{% url 'complaint_detail' 'namuna' %}" class="btn-ghost btn-sm">
-                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                    <span class="tnum">89</span> yechim
-                  </a>
-                  <button type="button" class="btn-ghost btn-sm" data-toast="Havola nusxalandi">
-                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v14"/></svg>
-                    Ulashish
-                  </button>
-                </div>
-              </div>
-            </div>
-          </article>
-
-          <!-- SKELETON — yuklanish holati namunasi (>300ms bo'lsa ko'rsatiladi) -->
-          <article class="card overflow-hidden" data-skeleton hidden>
-            <div class="flex">
-              <div class="hidden shrink-0 flex-col items-center gap-2 border-r border-line bg-surface-2/40 px-2 py-4 sm:flex">
-                <div class="skeleton h-9 w-9"></div>
-                <div class="skeleton h-4 w-8"></div>
-                <div class="skeleton h-9 w-9"></div>
-              </div>
-              <div class="flex-1 space-y-2.5 p-4">
-                <div class="flex gap-2">
-                  <div class="skeleton h-5 w-24 rounded-full"></div>
-                  <div class="skeleton h-5 w-16 rounded-full"></div>
-                </div>
-                <div class="skeleton h-5 w-4/5"></div>
-                <div class="skeleton h-4 w-full"></div>
-                <div class="skeleton h-4 w-2/3"></div>
-              </div>
-            </div>
-          </article>
+          {% for complaint in complaints %}
+            {% include "components/_complaint_card.html" with complaint=complaint index=forloop.counter0 %}
+          {% empty %}
+            {% if filtr.faolmi %}
+              {% include "components/_empty_state.html" with icon="search" title="Bu filtrda hech nima yo'q" text="Tanlangan kategoriya yoki avlod bo'yicha muammo topilmadi. Filtrni kengaytirib ko'ring." action_url="/" action="Butun lentani ko'rish" %}
+            {% else %}
+              {% include "components/_empty_state.html" with title="Hozircha bo'sh" text="Birinchi dardni siz yozing — kimdir aynan shu holatdan o'tgan bo'lishi mumkin." action_url="/yozish/" action="Dard yozish" %}
+            {% endif %}
+          {% endfor %}
         </div>
 
-        <!-- Yana yuklash -->
-        <div class="mt-5 flex justify-center">
-          <button type="button" class="btn-outline w-full sm:w-auto sm:min-w-56" data-load-more>
-            Yana yuklash
-          </button>
-        </div>
+        {% comment %}
+          ⚠️ "Yana yuklash" tugmasi ATAYLAB YO'Q — D1-T12 gacha.
+             Maketdagi tugma hech qayerga olib bormasdi. Ishlamaydigan
+             tugma qo'yishdan ko'ra qo'ymagan yaxshi: foydalanuvchi uni
+             bosib, hech nima bo'lmaganini "sayt buzuq" deb tushunadi.
+             D1-T12 kursor (created_at + id) bo'yicha sahifalashni qo'shadi.
+        {% endcomment %}
       </main>
 
       <!-- ---------- O'ng ustun ---------- -->
@@ -466,36 +188,12 @@
       </aside>
     </div>
 
-    <!-- ======================= MOBIL PASTKI NAV (maks. 5) ======================= -->
-    <nav
-      class="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface/95 backdrop-blur-md lg:hidden"
-      style="padding-bottom: env(safe-area-inset-bottom)"
-      aria-label="Mobil navigatsiya"
-    >
-      <div class="grid grid-cols-5">
-        <a href="{% url 'feed' %}" class="flex min-h-14 flex-col items-center justify-center gap-0.5 text-primary" aria-current="page">
-          <svg class="h-[22px] w-[22px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 11 9-8 9 8v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
-          <span class="text-[10px] font-semibold">Lenta</span>
-        </a>
-        <a href="{% url 'category_list' %}" class="flex min-h-14 flex-col items-center justify-center gap-0.5 text-fg-muted">
-          <svg class="h-[22px] w-[22px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
-          <span class="text-[10px] font-medium">Toifalar</span>
-        </a>
-        <a href="{% url 'complaint_create' %}" class="flex min-h-14 flex-col items-center justify-center" aria-label="Yangi dard yozish">
-          <span class="grid h-11 w-11 place-items-center rounded-full bg-primary text-on-primary">
-            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-          </span>
-        </a>
-        <a href="{% url 'expert_list' %}" class="flex min-h-14 flex-col items-center justify-center gap-0.5 text-fg-muted">
-          <svg class="h-[22px] w-[22px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 2 2.6 6.6L22 9.3l-5 4.6 1.3 7.1L12 17.8 5.7 21l1.3-7.1-5-4.6 7.4-.7z"/></svg>
-          <span class="text-[10px] font-medium">Ekspert</span>
-        </a>
-        <a href="{% url 'profile' 'sardor92' %}" class="flex min-h-14 flex-col items-center justify-center gap-0.5 text-fg-muted">
-          <svg class="h-[22px] w-[22px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg>
-          <span class="text-[10px] font-medium">Profil</span>
-        </a>
-      </div>
-    </nav>
+    {% comment %}
+      ⚠️ Maketdagi inline mobil nav BU YERDAN OLIB TASHLANDI: base.html
+         allaqachon `components/_bottom_nav.html` ni qo'shadi va ikkalasi
+         birga render bo'lardi (ikkita bir xil nav, ikkinchisi ostida).
+         Alohida maketda base.html yo'q edi — shuning uchun sezilmagan.
+    {% endcomment %}
     <div class="h-16 lg:hidden" aria-hidden="true"></div>
 
     <!-- Toast konteyneri -->

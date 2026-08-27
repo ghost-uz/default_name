@@ -2,14 +2,16 @@
   Lenta kartasi — loyihaning eng ko'p takrorlanadigan komponenti.
 
   Kontekst:
-    complaint  -> Complaint (D1-T3)
-    user_vote  -> 1 | -1 | None
+    complaint  -> Complaint (D1-T3); `complaint.user_vote` ko'rinishda
+                  qo'yiladi (1 | -1 | None) — lug'atni shablonda
+                  indekslash mumkin emas
     index      -> ro'yxatdagi tartib raqami (stagger animatsiyasi uchun)
 
   ⚠️ ANONIMLIK: muallif HECH QACHON `complaint.author` orqali chiqarilmaydi.
      Faqat `complaint.public_author` — u anonim postda None qaytaradi
      (D1-T6). Bu shablon reja 14-bo'limidagi tekshiruv ro'yxatiga kiradi.
 {% endcomment %}
+{% url 'dard_ovoz' complaint.pk as vote_url %}
 <article class="card card-hover stagger overflow-hidden" style="--i: {{ index|default:0 }}" data-vote-group>
 
   {% if complaint.is_boosted %}
@@ -20,7 +22,7 @@
   {% endif %}
 
   <div class="flex">
-    {% include "components/_vote.html" with obj=complaint layout="column" %}
+    {% include "components/_vote.html" with obj=complaint layout="column" vote_url=vote_url user_vote=complaint.user_vote %}
 
     <div class="min-w-0 flex-1 p-4">
       {# --- Meta qator --- #}
@@ -66,7 +68,7 @@
 
       {# --- Harakatlar --- #}
       <div class="mt-3 flex flex-wrap items-center gap-1">
-        {% include "components/_vote.html" with obj=complaint layout="row" %}
+        {% include "components/_vote.html" with obj=complaint layout="row" vote_url=vote_url user_vote=complaint.user_vote %}
 
         <a href="{{ complaint.get_absolute_url }}" class="btn-ghost btn-sm">
           <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>

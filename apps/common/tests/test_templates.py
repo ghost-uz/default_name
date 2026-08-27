@@ -8,7 +8,7 @@ import re
 from pathlib import Path
 
 from django.conf import settings
-from django.test import Client, SimpleTestCase, override_settings
+from django.test import Client, SimpleTestCase, TestCase, override_settings
 
 TEMPLATES_DIR = Path(settings.BASE_DIR) / "templates"
 HTML_IZOH = re.compile(r"<!--(.*?)-->", re.DOTALL)
@@ -56,12 +56,19 @@ class ShablonSintaksisTests(SimpleTestCase):
 
 
 @override_settings(ALLOWED_HOSTS=["testserver"])
-class SahifaRenderTests(SimpleTestCase):
+class SahifaRenderTests(TestCase):
     """Har bir sahifa render bo'lishi kerak.
 
-    Bu testlar ma'lumotlar bazasiga tegmaydi (SimpleTestCase) — maket
-    ko'rinishlari statik. M1 da ular haqiqiy ko'rinishlar bilan
-    almashtirilganda testlar TransactionTestCase ga o'tadi.
+    ⚠️ `SimpleTestCase` DAN `TestCase` GA O'TDI (D1-T7).
+       Ilgari barcha sahifalar maketning statik ko'rinishlari edi va
+       bazaga tegmasdi. `/` haqiqiy lentaga aylanishi bilan ular
+       `RuntimeError: Database access not allowed` bera boshladi —
+       xato ko'rinishi chalg'ituvchi, chunki sabab BOSHQA faylda
+       (apps/complaints/views.py) edi.
+
+       Testlarning MA'NOSI o'zgarmadi va ular endi haqiqiy sahifani ham
+       qamrab oladi: nonce, bitta h1, skip-link, shablon sintaksisi
+       sizib chiqmasligi. Aynan shu qiymat uchun ular o'chirilmadi.
     """
 
     YOLLAR = [

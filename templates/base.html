@@ -1,4 +1,4 @@
-{% load static %}<!doctype html>
+{% load static statik %}<!doctype html>
 <html lang="uz" class="{% block html_class %}{% endblock %}">
   <head>
     <meta charset="utf-8" />
@@ -30,10 +30,24 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="{% static 'css/app.css' %}" />
+    <link rel="stylesheet" href="{% static_v 'css/app.css' %}" />
   </head>
 
-  <body class="{% block body_class %}{% endblock %}">
+  {% comment %}
+    `data-guest` — app.js mehmon xulqini shundan biladi (login taklifi,
+    D1-T8). Ilgari u `?guest=1` dan o'qilardi: bu maketni sinash uchun
+    edi va haqiqiy sessiyada HECH QACHON ishlamasdi.
+
+    `hx-headers` — HTMX butun sahifa uchun CSRF sarlavhasini oladi.
+    Formalar `{% csrf_token %}` bilan ham yuboradi; bu esa kelajakdagi
+    formasiz `hx-post` lar uchun (aks holda ular 403 bilan qaytardi va
+    sababi ko'rinmasdi).
+  {% endcomment %}
+  <body
+    class="{% block body_class %}{% endblock %}"
+    data-guest="{{ request.user.is_authenticated|yesno:'false,true' }}"
+    hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+  >
     <a href="#main" class="skip-link">Asosiy kontentga o'tish</a>
 
     {% block header %}{% include "components/_header.html" %}{% endblock %}
@@ -45,7 +59,14 @@
 
     {% include "components/_toast_root.html" %}
 
-    <script src="{% static 'js/app.js' %}" defer></script>
+    {% comment %}
+      HTMX vendorlangan (CDN EMAS): D2-T9 da CSP yoqilganda tashqi skript
+      bloklanadi, bundan tashqari CDN uzilishi butun ovoz berishni
+      o'chirib qo'yardi. Versiya `package.json` da emas — u faqat
+      Tailwind quvuri uchun; bu fayl bevosita repoda turadi.
+    {% endcomment %}
+    <script src="{% static_v 'js/vendor/htmx.min.js' %}" defer></script>
+    <script src="{% static_v 'js/app.js' %}" defer></script>
     {% block scripts %}{% endblock %}
   </body>
 </html>

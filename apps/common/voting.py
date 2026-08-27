@@ -13,6 +13,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Any
 
@@ -141,7 +142,11 @@ def user_votes_for(
     vote_model: type[VoteModel],
     target_field: str,
     user: Any,
-    targets: list[models.Model],
+    # ⚠️ `Sequence`, `list` EMAS: `list` INVARIANT, ya'ni `list[Complaint]`
+    #    `list[Model]` o'rniga o'tmaydi (chaqiruvchi ro'yxatga `Model`
+    #    qo'shib yuborishi mumkin degan mulohaza). `Sequence` kovariant
+    #    va faqat o'qish uchun — bu yerda aynan shu kerak.
+    targets: Sequence[models.Model],
 ) -> dict[int, int]:
     """`{target_id: +1|-1}` — lentadagi barcha kartalar uchun BITTA so'rovda.
 

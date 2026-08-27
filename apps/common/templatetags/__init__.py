@@ -1,0 +1,1 @@
+"""Umumiy shablon teglari."""

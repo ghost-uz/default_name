@@ -79,7 +79,10 @@ def test_auth_client_kirgan(auth_client, user):
     assert javob.wsgi_request.user.is_authenticated
 
 
+@pytest.mark.django_db
 def test_anonymous_client_kirmagan(anonymous_client):
+    # ⚠️ `django_db` D1-T7 dan keyin kerak bo'ldi: `/` endi maketning
+    #    statik sahifasi emas, bazadan o'qiydigan haqiqiy lenta.
     javob = anonymous_client.get("/")
     assert not javob.wsgi_request.user.is_authenticated
 

@@ -45,7 +45,9 @@ def _sahifa(shablon: str, active_nav: str = "", **qoshimcha):
 
 
 urlpatterns = [
-    path("", _sahifa("complaints/feed.html", "feed", show_search=True), name="feed"),
+    # ⚠️ `feed` BU YERDAN OLIB TASHLANDI (D1-T7) — endi u haqiqiy
+    #    ko'rinish: apps/complaints/urls.py. Ikkalasi qolsa `reverse()`
+    #    oxirgisini olardi va maket haqiqiy sahifani bosib qo'yardi.
     path("tanishuv/", _sahifa("pages/landing.html"), name="landing"),
     path("yozish/", _sahifa("complaints/create.html"), name="complaint_create"),
     path(

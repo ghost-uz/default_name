@@ -1,0 +1,1 @@
+"""Muammolar ilovasining shablon teglari."""

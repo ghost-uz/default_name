@@ -337,6 +337,20 @@ class VotableModel(models.Model):
        mashqi shuni talab qiladi). Ularni `F()` ifodasisiz yangilamang.
     """
 
+    # ⚠️ MAYDON EMAS — ko'rinish to'ldiradigan vaqtinchalik atribut (D1-T8).
+    #    Shablon `{{ complaint.user_vote }}` deb o'qiydi: `1`, `-1` yoki
+    #    `None`. Django faqat `Field` nusxalarini maydon deb hisoblaydi,
+    #    shuning uchun bu migratsiyaga TUSHMAYDI.
+    #
+    #    Nega lug'at shablonga berilmaydi: Django shablon tili lug'atni
+    #    o'zgaruvchi kalit bilan indekslay olmaydi (`user_votes[c.pk]`
+    #    ishlamaydi). Atribut esa lentada ham, HTMX qayta renderida ham
+    #    bir xil yo'l bo'ladi.
+    #
+    #    Standart `None` ATAYLAB: obyekt boshqa joydan kelsa (masalan
+    #    Telegram avto-post, D5-T3) shablon `AttributeError` bermasin.
+    user_vote: int | None = None
+
     upvotes_cached = models.PositiveIntegerField(
         "foydali ovozlar", default=0, editable=False
     )

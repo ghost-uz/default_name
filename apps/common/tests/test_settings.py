@@ -15,11 +15,13 @@
 
 import os
 import sys
+from pathlib import Path
 from unittest import mock
 
 import pytest
-from django.conf import Settings
+from django.conf import Settings, settings
 from django.core.exceptions import ImproperlyConfigured
+from django.test import SimpleTestCase
 
 
 def sozlama(modul: str) -> Settings:
@@ -185,3 +187,43 @@ def test_eskirgan_EMAIL_sozlamalari_ishlatilmaydi():
             topilgan = {nom for nom in eskirgan if nom in s._explicit_settings}
             assert not topilgan, f"{modul} da eskirgan sozlama: {topilgan}"
             assert "default" in s.MAILERS
+
+
+class TilRoyxatiTests(SimpleTestCase):
+    """⚠️ D1-T7 da jonli sahifada topilgan xatoni qotiradi.
+
+    `LANGUAGES` ga til qo'shish uni brauzerga E'LON QILADI, va
+    `LocaleMiddleware` `Accept-Language` bo'yicha o'shanga o'tadi.
+    Tarjima bo'lmasa natija ruscha ham, o'zbekcha ham bo'lmagan
+    aralashma bo'ladi: "2 минуты oldin".
+
+    Xato JIM: sahifa 200 qaytaradi, testlar yashil bo'ladi (test mijozi
+    `Accept-Language` yubormaydi) va uni faqat haqiqiy brauzerda,
+    haqiqiy sozlamalar bilan ko'rish mumkin.
+    """
+
+    def test_har_bir_til_uchun_TARJIMA_bor(self):
+        tarjimasiz = []
+        for kod, _nom in settings.LANGUAGES:
+            if kod == settings.LANGUAGE_CODE:
+                continue  # asosiy til — shablonlar unda yozilgan
+            bor = any(
+                (Path(yol) / kod / "LC_MESSAGES" / "django.po").exists()
+                for yol in settings.LOCALE_PATHS
+            )
+            if not bor:
+                tarjimasiz.append(kod)
+
+        self.assertEqual(
+            tarjimasiz,
+            [],
+            "LANGUAGES da tarjimasiz til bor: "
+            f"{tarjimasiz}. Avval locale/<kod>/LC_MESSAGES/django.po ni "
+            "to'ldiring, keyin ro'yxatga qo'shing — aks holda foydalanuvchi "
+            "yarim tarjima qilingan sahifa ko'radi.",
+        )
+
+    def test_asosiy_til_royxatda_bor(self):
+        """`LANGUAGE_CODE` `LANGUAGES` da bo'lmasa `LocaleMiddleware` uni
+        tanlay olmaydi va sayt kutilmagan tilga o'tib ketadi."""
+        self.assertIn(settings.LANGUAGE_CODE, dict(settings.LANGUAGES))

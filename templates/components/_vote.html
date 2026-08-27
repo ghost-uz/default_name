@@ -4,27 +4,56 @@
     layout="row"     -> mobilda kartaning pastki qatorida
 
   Kontekst:
-    obj         -> Complaint yoki Solution
-    vote_url    -> HTMX manzili (M1: {% url 'vote' ... %})
-    user_vote   -> 1 | -1 | None — foydalanuvchining joriy ovozi
-    layout      -> "column" | "row"
+    obj          -> Complaint yoki Solution
+    vote_url     -> POST manzili ({% url 'dard_ovoz' obj.pk %})
+    user_vote    -> 1 | -1 | None — foydalanuvchining joriy ovozi
+    layout       -> "column" | "row"
+    vote_target  -> HTMX almashtiradigan element (standart: karta)
+
+  ⚠️ NEGA <form>, SHUNCHAKI <button> EMAS
+     Forma bo'lgani uchun ovoz berish JavaScript'SIZ HAM ishlaydi:
+     brauzer POST qiladi, server 302 bilan qaytaradi. HTMX esa faqat
+     ustiga qo'shiladigan qatlam — u yuklanmasa yoki bloklansa, funksiya
+     yo'qolmaydi, sekinlashadi xolos.
+
+     Yo'nalish tugmaning `value` sida (`name="qiymat"`), URL'da emas —
+     aks holda har tugmaga alohida forma kerak bo'lardi va ular orasidagi
+     sanoq maketdagi joyida tura olmasdi.
 
   ⚠️ Holat `aria-pressed` da saqlanadi, klassda emas: ekran o'quvchi
      "bosilgan" ekanini shundan biladi. app.js ham shu atributga qaraydi.
 {% endcomment %}
-{% if layout == "row" %}
-  <div class="mr-1 flex items-center gap-0.5 sm:hidden">
-{% else %}
-  <div class="hidden shrink-0 flex-col items-center gap-0.5 border-r border-line bg-surface-2/40 px-2 py-4 sm:flex">
-{% endif %}
+<form
+  method="post"
+  action="{{ vote_url }}"
+  {% if request.user.is_authenticated %}
+    {% comment %}
+      Mehmonda `hx-post` ATAYLAB YO'Q: u holda forma oddiy POST qiladi va
+      server login sahifasiga yo'naltiradi (JavaScript'siz yo'l), JS bor
+      bo'lsa esa app.js tugma yonida login taklifini ko'rsatadi — bu
+      hal qilingan mahsulot qarori (C varianti).
+    {% endcomment %}
+    hx-post="{{ vote_url }}"
+    hx-target="{{ vote_target|default:'closest [data-vote-group]' }}"
+    hx-swap="outerHTML"
+  {% endif %}
+  {% if layout == "row" %}
+    class="mr-1 flex items-center gap-0.5 sm:hidden"
+  {% else %}
+    class="hidden shrink-0 flex-col items-center gap-0.5 border-r border-line bg-surface-2/40 px-2 py-4 sm:flex"
+  {% endif %}
+>
+  {% csrf_token %}
+  <input type="hidden" name="layout" value="{{ layout|default:'column' }}" />
 
   <button
-    type="button"
+    type="submit"
+    name="qiymat"
+    value="1"
     class="vote-btn vote-up"
     data-vote="up"
     aria-pressed="{% if user_vote == 1 %}true{% else %}false{% endif %}"
     aria-label="Foydali — ovoz berish"
-    {% if vote_url %}hx-post="{{ vote_url }}" hx-swap="outerHTML" hx-target="closest [data-vote-group]"{% endif %}
   >
     <svg class="h-[18px] w-[18px] sm:h-5 sm:w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 15 7-7 7 7"/></svg>
   </button>
@@ -42,13 +71,14 @@
   </span>
 
   <button
-    type="button"
+    type="submit"
+    name="qiymat"
+    value="-1"
     class="vote-btn vote-down"
     data-vote="down"
     aria-pressed="{% if user_vote == -1 %}true{% else %}false{% endif %}"
     aria-label="Foydali emas"
-    {% if vote_url %}hx-post="{{ vote_url }}" hx-swap="outerHTML" hx-target="closest [data-vote-group]"{% endif %}
   >
     <svg class="h-[18px] w-[18px] sm:h-5 sm:w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m19 9-7 7-7-7"/></svg>
   </button>
-</div>
+</form>

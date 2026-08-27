@@ -195,9 +195,26 @@ TIME_ZONE = "Asia/Tashkent"
 USE_I18N = True
 USE_TZ = True
 
+# ⚠️ RUSCHA ATAYLAB O'CHIRILGAN (D1-T7 da jonli sahifada topildi).
+#
+#    `LocaleMiddleware` tilni brauzerning `Accept-Language` sarlavhasidan
+#    tanlaydi — `LANGUAGE_CODE` faqat ZAXIRA. Ya'ni ro'yxatda `ru` tursa,
+#    ruscha brauzerli mehmon (O'zbekistonda eng keng tarqalgan holat)
+#    ruscha sahifa "oladi". Lekin `locale/` BO'SH va shablon matnlari
+#    `{% trans %}` ga o'ralmagan, shuning uchun tarjima faqat Django'ning
+#    o'z satrlariga tegadi. Natija — yarim-yarim sahifa:
+#
+#        "2 минуты oldin"
+#
+#    Bu ruscha ham, o'zbekcha ham emas. Til ro'yxatiga tilni tarjimadan
+#    OLDIN qo'shish shunday ko'rinadi.
+#
+#    Ruschani qaytarish sharti: (1) shablonlar `{% trans %}` ga o'raladi,
+#    (2) `locale/ru/LC_MESSAGES/django.po` to'ldiriladi, (3) til
+#    almashtirgich qo'shiladi. Shundan keyin bu qatorni oching.
+#    Guard: apps/common/tests/test_settings.py
 LANGUAGES = [
     ("uz", "O'zbekcha"),
-    ("ru", "Русский"),
 ]
 LOCALE_PATHS = [BASE_DIR / "locale"]
 

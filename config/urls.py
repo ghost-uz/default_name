@@ -20,10 +20,19 @@ urlpatterns = [
     path(f"{settings.ADMIN_URL}/", admin.site.urls),
 ]
 
-# ⚠️ VAQTINCHALIK (D0-T6): maket sahifalari. M1 da bu blok quyidagilarga
-#    almashadi — URL NOMLARI O'ZGARMAYDI, ya'ni shablonlarga tegilmaydi:
-#      path("", include("apps.complaints.urls")),
-#      path("", include("apps.accounts.urls")),
+# ⚠️ HAQIQIY KO'RINISHLAR AVVAL, maket KEYIN.
+#    Ikkalasida bir xil nom bo'lsa `reverse()` OXIRGISINI oladi — ya'ni
+#    maket haqiqiy manzilni jimgina bosib qo'yardi. Shuning uchun maketdan
+#    tayyor bo'lgan sahifalar BIRMA-BIR o'chirib boriladi (hozircha: feed).
+urlpatterns += [
+    path("", include("apps.complaints.urls")),
+    path("", include("apps.solutions.urls")),
+]
+
+# ⚠️ VAQTINCHALIK (D0-T6): hali yozilmagan sahifalarning maketi.
+#    M1 oxirida butunlay o'chiriladi. Qolgani: complaint_detail (D1-T10),
+#    complaint_create (D1-T9), login (D1-T1), category_list, expert_list,
+#    profile, landing.
 urlpatterns += [path("", include("apps.common.maket"))]
 
 if settings.DEBUG:

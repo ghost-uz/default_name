@@ -76,9 +76,14 @@
     return n.toLocaleString("uz-UZ").replace(/,/g, " ");
   }
 
-  // Maketda mehmon rejimini `?guest=1` bilan sinab ko'rish mumkin.
-  // Django: {{ request.user.is_authenticated|yesno:"false,true" }}
-  const IS_GUEST = new URLSearchParams(location.search).has("guest");
+  /* Mehmonmi? Django `base.html` da `<body data-guest="true|false">` yozadi.
+     ⚠️ Ilgari bu `?guest=1` dan o'qilardi — u FAQAT maketni sinash uchun
+        edi va haqiqiy sessiyada hech qachon rost bo'lmasdi, ya'ni kirmagan
+        foydalanuvchi ovoz bergandek ko'rinardi (server esa 401 qaytarardi).
+     `?guest=1` alohida maket uchun zaxira sifatida qoldirildi. */
+  const IS_GUEST =
+    document.body.dataset.guest === "true" ||
+    new URLSearchParams(location.search).has("guest");
 
   /* --- Login taklifi (popover) ------------------------------------------
      Bitta vaqtda faqat BITTASI ochiq bo'ladi. Fokusni O'G'IRLAMAYDI —
@@ -218,9 +223,23 @@
     return false;
   }
 
-  $$("[data-vote]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      if (IS_GUEST && !handleGuestVote(btn)) return;
+  /* ⚠️ DELEGATSIYA, har tugmaga alohida listener EMAS.
+     Sabab: HTMX ovozdan keyin butun kartani ALMASHTIRADI. Elementga
+     bog'langan listener yangi DOM tugunida yo'q bo'lardi — birinchi ovoz
+     ishlab, ikkinchisi "o'lik" bo'lib qolardi (optimistik yangilanish
+     yo'qoladi, mehmon taklifi chiqmaydi). Buni topish qiyin: HTMX
+     so'rovi baribir ketaveradi. */
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-vote]");
+    if (btn) {
+      /* ⚠️ `preventDefault` SHART: tugma endi `type="submit"` (forma
+         JavaScript'siz ham ishlashi uchun). Usiz mehmon bosganda
+         popover ham chiqib, forma ham yuborilardi. */
+      if (IS_GUEST) {
+        e.preventDefault();
+        handleGuestVote(btn);
+        return;
+      }
 
       const group = btn.closest(".flex, .card") || document;
       const counter = $("[data-vote-count]", btn.parentElement) || $("[data-vote-count]", group);
@@ -253,7 +272,12 @@
 
       // Mobil haptic (qo'llab-quvvatlansa)
       if (navigator.vibrate) navigator.vibrate(8);
-    });
+
+      /* Optimistik yangilanish shu yerda TUGAYDI. Keyin HTMX serverdan
+         kelgan kartani qo'yadi va u OXIRGI SO'Z bo'ladi: agar sanoq
+         boshqacha bo'lsa (masalan boshqa qurilmadan ovoz berilgan),
+         serverniki g'olib chiqadi. */
+    }
   });
 
   /* ---------------------------------------------------------------------
