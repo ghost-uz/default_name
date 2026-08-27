@@ -87,6 +87,18 @@ repos:
   # -------------------------------------------------------------------- #
   - repo: local
     hooks:
+      # ⚠️ BU IKKI HOOK ISHLAYOTGAN POSTGRES'NI TALAB QILADI (D1-T5 dan beri).
+      #    Ya'ni commit qilishdan oldin `docker compose up -d db` kerak.
+      #
+      #    Sabab statik tahlilga o'xshamaydi: `Complaint.score_cached` —
+      #    `GeneratedField`, uning tizim tekshiruvi maqsad bazaning
+      #    imkoniyatlarini so'raydi (PostgreSQL'da bu server versiyasini
+      #    o'qish = jonli ulanish). `--database` berilmagani yordam bermaydi:
+      #    django/core/checks/registry.py da "belgilanmagan" = "HAMMASI":
+      #        if databases is None: databases = list(connections)
+      #
+      #    Xato ko'rinishi: `OperationalError: connection refused/timeout`
+      #    — model yoki migratsiya bilan aloqasi yo'qdek tuyuladi.
       - id: django-check
         name: manage.py check (dev)
         entry: python manage.py check

@@ -271,6 +271,26 @@ bilan ishga tushiradi. Venv faol bo'lmasa ular
 `ModuleNotFoundError: No module named 'django'` beradi — sabab kodda emas,
 PATH'da.
 
+### ⚠️ Commit qilishdan oldin baza ham ishlab tursin
+
+```bash
+docker compose up -d db
+```
+
+`django-check` va `django-migrations` hook'lari **ishlayotgan PostgreSQL**ni
+talab qiladi (D1-T5 dan beri). Bu statik tahlilga o'xshamaydi, lekin sababi
+aniq:
+
+1. `Complaint.score_cached` — `models.GeneratedField`;
+2. uning tizim tekshiruvi maqsad bazaning imkoniyatlarini so'raydi,
+   PostgreSQL'da esa bu server versiyasini o'qish, ya'ni **jonli ulanish**;
+3. `--database` berilmagani yordam bermaydi — Django uchun
+   «belgilanmagan» = «hammasi»:
+   `django/core/checks/registry.py` → `if databases is None: databases = list(connections)`.
+
+Xato ko'rinishi chalg'ituvchi: `OperationalError: connection refused`
+— model yoki migratsiya bilan aloqasi yo'qdek tuyuladi.
+
 ### Nima uchun `black` va `bandit` yo'q
 
 - **`black` → `ruff format`.** Bu black'ning qayta amalga oshirilishi:
@@ -298,7 +318,7 @@ ko'rinadi (django-stubs va factory_boy o'rtasidagi ma'lum cheklov).
 
 | Job | Nima qiladi | Xizmatlar |
 |---|---|---|
-| **Sifat** | `pre-commit run --all-files` (ruff, mypy, django check, fayl gigiyenasi) | — |
+| **Sifat** | `pre-commit run --all-files` (ruff, mypy, django check, fayl gigiyenasi) | PostgreSQL 17 ⚠️ |
 | **Testlar** | `pytest --create-db` + qamrov chegarasi | PostgreSQL 17, Redis 7 |
 | **Docker obrazi** | prod obrazi quriladimi | — |
 | **CI holati** | yig'ma natija — branch himoyasi shunga bog'lanadi | — |
@@ -342,11 +362,17 @@ Faqat **`CI holati`** tekshiruvini tanlang, alohida job'larni emas.
 | D0-T9 | GitHub Actions CI — sifat, testlar, Docker obrazi |
 | D0-T10 | Deploy to'plami — bootstrap, server compose, deploy workflow, runbook |
 
+| D1-T2 | `Category` + 8 kategoriya fixture'i + ikonka shabloni |
+| D1-T3 | `Complaint` — slug, status, hot_score, denormalizatsiya |
+| D1-T4 | `Solution` — bitta muammoda bitta qabul qilingan yechim (baza kafolati) |
+| D1-T5 | `ComplaintVote` / `SolutionVote` + `cast_vote()` |
+| D1-T6 | Anonimlik invarianti — `public_author` + guard testlar |
+
 **D0-T10 qisman:** barcha fayllar tayyor va lokal repetitsiyada tekshirilgan;
 server hali olinmagan. Ketma-ketlik: [`DEPLOY.md`](DEPLOY.md).
 
-Keyingi: server + birinchi deploy → **M0 tugaydi**, so'ng **M1** (yadro:
-`Complaint`, `Solution`, `Vote`).
+Keyingi: **M1** ko'rinishlari — D1-T7 (lenta), D1-T8 (HTMX ovoz),
+D1-T9/T10 (formalar), D1-T1 (Telegram login).
 
 ---
 

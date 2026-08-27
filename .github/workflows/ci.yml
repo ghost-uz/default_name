@@ -24,6 +24,50 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
+    # ⚠️ NEGA LINT ISHIGA BAZA KERAK (D1-T5 dan keyin paydo bo'lgan talab)
+    #    `manage.py check` va `makemigrations --check` sof statik tahlil EMAS.
+    #
+    #    Zanjir:
+    #      1. `Complaint.score_cached` — `models.GeneratedField`;
+    #      2. uning tizim tekshiruvi `_check_supported()` maqsad bazaning
+    #         `connection.features.supports_stored_generated_columns` ini
+    #         o'qiydi, PostgreSQL'da bu esa serverning HAQIQIY versiyasini
+    #         so'raydi -> jonli ulanish;
+    #      3. `--database` berilmagani "hech qaysi baza" degani EMAS:
+    #         django/core/checks/registry.py da
+    #             if databases is None: databases = list(connections)
+    #         ya'ni "belgilanmagan" = "HAMMASI".
+    #
+    #    Bu lokalda ko'rinmaydi — dasturchida Docker'dagi Postgres ishlab
+    #    turadi. Shuning uchun `pre-commit run --all-files` lokalda o'tdi,
+    #    CI'da esa "Connection refused" bilan yiqildi.
+    #
+    #    Hooklarni SKIP qilish yo'li ATAYLAB tanlanmadi: u holda "migratsiya
+    #    yaratilmagan" xatosi CI'dan o'tib, deploy'gacha yashirinardi.
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: dard
+          POSTGRES_USER: dard
+          POSTGRES_PASSWORD: dard
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    env:
+      # Loyiha standarti 5434 (lokal Docker stack'lar to'qnashmasligi uchun),
+      # GitHub xizmati esa runner'da localhost:5432 da turadi.
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: dard
+      POSTGRES_USER: dard
+      POSTGRES_PASSWORD: dard
+
     steps:
       - uses: actions/checkout@v7
 
