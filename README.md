@@ -340,8 +340,13 @@ Faqat **`CI holati`** tekshiruvini tanlang, alohida job'larni emas.
 | D0-T7 | pytest + factory_boy + qamrov (106 test, 94%) |
 | D0-T8 | ruff (lint+format) + mypy + pre-commit — 17 hook toza |
 | D0-T9 | GitHub Actions CI — sifat, testlar, Docker obrazi |
+| D0-T10 | Deploy to'plami — bootstrap, server compose, deploy workflow, runbook |
 
-Keyingi: **D0-T10** (erta deploy) → M0 tugaydi, M1 (yadro) boshlanadi.
+**D0-T10 qisman:** barcha fayllar tayyor va lokal repetitsiyada tekshirilgan;
+server hali olinmagan. Ketma-ketlik: [`DEPLOY.md`](DEPLOY.md).
+
+Keyingi: server + birinchi deploy → **M0 tugaydi**, so'ng **M1** (yadro:
+`Complaint`, `Solution`, `Vote`).
 
 ---
 

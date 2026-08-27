@@ -29,8 +29,16 @@
     <svg class="h-[18px] w-[18px] sm:h-5 sm:w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 15 7-7 7 7"/></svg>
   </button>
 
+  {% comment %}
+    ⚠️ `score_cached`, `upvotes_cached` EMAS (D1-T5).
+       Ko'rsatiladigan raqam — SOF ball (foydali − foydali emas), xuddi
+       ikkala strelka orasida turgani kabi. `upvotes_cached` faqat
+       ijobiy ovozlarni sanaydi va "−3" holatini KO'RSATA OLMAYDI.
+       `score_cached` — bazadagi GENERATED ustun, ya'ni u sanoqchilardan
+       hech qachon farq qila olmaydi.
+  {% endcomment %}
   <span class="tnum {% if layout == 'row' %}px-1 {% endif %}text-sm font-bold {% if user_vote == 1 %}text-upvote{% endif %}" data-vote-count>
-    {{ obj.upvotes_cached|default:0 }}
+    {{ obj.score_cached|default:0 }}
   </span>
 
   <button

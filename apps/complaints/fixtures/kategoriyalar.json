@@ -1,0 +1,114 @@
+[
+  {
+    "model": "complaints.category",
+    "pk": 1,
+    "fields": {
+      "created_at": "2026-08-24T00:00:00Z",
+      "updated_at": "2026-08-24T00:00:00Z",
+      "name": "Karyera va ish",
+      "slug": "karyera",
+      "icon": "briefcase",
+      "description": "Ish topish, kasb almashtirish, ish beruvchi bilan muammolar, o'sish va maosh.",
+      "order": 10,
+      "is_active": true
+    }
+  },
+  {
+    "model": "complaints.category",
+    "pk": 2,
+    "fields": {
+      "created_at": "2026-08-24T00:00:00Z",
+      "updated_at": "2026-08-24T00:00:00Z",
+      "name": "Munosabatlar",
+      "slug": "munosabatlar",
+      "icon": "heart",
+      "description": "Oila, sevgi, do'stlik, ota-ona bosimi.",
+      "order": 20,
+      "is_active": true
+    }
+  },
+  {
+    "model": "complaints.category",
+    "pk": 3,
+    "fields": {
+      "created_at": "2026-08-24T00:00:00Z",
+      "updated_at": "2026-08-24T00:00:00Z",
+      "name": "Moliya",
+      "slug": "moliya",
+      "icon": "money",
+      "description": "Kredit, ipoteka, jamg'arma, qarz.",
+      "order": 30,
+      "is_active": true
+    }
+  },
+  {
+    "model": "complaints.category",
+    "pk": 4,
+    "fields": {
+      "created_at": "2026-08-24T00:00:00Z",
+      "updated_at": "2026-08-24T00:00:00Z",
+      "name": "O'qish va ta'lim",
+      "slug": "talim",
+      "icon": "graduation",
+      "description": "Universitet, kurslar, chet elda o'qish.",
+      "order": 40,
+      "is_active": true
+    }
+  },
+  {
+    "model": "complaints.category",
+    "pk": 5,
+    "fields": {
+      "created_at": "2026-08-24T00:00:00Z",
+      "updated_at": "2026-08-24T00:00:00Z",
+      "name": "Sog'liq",
+      "slug": "sogliq",
+      "icon": "pulse",
+      "description": "Jismoniy va ruhiy salomatlik, stress.",
+      "order": 50,
+      "is_active": true
+    }
+  },
+  {
+    "model": "complaints.category",
+    "pk": 6,
+    "fields": {
+      "created_at": "2026-08-24T00:00:00Z",
+      "updated_at": "2026-08-24T00:00:00Z",
+      "name": "Uy-joy",
+      "slug": "uy-joy",
+      "icon": "home",
+      "description": "Ijara, sotib olish, qo'shnilar, ta'mir.",
+      "order": 60,
+      "is_active": true
+    }
+  },
+  {
+    "model": "complaints.category",
+    "pk": 7,
+    "fields": {
+      "created_at": "2026-08-24T00:00:00Z",
+      "updated_at": "2026-08-24T00:00:00Z",
+      "name": "Huquq",
+      "slug": "huquq",
+      "icon": "scale",
+      "description": "Mehnat, oila, iste'molchi huquqlari.",
+      "order": 70,
+      "is_active": true
+    }
+  },
+  {
+    "model": "complaints.category",
+    "pk": 8,
+    "fields": {
+      "created_at": "2026-08-24T00:00:00Z",
+      "updated_at": "2026-08-24T00:00:00Z",
+      "name": "Boshqa",
+      "slug": "boshqa",
+      "icon": "dots",
+      "description": "Yuqoridagilarga to'g'ri kelmagan hamma narsa.",
+      "order": 100,
+      "is_active": true
+    }
+  }
+]

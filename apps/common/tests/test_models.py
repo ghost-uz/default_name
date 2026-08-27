@@ -8,7 +8,7 @@
 """
 
 from django.contrib.auth import get_user_model
-from django.db import connection, models
+from django.db import models
 from django.test import TestCase
 from django.utils import timezone
 
@@ -58,21 +58,23 @@ SINOV_MODELLAR = [SinovVaqt, SinovOchirish, SinovModeratsiya, SinovKontent]
 
 
 class SinovJadvalMixin:
-    """Sinov modellari uchun jadvallarni yaratadi va o'chiradi."""
+    """Tarixiy nom — endi hech nima qilmaydi.
 
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        with connection.schema_editor() as editor:
-            for model in SINOV_MODELLAR:
-                editor.create_model(model)
+    ⚠️ ILGARI bu mixin jadvallarni `setUpClass` da yaratib, `tearDownClass`
+       da O'CHIRARDI. Bu jim va topilishi qiyin xatoga olib keldi:
 
-    @classmethod
-    def tearDownClass(cls):
-        with connection.schema_editor() as editor:
-            for model in reversed(SINOV_MODELLAR):
-                editor.delete_model(model)
-        super().tearDownClass()
+       Sinov modellari Django ilova reyestriga BUTUN SEANS uchun yoziladi
+       (pytest test modulini yig'ish paytida import qiladi), jadvallari esa
+       faqat shu sinf ichida mavjud bo'lardi. Boshqa istalgan testda
+       `user.delete()` chaqirilsa, Django `SoftDeleteModel.deleted_by`
+       teskari aloqasini ham yangilamoqchi bo'lib, mavjud bo'lmagan
+       jadvalga urilardi. Test yolg'iz ishlaganda o'tardi, to'plamda
+       yiqilardi — sabab esa butunlay boshqa faylda edi.
+
+       Endi jadvallar `conftest.py` dagi seans darajasidagi fixture'da
+       bir marta yaratiladi. Mixin merosxo'rlik zanjirini buzmaslik uchun
+       qoldirildi.
+    """
 
 
 # ---------------------------------------------------------------------------

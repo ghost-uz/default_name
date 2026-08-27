@@ -52,6 +52,40 @@ def pytest_configure(config) -> None:
         )
 
 
+@pytest.fixture(scope="session", autouse=True)
+def _sinov_modellari_uchun_jadvallar(django_db_setup, django_db_blocker):
+    """⚠️ `apps/common/tests/test_models.py` dagi sinov modellari uchun
+    jadvallarni BUTUN SEANS davomida yaratib qo'yadi.
+
+    NEGA BU KERAK (vaqt yegan xato)
+       Abstrakt modelni sinash uchun o'sha faylda `SinovOchirish` kabi
+       konkret modellar e'lon qilinadi. Django ilova reyestri esa GLOBAL:
+       pytest test modulini yig'ish paytida import qilishi bilanoq bu
+       modellar BUTUN seansga ro'yxatga olinadi.
+
+       Jadvallar esa avval faqat o'sha test sinfi ichida yaratilardi.
+       Natijada boshqa istalgan testda `user.delete()` chaqirilsa,
+       Django'ning `Collector` i barcha teskari aloqalarni aylanib chiqib
+       `UPDATE common_sinovochirish SET deleted_by_id = NULL` qilmoqchi
+       bo'lardi — jadval esa yo'q:
+
+           relation "common_sinovochirish" does not exist
+
+       Eng yomoni — test YOLG'IZ ishlaganda o'tardi, to'liq to'plamda
+       yiqilardi. Sabab test faylining o'zida emas, butunlay boshqa
+       faylda edi.
+
+    Jadvallar o'chirilmaydi: test bazasi seans oxirida baribir tashlanadi.
+    """
+    from django.db import connection
+
+    from apps.common.tests.test_models import SINOV_MODELLAR
+
+    with django_db_blocker.unblock(), connection.schema_editor() as editor:
+        for model in SINOV_MODELLAR:
+            editor.create_model(model)
+
+
 @pytest.fixture(autouse=True)
 def _tashqi_tarmoqni_taqiqlash(monkeypatch, request):
     """Testlar tashqi tarmoqqa CHIQMASIN.

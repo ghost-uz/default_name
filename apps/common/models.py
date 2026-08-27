@@ -278,8 +278,115 @@ class ContentModel(TimeStampedModel, SoftDeleteModel, ModeratedModel):
         Complaint.objects.visible()
     """
 
-    objects = ContentAliveManager()
-    all_objects = ContentAllManager()
+    # ⚠️ `type: ignore[misc]` — django-stubs cheklovi, kod xatosi emas.
+    #    Plagin `SoftDeleteModel.objects` ni SINF o'zgaruvchisi qilib
+    #    materializatsiya qiladi, bu yerdagi qayta belgilash esa nusxa
+    #    o'zgaruvchisi bo'lib ko'rinadi. Ish vaqtida bu Django'ning
+    #    odatiy menejer merosxo'rligi. Fayldagi menejer sinflarida ham
+    #    xuddi shu izoh turibdi.
+    #
+    #    ⚠️ Bu xato `Complaint`/`Solution` paydo bo'lgunicha KO'RINMAGAN:
+    #       plagin abstrakt modelni faqat unda konkret voris bo'lganda
+    #       to'liq ishlab chiqadi. Ya'ni "mypy toza edi" degani "muammo
+    #       yo'q edi" degani emas.
+    objects = ContentAliveManager()  # type: ignore[misc]
+    all_objects = ContentAllManager()  # type: ignore[misc]
 
     class Meta:
         abstract = True
+
+
+# ===========================================================================
+# 5. Ovoz berish (D1-T5)
+# ===========================================================================
+class VoteValue(models.IntegerChoices):
+    """Ovoz qiymati.
+
+    Butun son (`+1`/`-1`), matn emas — sabab: sanoqchini `Sum(value)` bilan
+    tiklash va "qarama-qarshi ovozga o'tish 2 birlik" mantig'i arifmetikaga
+    tayanadi. Matn bo'lsa har joyda `if` yozish kerak bo'lardi.
+    """
+
+    UP = 1, "Foydali"
+    DOWN = -1, "Foydali emas"
+
+
+class VotableModel(models.Model):
+    """Ovoz beriladigan kontent uchun keshlangan sanoqchilar.
+
+    ⚠️ NEGA IKKITA SANOQCHI, BITTA EMAS
+       Faqat `score` saqlansa, 10 ta "+1" va 8 ta "-1" olgan qizg'in post
+       bilan hech kim ovoz bermagan post BIR XIL (score=2) ko'rinadi.
+       Moderatsiya (M2) uchun aynan shu farq muhim — bahsli kontentni
+       shundan topiladi.
+
+    ⚠️ NEGA `score_cached` GENERATED FIELD
+       Uchinchi ustunni QO'LDA yangilash uchinchi drift manbai bo'lardi:
+       yangilash yo'llaridan biri (masalan admin, yoki fon vazifasi) uni
+       unutsa, saralash jimgina noto'g'ri bo'lib qoladi va buni hech kim
+       sezmaydi. GENERATED ustunni PostgreSQL O'ZI hisoblaydi — u
+       sanoqchilardan farq QILA OLMAYDI. Indekslash ham mumkin, ya'ni
+       "Eng yaxshi" saralashi tez ishlaydi.
+
+       Cheklov: bu ustunga yozib bo'lmaydi (`obj.score_cached = 5` ->
+       xato). Bu ayb emas, xususiyat — haqiqiy manba sanoqchilar.
+
+    ⚠️ HAQIQIY MANBA — OVOZ JADVALI
+       Bu maydonlar KESH. Har biri `ComplaintVote` / `SolutionVote`
+       jadvalidan qayta hisoblanishi mumkin bo'lishi SHART (D7-T3 tiklash
+       mashqi shuni talab qiladi). Ularni `F()` ifodasisiz yangilamang.
+    """
+
+    upvotes_cached = models.PositiveIntegerField(
+        "foydali ovozlar", default=0, editable=False
+    )
+    downvotes_cached = models.PositiveIntegerField(
+        "foydali emas ovozlar", default=0, editable=False
+    )
+    score_cached = models.GeneratedField(
+        verbose_name="ball",
+        expression=models.F("upvotes_cached") - models.F("downvotes_cached"),
+        output_field=models.IntegerField(),
+        # PostgreSQL faqat STORED generated ustunni qo'llaydi (VIRTUAL emas).
+        db_persist=True,
+        db_index=True,
+    )
+
+    class Meta:
+        abstract = True
+
+
+class VoteModel(TimeStampedModel):
+    """Bitta ovoz. `ComplaintVote` va `SolutionVote` shundan meros oladi.
+
+    ⚠️ NEGA ALOHIDA JADVALLAR, `ContentType` EMAS (ochiq qaror Q1)
+       Ovoz — loyihadagi eng ko'p YOZILADIGAN jadval. Umumiy `Vote`
+       jadvalida noyoblik `(user, content_type, object_id)` bo'yicha
+       bo'lardi: indeks kengroq, JOIN qimmatroq va eng muhimi — baza
+       darajasida FK butunligi YO'Q (o'chirilgan postning ovozlari
+       yetim bo'lib qoladi va ularni faqat qo'lda tozalash mumkin).
+
+       Alohida jadvalda `ON DELETE CASCADE` shu ishni bepul bajaradi.
+       Narxi — ikkita deyarli bir xil model; bu abstrakt asos uni
+       kamaytiradi.
+
+    ⚠️ NOYOBLIK CHEKLOVI ABSTRAKTDA EMAS, KONKRET MODELDA
+       Cheklov maqsad maydonini (`complaint` / `solution`) nomlashi kerak,
+       u esa faqat konkret modelda mavjud.
+    """
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        verbose_name="foydalanuvchi",
+        on_delete=models.CASCADE,
+        # Foydalanuvchi o'chsa ovozlari ham ketadi — ular shaxsga bog'liq
+        # va sanoqchilar D2-T8 da qayta hisoblanadi.
+        related_name="%(class)ss",
+    )
+    value = models.SmallIntegerField("qiymat", choices=VoteValue.choices)
+
+    class Meta:
+        abstract = True
+
+    def __str__(self) -> str:
+        return f"{self.user_id}: {self.value:+d}"

