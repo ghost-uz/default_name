@@ -1,0 +1,7 @@
+# Ishlab chiqarish muhiti
+-r base.txt
+
+gunicorn==23.*
+
+# D7-T1 da qo'shiladi:
+# sentry-sdk[django]

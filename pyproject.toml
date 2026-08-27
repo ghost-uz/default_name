@@ -1,0 +1,209 @@
+[project]
+name = "dard"
+version = "0.1.0"
+description = "Dard.uz — muammo va yechim platformasi"
+requires-python = ">=3.12"
+
+# ⚠️ Bu fayl loyihani paket sifatida QURMAYDI (Django loyihasi).
+#    U faqat vositalar (pytest, coverage va D0-T8 da ruff/black/mypy)
+#    uchun yagona konfiguratsiya joyi. To'rtta alohida config fayl
+#    o'rniga bittasi — qaysi biri kuchda ekanini qidirish shart emas.
+
+# ===========================================================================
+# pytest
+# ===========================================================================
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.test"
+python_files = ["test_*.py", "tests.py", "tests_*.py"]
+testpaths = ["apps", "tests"]
+
+# ⚠️ `--reuse-db` ATAYLAB YO'Q.
+#    U testni tezlashtiradi, lekin migratsiya o'zgarganda bazani YANGILAMAYDI
+#    va testlar eski sxemada ishlaydi. Natijada xato "sirli" bo'lib ko'rinadi:
+#    kod to'g'ri, test yiqiladi. Tezlik kerak bo'lsa qo'lda bering:
+#        pytest --reuse-db
+#    lekin migratsiya o'zgargach `--create-db` bilan yangilang.
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "-ra",
+    "--cov=apps",
+    "--cov=config",
+    "--cov-report=term-missing:skip-covered",
+    "--cov-fail-under=70",
+]
+
+markers = [
+    "slow: sekin testlar (pytest -m 'not slow' bilan o'tkazib yuboriladi)",
+    "e2e: brauzer testlari — alohida ishga tushiriladi",
+]
+
+filterwarnings = [
+    # Ogohlantirish = xato. Django yangilanishida eskirgan API'ni ERTA
+    # ko'rish uchun; aks holda ular ovoz-shovqin ichida yo'qoladi.
+    "error",
+    "ignore::DeprecationWarning:factory.*",
+    # ⚠️ pytest keshi — bu OPTIMIZATSIYA (`--lf`, `--ff` uchun), test
+    #    natijasiga aloqasi yo'q. Uni yoza olmaslik testni YIQITMASLIGI
+    #    kerak. Amalda uchraydi: konteyner non-root ishlaydi, `/app` esa
+    #    host'dan mount qilingan va `.pytest_cache` egasi boshqa.
+    "ignore::pytest.PytestCacheWarning",
+]
+
+# ===========================================================================
+# coverage
+# ===========================================================================
+[tool.coverage.run]
+source = ["apps", "config"]
+branch = true
+# ⚠️ Test fayllarining O'ZI qamrovga KIRMASLIGI kerak.
+#    Ro'yxat to'liq bo'lmaganda `tests_pytest.py` hisobga tushib qoldi va
+#    natija PLATFORMAGA BOG'LIQ bo'lib chiqdi: Windows'da 100% (raqamni
+#    ko'targan), Linux'da 0% (tushirgan) — 94% va 81%. Ikkala son ham
+#    haqiqatni ko'rsatmasdi.
+#    Naqshlar `[tool.mypy] exclude` bilan bir xil tutilsin.
+omit = [
+    "*/migrations/*",
+    "*/tests/*",
+    "*/tests.py",
+    "*/tests_*.py",
+    "*/test_*.py",
+    "*/factories.py",
+    "*/conftest.py",
+    "conftest.py",
+    "scripts/*",
+    # Vaqtinchalik maket ko'rinishlari — M1 oxirida o'chiriladi
+    "apps/common/maket.py",
+    # Kirish nuqtalari: ular ishlayotganini konteyner healthcheck'i
+    # tasdiqlaydi, birlik testi emas
+    "config/wsgi.py",
+    "config/asgi.py",
+    "manage.py",
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.:",
+]
+
+# ===========================================================================
+# ruff — linter VA formatlovchi
+# ===========================================================================
+# ⚠️ `black` QO'SHILMADI. `ruff format` uning qayta amalga oshirilishi bo'lib,
+#    natijasi bir xil, lekin ~30 barobar tez va bitta vosita bilan cheklanadi.
+#    Ikkalasini birga ishlatish ikki konfiguratsiyani sinxron saqlashni
+#    talab qiladi va chekka holatlarda ular bir-biriga qarshi chiqadi.
+#
+# ⚠️ `bandit` ham alohida QO'SHILMADI: uning qoidalari ruff'da `S` guruhi
+#    sifatida bor (flake8-bandit) va ular quyida yoqilgan.
+[tool.ruff]
+target-version = "py312"
+line-length = 88
+extend-exclude = ["migrations", "staticfiles", "node_modules"]
+
+[tool.ruff.lint]
+select = [
+    "E", "W",   # pycodestyle
+    "F",        # pyflakes — ishlatilmagan import/o'zgaruvchi
+    "I",        # isort — import tartibi
+    "N",        # pep8-naming
+    "UP",       # pyupgrade — eskirgan sintaksis
+    "B",        # flake8-bugbear — nozik xatolar
+    "C4",       # comprehension'lar
+    "DJ",       # flake8-django
+    "S",        # flake8-bandit — XAVFSIZLIK
+    "SIM",      # soddalashtirish
+    "T20",      # print() qoldirilmasin
+    "RUF",      # ruff'ning o'z qoidalari
+]
+ignore = [
+    "E501",     # qator uzunligi — formatlovchi hal qiladi
+    "RUF001",   # kirill/lotin o'xshash belgilar: o'zbekcha matnda normal
+    "RUF002",
+    "RUF003",
+    "RUF012",   # ClassVar talabi — Django Meta/model uslubiga to'g'ri kelmaydi
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Testlardagi qonuniy naqshlar:
+#   S101 — `assert` testning ishlash usuli, xavfsizlik muammosi emas
+#   S105/S106 — "parol" satrlari test ma'lumoti ("x", "test-parol")
+#   N802/N806 — nomlarda ATAYLAB katta harf: `test_..._KORSATMAYDI`
+#     muhim invariantni ko'zga tashlaydi
+#   SIM117 — ichma-ich `with`: tashqarisi tayyorgarlik, ichkarisi tekshiruv;
+#     birlashtirilsa bu ajrim yo'qoladi
+"**/test_*.py" = ["S101", "S105", "S106", "N802", "N806", "SIM117"]
+"**/tests.py" = ["S101", "S105", "S106", "N802", "N806", "SIM117"]
+"**/tests_*.py" = ["S101", "S105", "S106", "N802", "N806", "SIM117"]
+"conftest.py" = ["S101", "S105", "S106"]
+# factory_boy'da `post_generation` metodining birinchi argumenti `obj`
+"**/factories.py" = ["N805", "S105", "S106"]
+# Sozlamalarda `from .base import *` — Django'ning standart uslubi.
+# S104: dev'da `0.0.0.0` ALLOWED_HOSTS da — konteynerdan kirish uchun kerak.
+"config/settings/*.py" = ["F403", "F405", "E402", "S104"]
+# Bir martalik yordamchi skriptlar konsolga yozadi
+"scripts/*.py" = ["T20", "S101"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["apps", "config"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
+
+# ===========================================================================
+# mypy
+# ===========================================================================
+[tool.mypy]
+python_version = "3.12"
+plugins = ["mypy_django_plugin.main"]
+
+# ⚠️ `strict = true` ATAYLAB YO'Q. Django'ning dinamik tabiati (menejerlar,
+#    `related_name`, `**kwargs`) sof `strict` rejimda yuzlab yolg'on
+#    ogohlantirish beradi va vosita e'tiborsiz qoldiriladigan bo'lib qoladi.
+#    Quyidagi to'plam HAQIQIY xatolarni ushlaydi, shovqin qilmasdan.
+check_untyped_defs = true          # annotatsiyasiz funksiya tanasi ham tekshiriladi
+warn_unused_ignores = true         # keraksiz `# type: ignore` topiladi
+warn_redundant_casts = true
+warn_unused_configs = true
+no_implicit_optional = true
+show_error_codes = true
+pretty = true
+
+# ⚠️ Testlar va fabrikalar TEKSHIRILMAYDI.
+#    Sabab: `UserFactory()` ish vaqtida `User` qaytaradi, lekin statik
+#    tahlilda `UserFactory` bo'lib ko'rinadi — bu django-stubs va
+#    factory_boy o'rtasidagi ma'lum cheklov. Natijada o'nlab yolg'on
+#    xatolar chiqadi va vosita e'tiborsiz qoldiriladigan bo'lib qoladi.
+#
+#    Bu `[[tool.mypy.overrides]]` orqali qilinmaydi: mypy modul
+#    naqshlarida `*` faqat TO'LIQ komponentni almashtira oladi, ya'ni
+#    `*.tests_*` hech narsaga mos kelmaydi va bo'lim "unused" bo'lib
+#    ogohlantirish beradi.
+exclude = [
+    "migrations/",
+    "\\.venv/",
+    "staticfiles/",
+    "node_modules/",
+    "scripts/",
+    "/tests/",
+    "test_.*\\.py$",
+    "tests\\.py$",
+    "tests_.*\\.py$",
+    "factories\\.py$",
+    "conftest\\.py$",
+]
+
+[[tool.mypy.overrides]]
+# Celery tip stub'lari bilan kelmaydi
+module = ["celery.*"]
+ignore_missing_imports = true
+
+[tool.django-stubs]
+django_settings_module = "config.settings.test"

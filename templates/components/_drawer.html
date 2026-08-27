@@ -1,0 +1,36 @@
+{% comment %}
+  Mobil yon menyu (ikkilamchi navigatsiya).
+
+  Fokus tuzog'i va Escape bilan yopish — static/js/app.js, 2-blok.
+  Asosiy navigatsiya pastki panelda; bu yerda faqat qo'shimcha havolalar.
+{% endcomment %}
+<div id="mobile-drawer" class="fixed inset-0 z-50 hidden lg:hidden" role="dialog" aria-modal="true" aria-label="Menyu">
+  <div class="absolute inset-0 bg-black/50" data-drawer-close></div>
+
+  <nav class="animate-in absolute left-0 top-0 h-full w-[280px] max-w-[85vw] border-r border-line bg-surface p-4">
+    <div class="mb-4 flex items-center justify-between">
+      <span class="text-lg font-extrabold tracking-tight">Menyu</span>
+      <button type="button" class="btn-ghost !px-2" data-drawer-close aria-label="Yopish">
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <a href="{% url 'feed' %}" class="btn-ghost !justify-start {% if active_nav == 'feed' %}!text-fg !bg-surface-2{% endif %}">Lenta</a>
+      <a href="{% url 'category_list' %}" class="btn-ghost !justify-start {% if active_nav == 'categories' %}!text-fg !bg-surface-2{% endif %}">Kategoriyalar</a>
+      <a href="{% url 'expert_list' %}" class="btn-ghost !justify-start {% if active_nav == 'experts' %}!text-fg !bg-surface-2{% endif %}">Ekspertlar</a>
+
+      {% if request.user.is_authenticated %}
+        <a href="{% url 'profile' request.user.username %}" class="btn-ghost !justify-start">Mening profilim</a>
+      {% endif %}
+
+      <hr class="my-3 border-line" />
+
+      <a href="{% url 'complaint_create' %}" class="btn-primary">Dard yozish</a>
+
+      {% if not request.user.is_authenticated %}
+        <a href="{% url 'login' %}" class="btn-outline mt-2">Kirish</a>
+      {% endif %}
+    </div>
+  </nav>
+</div>

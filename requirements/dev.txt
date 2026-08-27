@@ -1,0 +1,18 @@
+# Ishlab chiqish muhiti
+-r base.txt
+
+# --- Testlash (D0-T7) ---
+pytest==9.*
+pytest-django==4.*
+pytest-cov==7.*
+factory-boy==3.*
+
+# --- Kod sifati (D0-T8) ---
+# ⚠️ `black` YO'Q: `ruff format` uning qayta amalga oshirilishi, natijasi
+#    bir xil va ~30 barobar tez. Ikkalasi chekka holatlarda bir-biriga
+#    qarshi chiqadi.
+# ⚠️ `bandit` YO'Q: uning qoidalari ruff'da `S` guruhi sifatida yoqilgan.
+ruff==0.16.*
+mypy==2.*
+django-stubs==5.*
+pre-commit==4.*

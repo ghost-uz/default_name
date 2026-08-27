@@ -1,0 +1,106 @@
+# Dard.uz — commit oldidan avtomatik tekshiruvlar.
+#
+# O'rnatish (bir marta):
+#   pre-commit install
+#
+# Qo'lda ishga tushirish:
+#   pre-commit run --all-files
+#
+# ⚠️ NEGA KERAK
+#   Yolg'iz ishlaganda code review yo'q. Linter uning o'rnini bosadi —
+#   lekin faqat ISHGA TUSHIRILSA. Hook bo'lmasa u haftada bir marta
+#   eslab qolinadi va o'shanda 200 ta ogohlantirish chiqadi.
+
+default_language_version:
+  python: python3.12
+
+# Faqat o'zgargan fayllar tekshiriladi (tez), lekin mypy bundan mustasno —
+# pastdagi izohga qarang.
+repos:
+  # -------------------------------------------------------------------- #
+  # Umumiy gigiyena
+  # -------------------------------------------------------------------- #
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-merge-conflict
+      - id: check-case-conflict # Windows/macOS uchun: File.py va file.py
+      - id: check-added-large-files
+        args: ["--maxkb=500"]
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+        args: ["--markdown-linebreak-ext=md"]
+      - id: check-yaml
+        # Compose fayllari alohida tekshiriladi — pastdagi izohga qarang
+        exclude: ^docker-compose.*\.ya?ml$
+      - id: check-yaml
+        name: check yaml (docker compose)
+        files: ^docker-compose.*\.ya?ml$
+        # ⚠️ `--unsafe`: Docker Compose o'zining maxsus YAML teglarini
+        #    ishlatadi (`ports: !override []` — ro'yxatni birlashtirmasdan
+        #    ALMASHTIRADI). Standart xavfsiz yuklovchi bunday tegni
+        #    "could not determine a constructor" deb rad etadi.
+        #    `--unsafe` sintaksisni baribir to'liq tekshiradi, faqat
+        #    Python obyektiga aylantirmaydi — bizga aynan shu yetarli.
+        args: ["--unsafe"]
+      - id: check-toml
+      - id: check-json
+      # ⚠️ BOM (byte order mark) fayl boshiga tushib qolsa: npm "not valid
+      #    JSON" deydi, Django esa BOM'ni birinchi kalitga yopishtiradi.
+      #    PowerShell'ning `Set-Content -Encoding UTF8` aynan shuni qiladi.
+      - id: fix-byte-order-marker
+      - id: mixed-line-ending
+        args: ["--fix=lf"]
+      # Sirlar tasodifan commit qilinmasin
+      - id: detect-private-key
+
+  # -------------------------------------------------------------------- #
+  # ruff — lint + format (black va bandit o'rnini bosadi)
+  # -------------------------------------------------------------------- #
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.4
+    hooks:
+      - id: ruff-check
+        args: ["--fix"]
+      - id: ruff-format
+
+  # -------------------------------------------------------------------- #
+  # mypy
+  # -------------------------------------------------------------------- #
+  - repo: local
+    hooks:
+      - id: mypy
+        name: mypy (butun loyiha)
+        entry: python -m mypy apps config
+        language: system
+        types: [python]
+        # ⚠️ pass_filenames: false — MUHIM.
+        #    Standart holatda pre-commit mypy'ga FAQAT o'zgargan fayllarni
+        #    beradi. Bunda modullararo xatolar KO'RINMAYDI: `base.py` dagi
+        #    o'zgarish `prod.py` ni buzsa-yu, `prod.py` o'zgarmagan bo'lsa —
+        #    hook yashil qoladi va xato deploy'gacha yashirinadi.
+        pass_filenames: false
+        require_serial: true
+
+  # -------------------------------------------------------------------- #
+  # Django tekshiruvlari
+  # -------------------------------------------------------------------- #
+  - repo: local
+    hooks:
+      - id: django-check
+        name: manage.py check (dev)
+        entry: python manage.py check
+        language: system
+        types: [python]
+        pass_filenames: false
+        require_serial: true
+
+      - id: django-migrations
+        name: qo'llanmagan model o'zgarishi bormi
+        # ⚠️ Model o'zgartirilib migratsiya yaratilmasa, xato faqat
+        #    boshqa mashinada yoki deploy'da chiqadi.
+        entry: python manage.py makemigrations --check --dry-run
+        language: system
+        types: [python]
+        pass_filenames: false
+        require_serial: true

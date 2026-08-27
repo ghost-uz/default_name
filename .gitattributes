@@ -1,0 +1,26 @@
+# ⚠️ Windows'da ishlab chiqilgan, Linux konteynerida bajariladigan fayllar.
+# CRLF bilan saqlangan .sh fayli konteynerda "exec format error" beradi —
+# bu xato sababi ko'rinmaydi va vaqt yeydi.
+*.sh text eol=lf
+entrypoint.sh text eol=lf
+Dockerfile text eol=lf
+*.conf text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+
+# Matn fayllar — repo ichida LF
+*.py text eol=lf
+*.html text eol=lf
+*.css text eol=lf
+*.js text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+
+# Ikkilik fayllar — tegilmasin
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.woff2 binary
+*.ico binary

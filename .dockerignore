@@ -1,0 +1,43 @@
+# Konteyner ichiga TUSHMASLIGI kerak bo'lganlar.
+# Bu fayl qurilish tezligiga ham, xavfsizlikka ham ta'sir qiladi.
+
+# ⚠️ Sirlar
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Lokal virtual muhit — konteynerda o'ziniki bor.
+# Bu ayniqsa muhim: Windows'da qurilgan .venv Linux'da ISHLAMAYDI.
+.venv/
+venv/
+env/
+
+__pycache__/
+*.py[cod]
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+.git/
+.gitignore
+.gitattributes
+
+node_modules/
+frontend/node_modules/
+
+# Qurilish natijalari — konteynerda qaytadan yaratiladi
+staticfiles/
+media/
+
+# Hujjatlar va maket skrinshotlari
+*.md
+!README.md
+frontend/design-system/screenshots/
+
+.vscode/
+.idea/
+.playwright-mcp/

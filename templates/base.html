@@ -1,0 +1,51 @@
+{% load static %}<!doctype html>
+<html lang="uz" class="{% block html_class %}{% endblock %}">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>{% block title %}Dard.uz — Nolima, yechim topamiz{% endblock %}</title>
+    <meta name="description" content="{% block description %}Dard.uz — hayotiy muammolaringiz bilan o'rtoqlashing va real tajribaga asoslangan yechim toping.{% endblock %}" />
+    <meta name="theme-color" content="#2563eb" />
+    {% block head_extra %}{% endblock %}
+
+    {% comment %}
+      FOUC oldini olish: mavzu CSS'dan OLDIN qo'llanadi, aks holda sahifa
+      bir lahza oq bo'lib "chaqnaydi".
+      ⚠️ nonce SHART: D2-T9 da CSP yoqilganda nonce'siz inline skript
+         bloklanadi va butun sayt yorug' rejimda "sakraydi".
+    {% endcomment %}
+    <script nonce="{{ request.csp_nonce }}">
+      (function () {
+        var t = localStorage.getItem("dard-theme");
+        if (t === "dark" || (!t && matchMedia("(prefers-color-scheme: dark)").matches)) {
+          document.documentElement.classList.add("dark");
+        }
+      })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="{% static 'css/app.css' %}" />
+  </head>
+
+  <body class="{% block body_class %}{% endblock %}">
+    <a href="#main" class="skip-link">Asosiy kontentga o'tish</a>
+
+    {% block header %}{% include "components/_header.html" %}{% endblock %}
+    {% block drawer %}{% include "components/_drawer.html" %}{% endblock %}
+
+    {% block content %}{% endblock %}
+
+    {% block bottom_nav %}{% include "components/_bottom_nav.html" %}{% endblock %}
+
+    {% include "components/_toast_root.html" %}
+
+    <script src="{% static 'js/app.js' %}" defer></script>
+    {% block scripts %}{% endblock %}
+  </body>
+</html>

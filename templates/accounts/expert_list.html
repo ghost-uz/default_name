@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+
+{% block title %}Ekspertlar — Dard.uz{% endblock %}
+{% block description %}Psixolog, yurist, HR, moliyachi va boshqa mutaxassislar.{% endblock %}
+
+{# active_nav: experts — ko'rinishdan kontekstda beriladi #}
+
+{% block content %}
+<main id="main" class="mx-auto max-w-[1200px] px-4 py-8 lg:px-6">
+      <h1 class="text-2xl font-extrabold sm:text-[32px]">Ekspertlar</h1>
+      <p class="mt-1.5 max-w-2xl text-[15px] text-fg-muted">
+        Tasdiqlangan mutaxassislar. Karma balli ularning yechimlari qanchalik foydali ekanini
+        ko'rsatadi — reklama emas, jamoa bahosi.
+      </p>
+
+      <!-- Soha filtri -->
+      <div class="mt-6 flex flex-wrap items-center gap-2" role="group" aria-label="Soha bo'yicha filtr">
+        <button type="button" class="chip chip-active" aria-pressed="true">Hammasi</button>
+        <button type="button" class="chip" aria-pressed="false">Psixolog</button>
+        <button type="button" class="chip" aria-pressed="false">Yurist</button>
+        <button type="button" class="chip" aria-pressed="false">HR</button>
+        <button type="button" class="chip" aria-pressed="false">Moliyachi</button>
+        <button type="button" class="chip" aria-pressed="false">Rieltor</button>
+        <button type="button" class="chip" aria-pressed="false">IT</button>
+      </div>
+
+      <!-- Ekspertlar to'ri -->
+      <div class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <!-- PRO ekspert -->
+        <article class="card card-hover overflow-hidden">
+          <div class="p-5">
+            <div class="flex items-start gap-3.5">
+              <span class="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-primary text-lg font-extrabold text-on-primary" aria-hidden="true">D</span>
+              <div class="min-w-0 flex-1">
+                <div class="flex flex-wrap items-center gap-1.5">
+                  <h2 class="truncate font-bold">
+                    <a href="{% url 'profile' 'sardor92' %}" class="hover:text-primary">Dilshod S.</a>
+                  </h2>
+                  <span class="badge-pro">
+                    <svg class="h-3 w-3" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 2.6 6.6L22 9.3l-5 4.6 1.3 7.1L12 17.8 5.7 21l1.3-7.1-5-4.6 7.4-.7z"/></svg>
+                    PRO
+                  </span>
+                </div>
+                <p class="mt-0.5 truncate text-[14px] text-fg-muted">Klinik psixolog · 11 yil</p>
+                <p class="mt-1.5 inline-flex items-center gap-1.5 text-[13px]">
+                  <svg class="h-3.5 w-3.5 text-karma-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m13 2-9 12h7l-1 8 9-12h-7z"/></svg>
+                  <span class="tnum font-bold text-karma">8 420</span>
+                  <span class="text-fg-muted">karma</span>
+                </p>
+              </div>
+            </div>
+
+            <p class="clamp-3 mt-4 text-[14px] leading-relaxed text-fg-muted">
+              Oilaviy munosabatlar, avlodlararo nizolar va tashvish buzilishlari bilan ishlayman.
+              Bu yerda bepul maslahat beraman — murakkab holatlarda qabulga taklif qilaman.
+            </p>
+
+            <dl class="tnum mt-4 grid grid-cols-3 gap-2 border-t border-line pt-4 text-center">
+              <div>
+                <dd class="font-bold">214</dd>
+                <dt class="text-[11px] text-fg-muted">Yechim</dt>
+              </div>
+              <div>
+                <dd class="font-bold text-solved">89</dd>
+                <dt class="text-[11px] text-fg-muted">Qabul qilingan</dt>
+              </div>
+              <div>
+                <dd class="font-bold">4.9</dd>
+                <dt class="text-[11px] text-fg-muted">Reyting</dt>
+              </div>
+            </dl>
+          </div>
+          <div class="flex gap-2 border-t border-line bg-surface-2/40 p-3">
+            <a href="{% url 'profile' 'sardor92' %}" class="btn-outline btn-sm flex-1">Profil</a>
+            <button type="button" class="btn btn-sm flex-1 bg-telegram text-white hover:bg-telegram-hover" data-toast="Beta: bog'lanish PRO obunachilar uchun ochiladi">
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21.9 4.4 18.6 20c-.2 1.1-.9 1.4-1.8.9l-5-3.7-2.4 2.3c-.3.3-.5.5-1 .5l.4-5.1L18 6.4c.4-.4-.1-.6-.6-.2L7.1 12.9 2.2 11.4c-1-.3-1.1-1 .2-1.5L20.5 3c.9-.3 1.7.2 1.4 1.4"/></svg>
+              Bog'lanish
+            </button>
+          </div>
+        </article>
+
+        <article class="card card-hover overflow-hidden">
+          <div class="p-5">
+            <div class="flex items-start gap-3.5">
+              <span class="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-genz text-lg font-extrabold text-white" aria-hidden="true">N</span>
+              <div class="min-w-0 flex-1">
+                <div class="flex flex-wrap items-center gap-1.5">
+                  <h2 class="truncate font-bold"><a href="{% url 'profile' 'sardor92' %}" class="hover:text-primary">Nodira X.</a></h2>
+                  <span class="badge-pro">
+                    <svg class="h-3 w-3" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 2.6 6.6L22 9.3l-5 4.6 1.3 7.1L12 17.8 5.7 21l1.3-7.1-5-4.6 7.4-.7z"/></svg>
+                    PRO
+                  </span>
+                </div>
+                <p class="mt-0.5 truncate text-[14px] text-fg-muted">HR mutaxassis · 8 yil</p>
+                <p class="mt-1.5 inline-flex items-center gap-1.5 text-[13px]">
+                  <svg class="h-3.5 w-3.5 text-karma-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m13 2-9 12h7l-1 8 9-12h-7z"/></svg>
+                  <span class="tnum font-bold text-karma">6 130</span>
+                  <span class="text-fg-muted">karma</span>
+                </p>
+              </div>
+            </div>
+            <p class="clamp-3 mt-4 text-[14px] leading-relaxed text-fg-muted">
+              Rezyume, intervyu va ish joyidagi konfliktlar. IT va marketing sohalarida ishga joylashish
+              bo'yicha savollarga javob beraman.
+            </p>
+            <dl class="tnum mt-4 grid grid-cols-3 gap-2 border-t border-line pt-4 text-center">
+              <div><dd class="font-bold">178</dd><dt class="text-[11px] text-fg-muted">Yechim</dt></div>
+              <div><dd class="font-bold text-solved">71</dd><dt class="text-[11px] text-fg-muted">Qabul qilingan</dt></div>
+              <div><dd class="font-bold">4.8</dd><dt class="text-[11px] text-fg-muted">Reyting</dt></div>
+            </dl>
+          </div>
+          <div class="flex gap-2 border-t border-line bg-surface-2/40 p-3">
+            <a href="{% url 'profile' 'sardor92' %}" class="btn-outline btn-sm flex-1">Profil</a>
+            <button type="button" class="btn btn-sm flex-1 bg-telegram text-white hover:bg-telegram-hover" data-toast="Beta: bog'lanish PRO obunachilar uchun ochiladi">
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21.9 4.4 18.6 20c-.2 1.1-.9 1.4-1.8.9l-5-3.7-2.4 2.3c-.3.3-.5.5-1 .5l.4-5.1L18 6.4c.4-.4-.1-.6-.6-.2L7.1 12.9 2.2 11.4c-1-.3-1.1-1 .2-1.5L20.5 3c.9-.3 1.7.2 1.4 1.4"/></svg>
+              Bog'lanish
+            </button>
+          </div>
+        </article>
+
+        <!-- Oddiy (PRO emas) ekspert — farqi ko'rinib turishi kerak -->
+        <article class="card card-hover overflow-hidden">
+          <div class="p-5">
+            <div class="flex items-start gap-3.5">
+              <span class="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-surface-2 text-lg font-extrabold text-fg-muted" aria-hidden="true">A</span>
+              <div class="min-w-0 flex-1">
+                <h2 class="truncate font-bold"><a href="{% url 'profile' 'sardor92' %}" class="hover:text-primary">Aziz R.</a></h2>
+                <p class="mt-0.5 truncate text-[14px] text-fg-muted">Yurist · 6 yil</p>
+                <p class="mt-1.5 inline-flex items-center gap-1.5 text-[13px]">
+                  <svg class="h-3.5 w-3.5 text-karma-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m13 2-9 12h7l-1 8 9-12h-7z"/></svg>
+                  <span class="tnum font-bold text-karma">5 902</span>
+                  <span class="text-fg-muted">karma</span>
+                </p>
+              </div>
+            </div>
+            <p class="clamp-3 mt-4 text-[14px] leading-relaxed text-fg-muted">
+              Mehnat va iste'molchi huquqlari. Sudga bormasdan hal qilish yo'llarini ko'rsataman.
+            </p>
+            <dl class="tnum mt-4 grid grid-cols-3 gap-2 border-t border-line pt-4 text-center">
+              <div><dd class="font-bold">302</dd><dt class="text-[11px] text-fg-muted">Yechim</dt></div>
+              <div><dd class="font-bold text-solved">118</dd><dt class="text-[11px] text-fg-muted">Qabul qilingan</dt></div>
+              <div><dd class="font-bold">4.7</dd><dt class="text-[11px] text-fg-muted">Reyting</dt></div>
+            </dl>
+          </div>
+          <div class="border-t border-line bg-surface-2/40 p-3">
+            <a href="{% url 'profile' 'sardor92' %}" class="btn-outline btn-sm w-full">Profilni ko'rish</a>
+          </div>
+        </article>
+      </div>
+
+      <!-- ============ PRO OBUNA (monetizatsiya) ============ -->
+      <section class="card mt-10 overflow-hidden border-primary/30" aria-labelledby="pro-h">
+        <div class="grid lg:grid-cols-[minmax(0,1fr)_340px]">
+          <div class="p-6 sm:p-8">
+            <span class="badge-pro">PRO Ekspert obunasi</span>
+            <h2 id="pro-h" class="mt-3 text-[clamp(1.5rem,3vw,2rem)] font-extrabold tracking-tight">
+              Bilimingiz mijozga aylansin
+            </h2>
+            <p class="mt-3 max-w-xl text-[15px] leading-relaxed text-fg-muted">
+              Bepul javob berish ham obro' quradi. PRO esa o'sha obro'ni to'g'ridan-to'g'ri
+              murojaatga aylantiradi.
+            </p>
+
+            <ul class="mt-6 grid gap-3 sm:grid-cols-2">
+              <li class="flex items-start gap-2.5 text-[14px]">
+                <svg class="mt-0.5 h-4.5 w-4.5 shrink-0 text-solved" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m20 6-11 11-5-5"/></svg>
+                «Bog'lanish» tugmasi profilda
+              </li>
+              <li class="flex items-start gap-2.5 text-[14px]">
+                <svg class="mt-0.5 h-4.5 w-4.5 shrink-0 text-solved" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m20 6-11 11-5-5"/></svg>
+                Tasdiqlangan PRO nishoni
+              </li>
+              <li class="flex items-start gap-2.5 text-[14px]">
+                <svg class="mt-0.5 h-4.5 w-4.5 shrink-0 text-solved" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m20 6-11 11-5-5"/></svg>
+                Yechimlaringiz ro'yxat boshida
+              </li>
+              <li class="flex items-start gap-2.5 text-[14px]">
+                <svg class="mt-0.5 h-4.5 w-4.5 shrink-0 text-solved" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m20 6-11 11-5-5"/></svg>
+                Telegram'da yangi savol bildirishnomasi
+              </li>
+            </ul>
+          </div>
+
+          <div class="border-t border-line bg-surface-2/50 p-6 sm:p-8 lg:border-l lg:border-t-0">
+            <p class="text-[13px] font-semibold uppercase tracking-wider text-fg-muted">Oylik</p>
+            <p class="mt-2 flex items-baseline gap-1.5">
+              <span class="tnum text-4xl font-extrabold">149 000</span>
+              <span class="text-[15px] font-medium text-fg-muted">so'm/oy</span>
+            </p>
+            <p class="mt-2 text-[13px] text-fg-muted">Click yoki Payme orqali. Istalgan vaqtda bekor qilinadi.</p>
+
+            <button type="button" class="btn-primary mt-5 w-full !min-h-12" data-toast="Beta: to'lov tizimi 4-bosqichda ulanadi">
+              PRO ni yoqish
+            </button>
+            <p class="mt-3 text-center text-[13px] text-fg-muted">Birinchi 14 kun bepul</p>
+          </div>
+        </div>
+      </section>
+    </main>
+{% endblock %}

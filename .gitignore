@@ -1,0 +1,41 @@
+# --- Sirlar (BIRINCHI O'RINDA) ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# --- Django ---
+*.log
+db.sqlite3
+/media/
+/staticfiles/
+# Tailwind chiqishi — qurilgan fayl, manba tailwind/input.css
+/static/css/app.css
+
+# --- Node (front-end build) ---
+node_modules/
+
+# --- Muharrir / OS ---
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# --- Vaqtinchalik ---
+.playwright-mcp/
+*.old.*

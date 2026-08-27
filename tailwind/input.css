@@ -1,0 +1,503 @@
+/* ==========================================================================
+   Dard.uz — Design System v0.1 (beta)
+   Uslub: Minimal & Direct + Card/Bento gibridi
+   Qoida: ierarxiya CHEGARA va BO'SHLIQ orqali quriladi, soya orqali emas.
+   ========================================================================== */
+
+@import "tailwindcss";
+
+/* Klass nomlari qayerdan qidiriladi.
+   ⚠️ Ochiq ko'rsatilgan: Tailwind v4 avtomatik aniqlashi .venv, staticfiles
+   va node_modules ni ham ko'zdan kechirib, qurilishni sekinlashtiradi va
+   ba'zan keraksiz klasslarni topib qo'yadi. */
+@source "../templates";
+@source "../apps";
+@source "../static/js";
+
+/* Dark mode = <html class="dark">. Tailwind v4 da media-query o'rniga class. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* --------------------------------------------------------------------------
+   1. PRIMITIVE TOKENS — xom qiymatlar. Komponentda TO'G'RIDAN-TO'G'RI ishlatilmaydi.
+   -------------------------------------------------------------------------- */
+:root {
+  /* Neytral shkala */
+  --p-white: #ffffff;
+  --p-slate-50: #f8fafc;
+  --p-slate-100: #f1f5f9;
+  --p-slate-200: #e2e8f0;
+  --p-slate-500: #64748b;
+  --p-slate-900: #0f172a;
+
+  /* Brend */
+  --p-blue-600: #2563eb;
+  --p-blue-700: #1d4ed8;
+  --p-blue-400: #60a5fa;
+
+  /* Semantik xom ranglar */
+  --p-amber-600: #d97706;
+  --p-amber-700: #b45309;
+  --p-green-600: #16a34a;
+  --p-green-700: #15803d;
+  --p-red-600: #dc2626;
+
+  /* Avlod (generation_tag) ranglari */
+  --p-violet-600: #7c3aed;
+  --p-cyan-700: #0e7490;
+}
+
+/* --------------------------------------------------------------------------
+   2. SEMANTIC TOKENS — komponentlar FAQAT shularni ishlatadi.
+      Yorug'/qorong'i rejim shu qatlamda almashadi.
+   -------------------------------------------------------------------------- */
+:root {
+  --c-bg: var(--p-slate-50);
+  --c-surface: var(--p-white);
+  --c-surface-2: var(--p-slate-100);
+  --c-fg: var(--p-slate-900);
+  --c-fg-muted: var(--p-slate-500);
+  --c-border: var(--p-slate-200);
+  --c-border-strong: #cbd5e1;
+
+  --c-primary: var(--p-blue-600);
+  --c-primary-hover: var(--p-blue-700);
+  --c-on-primary: var(--p-white);
+
+  /* Karma / boost / reputatsiya */
+  --c-karma: var(--p-amber-700); /* matn uchun — oq fonda 4.6:1 */
+  --c-karma-icon: var(--p-amber-600); /* faqat ikonka/chegara — 3:1 */
+  --c-karma-bg: #fffbeb;
+
+  /* is_accepted / is_solved */
+  --c-solved: var(--p-green-700); /* matn uchun — 4.5:1 */
+  --c-solved-icon: var(--p-green-600);
+  --c-solved-bg: #f0fdf4;
+
+  --c-danger: var(--p-red-600);
+  --c-danger-bg: #fef2f2;
+
+  /* Ovoz berish holatlari */
+  --c-upvote: var(--p-green-600);
+  --c-downvote: var(--p-red-600);
+
+  /* Avlod teglari */
+  --c-genz: var(--p-violet-600);
+  --c-genz-bg: #f5f3ff;
+  --c-mil: var(--p-cyan-700);
+  --c-mil-bg: #ecfeff;
+  --c-boom: var(--p-amber-700);
+  --c-boom-bg: #fef3c7;
+
+  --c-ring: var(--p-blue-600);
+
+  /* Django rangi emas — Telegram brend rangi (login tugmasi uchun) */
+  --c-telegram: #229ed9;
+  --c-telegram-hover: #1c8bc0;
+}
+
+.dark {
+  --c-bg: #0b1220;
+  --c-surface: #111a2c;
+  --c-surface-2: #17223a;
+  --c-fg: #e8edf5;
+  --c-fg-muted: #94a3b8;
+  --c-border: #1f2c45;
+  --c-border-strong: #2c3d5c;
+
+  --c-primary: var(--p-blue-400);
+  --c-primary-hover: #93c5fd;
+  --c-on-primary: #0b1220;
+
+  --c-karma: #fbbf24;
+  --c-karma-icon: #fbbf24;
+  --c-karma-bg: #2a2010;
+
+  --c-solved: #4ade80;
+  --c-solved-icon: #4ade80;
+  --c-solved-bg: #0e2417;
+
+  --c-danger: #f87171;
+  --c-danger-bg: #2a1414;
+
+  --c-upvote: #4ade80;
+  --c-downvote: #f87171;
+
+  --c-genz: #c4b5fd;
+  --c-genz-bg: #251d3d;
+  --c-mil: #67e8f9;
+  --c-mil-bg: #0c2b33;
+  --c-boom: #fcd34d;
+  --c-boom-bg: #2d2410;
+
+  --c-ring: var(--p-blue-400);
+}
+
+/* --------------------------------------------------------------------------
+   3. TAILWIND THEME MAPPING
+      `@theme inline` -> utility'lar CSS o'zgaruvchiga ISHORA qiladi,
+      shuning uchun .dark klassi almashganda ranglar avtomatik yangilanadi.
+   -------------------------------------------------------------------------- */
+@theme inline {
+  --color-bg: var(--c-bg);
+  --color-surface: var(--c-surface);
+  --color-surface-2: var(--c-surface-2);
+  --color-fg: var(--c-fg);
+  --color-fg-muted: var(--c-fg-muted);
+  --color-line: var(--c-border);
+  --color-line-strong: var(--c-border-strong);
+
+  --color-primary: var(--c-primary);
+  --color-primary-hover: var(--c-primary-hover);
+  --color-on-primary: var(--c-on-primary);
+
+  --color-karma: var(--c-karma);
+  --color-karma-icon: var(--c-karma-icon);
+  --color-karma-bg: var(--c-karma-bg);
+
+  --color-solved: var(--c-solved);
+  --color-solved-icon: var(--c-solved-icon);
+  --color-solved-bg: var(--c-solved-bg);
+
+  --color-danger: var(--c-danger);
+  --color-danger-bg: var(--c-danger-bg);
+
+  --color-upvote: var(--c-upvote);
+  --color-downvote: var(--c-downvote);
+
+  --color-genz: var(--c-genz);
+  --color-genz-bg: var(--c-genz-bg);
+  --color-mil: var(--c-mil);
+  --color-mil-bg: var(--c-mil-bg);
+  --color-boom: var(--c-boom);
+  --color-boom-bg: var(--c-boom-bg);
+
+  --color-telegram: var(--c-telegram);
+  --color-telegram-hover: var(--c-telegram-hover);
+
+  /* Tipografika — bitta oila, og'irlik orqali ierarxiya (Inter) */
+  --font-sans: "Inter", ui-sans-serif, "Segoe UI", Roboto, system-ui, sans-serif;
+
+  /* Radius shkalasi */
+  --radius-btn: 8px;
+  --radius-card: 14px;
+  --radius-input: 10px;
+
+  /* Animatsiya — 150-300ms oralig'i (UX qoidasi) */
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* --------------------------------------------------------------------------
+   4. BASE
+   -------------------------------------------------------------------------- */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  body {
+    background-color: var(--c-bg);
+    color: var(--c-fg);
+    font-family: var(--font-sans);
+    font-size: 16px; /* mobil auto-zoom oldini oladi */
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    letter-spacing: -0.02em;
+    line-height: 1.25;
+    font-weight: 700;
+  }
+
+  /* Klaviatura fokusi HAR DOIM ko'rinadi — sichqoncha bosishida ko'rinmaydi */
+  :focus-visible {
+    outline: 2px solid var(--c-ring);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  ::selection {
+    background: var(--c-primary);
+    color: var(--c-on-primary);
+  }
+
+  /* Raqamlar ustunda "sakramasligi" uchun (ovoz soni, karma) */
+  .tnum {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   5. COMPONENTS
+   -------------------------------------------------------------------------- */
+/* ⚠️ TAILWIND V4 QOIDASI (qimmatga tushadigan tuzoq):
+   `@utility` yaratgan klass UTILITIES qatlamiga tushadi, u esa COMPONENTS'dan
+   KEYIN keladi. Ya'ni `@utility chip` + `@layer components { .chip-active }`
+   bo'lsa — chip'ning `text-fg-muted` chip-active'ning `text-on-primary` ini
+   YENGADI (ko'k fonda ko'k matn).
+   Yechim: hammasi BITTA qatlamda, umumiy asos selektorlar ro'yxati orqali
+   beriladi. Variantlar asosdan KEYIN yoziladi -> manba tartibi hal qiladi. */
+@layer components {
+  /* --- Tugmalar: barchasi min 44px balandlik (touch target) --- */
+  .btn,
+  .btn-primary,
+  .btn-ghost,
+  .btn-outline,
+  .btn-telegram {
+    @apply inline-flex items-center justify-center gap-2 rounded-[var(--radius-btn)]
+           px-4 min-h-11 min-w-11 text-sm font-semibold cursor-pointer select-none
+           transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+    touch-action: manipulation;
+  }
+  .btn-primary {
+    @apply bg-primary text-on-primary hover:bg-primary-hover;
+  }
+  .btn-ghost {
+    @apply text-fg-muted hover:bg-surface-2 hover:text-fg;
+  }
+  .btn-outline {
+    @apply border border-line bg-surface text-fg hover:bg-surface-2;
+  }
+  .btn-telegram {
+    @apply bg-telegram text-white hover:bg-telegram-hover;
+  }
+  /* Asosdan KEYIN -> min-h/px ni bekor qiladi.
+     MOBILDA 44px qoladi (touch target), faqat ≥640px da zichlashadi. */
+  .btn-sm {
+    @apply min-h-11 px-3 text-[13px] sm:min-h-9 sm:min-w-9;
+  }
+
+  /* --- Karta: soya emas, chegara. Minimalizmning asosiy qoidasi. --- */
+  .card {
+    @apply rounded-[var(--radius-card)] border border-line bg-surface;
+  }
+  .card-hover {
+    @apply transition-colors duration-200 hover:border-line-strong;
+  }
+
+  /* --- Chip --- */
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-line
+           px-2.5 py-1 text-xs font-medium text-fg-muted
+           transition-colors duration-200;
+  }
+  .chip-active {
+    @apply border-primary bg-primary text-on-primary;
+  }
+
+  /* Chip vizual jihatdan ixcham (26px) bo'lib qolsin, LEKIN bosish maydoni
+     44px bo'lsin. Guideline'ning o'z tavsiyasi: "extend hit area beyond
+     visual bounds". Faqat VERTIKAL kengaytiramiz — yonma-yon chiplar
+     bir-birining maydoniga kirib ketmasligi uchun. */
+  button.chip,
+  a.chip {
+    position: relative;
+  }
+  button.chip::after,
+  a.chip::after {
+    content: "";
+    position: absolute;
+    inset: -9px 0;
+  }
+  @media (min-width: 640px) {
+    /* Desktopda sichqoncha aniq — kengaytirish shart emas */
+    button.chip::after,
+    a.chip::after {
+      display: none;
+    }
+  }
+
+  /* --- Badge --- */
+  .badge,
+  .badge-genz,
+  .badge-mil,
+  .badge-boom,
+  .badge-solved,
+  .badge-pro {
+    @apply inline-flex items-center gap-1 rounded-full px-2 py-0.5
+           text-[11px] font-semibold uppercase tracking-wide;
+  }
+  .badge-genz {
+    @apply bg-genz-bg text-genz;
+  }
+  .badge-mil {
+    @apply bg-mil-bg text-mil;
+  }
+  .badge-boom {
+    @apply bg-boom-bg text-boom;
+  }
+  .badge-solved {
+    @apply bg-solved-bg text-solved;
+  }
+  .badge-pro {
+    @apply bg-karma-bg text-karma;
+  }
+
+  /* --- Ovoz berish tugmasi ---
+     Mobilda 44×44 (asosiy harakat, barmoq bilan bosiladi),
+     desktopda 36×36 (sichqoncha aniq, zichlik muhimroq). */
+  .vote-btn {
+    @apply flex h-11 w-11 items-center justify-center rounded-lg
+           text-fg-muted cursor-pointer
+           transition-colors duration-150
+           hover:bg-surface-2
+           sm:h-9 sm:w-9;
+    touch-action: manipulation;
+  }
+
+  /* --- Forma --- */
+  .input {
+    @apply w-full rounded-[var(--radius-input)] border border-line bg-surface
+           px-3.5 min-h-11 text-fg placeholder:text-fg-muted
+           transition-colors duration-200
+           focus:border-primary focus:outline-none
+           focus:ring-2 focus:ring-primary/30;
+  }
+  .label {
+    @apply block text-sm font-semibold text-fg mb-1.5;
+  }
+  .helper {
+    @apply mt-1.5 text-[13px] text-fg-muted;
+  }
+  .field-error {
+    @apply mt-1.5 flex items-start gap-1.5 text-[13px] font-medium text-danger;
+  }
+  .input-invalid {
+    @apply border-danger focus:border-danger focus:ring-danger/30;
+  }
+  textarea.input {
+    @apply py-3 leading-relaxed resize-y;
+  }
+  select.input {
+    @apply py-2.5 pr-9 appearance-none bg-no-repeat;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-position: right 12px center;
+  }
+
+  /* --- Ovoz berish holatlari --- */
+  .vote-btn[aria-pressed="true"].vote-up {
+    @apply bg-solved-bg text-upvote;
+  }
+  .vote-btn[aria-pressed="true"].vote-down {
+    @apply bg-danger-bg text-downvote;
+  }
+
+  /* --- Mehmon uchun login taklifi (handleGuestVote) ---
+     `position: fixed` ATAYLAB: karta `.card`da `overflow-hidden` bor,
+     absolute qo'ysak popover kesilib qolardi. Fixed uni klipdan chiqaradi.
+     Soya bu yerda o'rinli — u sirtdan AJRALIB turishi kerak (modal/toast kabi). */
+  .login-hint {
+    @apply fixed z-50 w-72 max-w-[calc(100vw-1rem)] rounded-[var(--radius-card)]
+           border border-line bg-surface p-3.5 shadow-2xl;
+  }
+
+  /* --- Havolalar --- */
+  .link {
+    @apply text-primary underline-offset-2 hover:underline;
+  }
+
+  /* --- Skeleton (yuklanish holati) --- */
+  .skeleton {
+    @apply rounded bg-surface-2;
+    animation: pulse-soft 1.6s ease-in-out infinite;
+  }
+
+  /* --- Kontent kengligi: 60-75 belgi o'qish uchun --- */
+  .prose-body {
+    @apply text-[17px] leading-[1.7] text-fg;
+    max-width: 68ch;
+  }
+
+  /* --- Ikki qatorli qisqartma --- */
+  .clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* --- Klaviatura foydalanuvchilari uchun o'tkazib yuborish havolasi --- */
+  .skip-link {
+    @apply absolute left-4 -top-20 z-[100] rounded-lg bg-primary px-4 py-2
+           text-sm font-semibold text-on-primary
+           focus:top-4;
+    transition: top 200ms var(--ease-out-soft);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   6. KEYFRAMES — 150-400ms, faqat transform/opacity (layout reflow yo'q)
+   -------------------------------------------------------------------------- */
+@keyframes pulse-soft {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@keyframes slide-up-fade {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pop {
+  0% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(1.18);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@utility animate-in {
+  animation: slide-up-fade 260ms var(--ease-out-soft) both;
+}
+
+@utility animate-pop {
+  animation: pop 220ms var(--ease-out-soft);
+}
+
+/* Ro'yxat elementlari ketma-ket chiqishi (30-50ms stagger) */
+@utility stagger {
+  animation: slide-up-fade 260ms var(--ease-out-soft) both;
+  animation-delay: calc(var(--i, 0) * 40ms);
+}

@@ -1,0 +1,219 @@
+{% extends 'base.html' %}
+
+{% block title %}Yangi dard yozish — Dard.uz{% endblock %}
+{% block description %}Muammoingizni yozing va jamoadan real tajribaga asoslangan yechim oling.{% endblock %}
+
+{% block content %}
+<div class="mx-auto grid max-w-[1100px] gap-6 px-4 py-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:px-6">
+      <main id="main" class="min-w-0">
+        <h1 class="text-2xl font-extrabold sm:text-[28px]">Dardingizni yozing</h1>
+        <p class="mt-1.5 max-w-prose text-[15px] text-fg-muted">
+          Qanchalik aniq yozsangiz, yechim shunchalik foydali bo'ladi. Ismingizni yashirishingiz mumkin.
+        </p>
+
+        <form class="mt-6 space-y-6" data-validate novalidate>
+          <!-- ---------- 1. Sarlavha ---------- -->
+          <div data-field>
+            <label for="title" class="label">
+              Muammo sarlavhasi <span class="text-danger" aria-hidden="true">*</span>
+              <span class="sr-only">(majburiy)</span>
+            </label>
+            <input
+              id="title"
+              name="title"
+              type="text"
+              class="input"
+              required
+              data-minlen="15"
+              maxlength="140"
+              data-mirror-source
+              placeholder="Masalan: Ish beruvchi 3 oydan beri maosh bermayapti"
+              autocomplete="off"
+            />
+            <div class="flex items-start justify-between gap-3">
+              <p class="helper">Savol shaklida yozing — bunday postlar 2 barobar ko'p yechim oladi.</p>
+              <span class="tnum mt-1.5 shrink-0 text-[13px] text-fg-muted" data-counter-for="title">0 / 140</span>
+            </div>
+            <p class="field-error" data-field-error hidden></p>
+          </div>
+
+          <!-- ---------- 2. Tavsif ---------- -->
+          <div data-field>
+            <label for="description" class="label">
+              Batafsil tavsif <span class="text-danger" aria-hidden="true">*</span>
+            </label>
+            <textarea
+              id="description"
+              name="description"
+              class="input"
+              rows="7"
+              required
+              data-minlen="50"
+              data-autogrow
+              maxlength="8000"
+              placeholder="Vaziyatni tushuntiring: nima bo'ldi, nimalarni sinab ko'rdingiz, aynan nimada yordam kerak?"
+            ></textarea>
+            <div class="flex items-start justify-between gap-3">
+              <p class="helper">Shaxsiy ma'lumot (telefon, manzil, pasport) yozmang.</p>
+              <span class="tnum mt-1.5 shrink-0 text-[13px] text-fg-muted" data-counter-for="description">0 / 8000</span>
+            </div>
+            <p class="field-error" data-field-error hidden></p>
+          </div>
+
+          <!-- ---------- 3. Kategoriya + Avlod ---------- -->
+          <div class="grid gap-5 sm:grid-cols-2">
+            <div data-field>
+              <label for="category" class="label">
+                Kategoriya <span class="text-danger" aria-hidden="true">*</span>
+              </label>
+              <select id="category" name="category" class="input" required>
+                <option value="">Tanlang…</option>
+                <option value="karyera">Karyera va ish</option>
+                <option value="munosabatlar">Munosabatlar</option>
+                <option value="moliya">Moliya</option>
+                <option value="oqish">O'qish va ta'lim</option>
+                <option value="sogliq">Sog'liq</option>
+                <option value="uy-joy">Uy-joy</option>
+                <option value="huquq">Huquq</option>
+                <option value="ota-onalik">Ota-onalik</option>
+              </select>
+              <p class="helper">To'g'ri kategoriya = kerakli ekspert ko'radi.</p>
+              <p class="field-error" data-field-error hidden></p>
+            </div>
+
+            <fieldset>
+              <legend class="label">
+                Avlod <span class="text-danger" aria-hidden="true">*</span>
+              </legend>
+              <div class="flex flex-wrap gap-2">
+                <label class="cursor-pointer">
+                  <input type="radio" name="generation" value="genz" class="peer sr-only" checked />
+                  <span class="chip peer-checked:border-genz peer-checked:bg-genz-bg peer-checked:text-genz peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[var(--c-ring)]">
+                    Gen Z <span class="opacity-60">(16-28)</span>
+                  </span>
+                </label>
+                <label class="cursor-pointer">
+                  <input type="radio" name="generation" value="millennial" class="peer sr-only" />
+                  <span class="chip peer-checked:border-mil peer-checked:bg-mil-bg peer-checked:text-mil peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[var(--c-ring)]">
+                    Millennial <span class="opacity-60">(29-44)</span>
+                  </span>
+                </label>
+                <label class="cursor-pointer">
+                  <input type="radio" name="generation" value="boomer" class="peer sr-only" />
+                  <span class="chip peer-checked:border-boom peer-checked:bg-boom-bg peer-checked:text-boom peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[var(--c-ring)]">
+                    Boomer <span class="opacity-60">(45+)</span>
+                  </span>
+                </label>
+              </div>
+              <p class="helper">Sizning avlodingiz — shunga o'xshash tajribalilar javob beradi.</p>
+            </fieldset>
+          </div>
+
+          <!-- ---------- 4. Maxfiylik ---------- -->
+          <div class="card p-4">
+            <label class="flex cursor-pointer items-start gap-3">
+              <input type="checkbox" name="is_anonymous" class="peer sr-only" checked />
+              <span
+                class="relative mt-0.5 h-6 w-11 shrink-0 rounded-full bg-line-strong transition-colors duration-200 peer-checked:bg-primary peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[var(--c-ring)] after:absolute after:left-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-transform after:duration-200 peer-checked:after:translate-x-5"
+                aria-hidden="true"
+              ></span>
+              <span class="min-w-0">
+                <span class="block text-sm font-semibold">Anonim e'lon qilish</span>
+                <span class="mt-1 block text-[13px] leading-relaxed text-fg-muted">
+                  Ismingiz o'rniga «Anonim» ko'rsatiladi. Karma ballari baribir sizga yoziladi.
+                  Keyinchalik o'zgartirib bo'lmaydi.
+                </span>
+              </span>
+            </label>
+          </div>
+
+          <!-- ---------- 5. Qo'shimcha (progressive disclosure) ---------- -->
+          <details class="card group overflow-hidden">
+            <summary class="flex cursor-pointer list-none items-center gap-2 p-4 text-sm font-semibold transition-colors hover:bg-surface-2">
+              <svg class="h-4 w-4 text-fg-muted transition-transform duration-200 group-open:rotate-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+              Qo'shimcha sozlamalar
+              <span class="ml-auto text-xs font-normal text-fg-muted">ixtiyoriy</span>
+            </summary>
+            <div class="space-y-4 border-t border-line p-4">
+              <div>
+                <label for="tags" class="label">Teglar</label>
+                <input id="tags" name="tags" type="text" class="input" placeholder="ipoteka, bank, kredit" autocomplete="off" />
+                <p class="helper">Vergul bilan ajrating, maksimal 5 ta.</p>
+              </div>
+
+              <!-- Monetizatsiya: Boost -->
+              <div class="rounded-[var(--radius-input)] border border-karma-icon/40 bg-karma-bg p-3.5">
+                <div class="flex items-start gap-3">
+                  <svg class="mt-0.5 h-5 w-5 shrink-0 text-karma-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m13 2-9 12h7l-1 8 9-12h-7z"/></svg>
+                  <div class="min-w-0 flex-1">
+                    <p class="text-sm font-bold text-karma">Shoshilinch? Postni ko'taring</p>
+                    <p class="mt-1 text-[13px] leading-relaxed text-fg-muted">
+                      24 soat davomida «Qaynoq» ro'yxatining yuqorisida turadi. O'rtacha 5 barobar ko'p yechim.
+                    </p>
+                    <button type="button" class="btn-outline btn-sm mt-2.5 !border-karma-icon/50 !text-karma" data-toast="To'lov tizimi beta versiyada faol emas">
+                      5 000 so'm — Ko'tarish
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </details>
+
+          <!-- ---------- Yuborish ---------- -->
+          <div class="flex flex-col-reverse gap-2 border-t border-line pt-5 sm:flex-row sm:items-center">
+            <a href="{% url 'feed' %}" class="btn-outline sm:min-w-32">Bekor qilish</a>
+            <p class="flex-1 text-[13px] text-fg-muted sm:px-2">
+              E'lon qilish orqali <a href="#" class="link">jamoa qoidalari</a>ga rozilik bildirasiz.
+            </p>
+            <button type="submit" class="btn-primary sm:min-w-40">E'lon qilish</button>
+          </div>
+        </form>
+      </main>
+
+      <!-- ---------- Yon panel: jonli ko'rinish ---------- -->
+      <aside class="space-y-3">
+        <section class="lg:sticky lg:top-22">
+          <h2 class="mb-2.5 px-1 text-[11px] font-bold uppercase tracking-wider text-fg-muted">
+            Lentada shunday ko'rinadi
+          </h2>
+          <article class="card overflow-hidden">
+            <div class="p-4">
+              <div class="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-[13px] text-fg-muted">
+                <span class="chip !py-0.5">Kategoriya</span>
+                <span class="badge-genz">Gen Z</span>
+              </div>
+              <h3 class="text-[15px] font-bold leading-snug" data-mirror-target data-mirror-empty="Sarlavhangiz shu yerda ko'rinadi">
+                Sarlavhangiz shu yerda ko'rinadi
+              </h3>
+              <div class="mt-3 flex items-center gap-3 text-[13px] text-fg-muted">
+                <span class="inline-flex items-center gap-1.5">
+                  <span class="grid h-5 w-5 place-items-center rounded-full bg-surface-2 text-[10px] font-bold" aria-hidden="true">A</span>
+                  Anonim
+                </span>
+                <span aria-hidden="true">·</span>
+                <span>hozir</span>
+              </div>
+            </div>
+          </article>
+
+          <div class="card mt-3 p-4">
+            <h2 class="text-sm font-bold">Yaxshi post uchun 3 qoida</h2>
+            <ol class="mt-3 space-y-2.5 text-[13px] leading-relaxed text-fg-muted">
+              <li class="flex gap-2.5">
+                <span class="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-surface-2 text-[11px] font-bold text-fg">1</span>
+                <span>Aniq savol bering — «nima qilay?» dan ko'ra «X va Y dan qaysi biri?» yaxshiroq.</span>
+              </li>
+              <li class="flex gap-2.5">
+                <span class="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-surface-2 text-[11px] font-bold text-fg">2</span>
+                <span>Nimalarni allaqachon sinab ko'rganingizni yozing.</span>
+              </li>
+              <li class="flex gap-2.5">
+                <span class="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-surface-2 text-[11px] font-bold text-fg">3</span>
+                <span>Boshqalarning ism-sharifini yozmang — post o'chiriladi.</span>
+              </li>
+            </ol>
+          </div>
+        </section>
+      </aside>
+    </div>
+{% endblock %}

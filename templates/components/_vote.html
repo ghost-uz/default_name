@@ -1,0 +1,46 @@
+{% comment %}
+  Ovoz berish bloki. Karta ichida IKKI marta ishlatiladi:
+    layout="column"  -> desktopda kartaning chap ustuni
+    layout="row"     -> mobilda kartaning pastki qatorida
+
+  Kontekst:
+    obj         -> Complaint yoki Solution
+    vote_url    -> HTMX manzili (M1: {% url 'vote' ... %})
+    user_vote   -> 1 | -1 | None — foydalanuvchining joriy ovozi
+    layout      -> "column" | "row"
+
+  ⚠️ Holat `aria-pressed` da saqlanadi, klassda emas: ekran o'quvchi
+     "bosilgan" ekanini shundan biladi. app.js ham shu atributga qaraydi.
+{% endcomment %}
+{% if layout == "row" %}
+  <div class="mr-1 flex items-center gap-0.5 sm:hidden">
+{% else %}
+  <div class="hidden shrink-0 flex-col items-center gap-0.5 border-r border-line bg-surface-2/40 px-2 py-4 sm:flex">
+{% endif %}
+
+  <button
+    type="button"
+    class="vote-btn vote-up"
+    data-vote="up"
+    aria-pressed="{% if user_vote == 1 %}true{% else %}false{% endif %}"
+    aria-label="Foydali — ovoz berish"
+    {% if vote_url %}hx-post="{{ vote_url }}" hx-swap="outerHTML" hx-target="closest [data-vote-group]"{% endif %}
+  >
+    <svg class="h-[18px] w-[18px] sm:h-5 sm:w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 15 7-7 7 7"/></svg>
+  </button>
+
+  <span class="tnum {% if layout == 'row' %}px-1 {% endif %}text-sm font-bold {% if user_vote == 1 %}text-upvote{% endif %}" data-vote-count>
+    {{ obj.upvotes_cached|default:0 }}
+  </span>
+
+  <button
+    type="button"
+    class="vote-btn vote-down"
+    data-vote="down"
+    aria-pressed="{% if user_vote == -1 %}true{% else %}false{% endif %}"
+    aria-label="Foydali emas"
+    {% if vote_url %}hx-post="{{ vote_url }}" hx-swap="outerHTML" hx-target="closest [data-vote-group]"{% endif %}
+  >
+    <svg class="h-[18px] w-[18px] sm:h-5 sm:w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m19 9-7 7-7-7"/></svg>
+  </button>
+</div>

@@ -1,0 +1,61 @@
+{% comment %}
+  Mobil pastki navigatsiya.
+
+  ⚠️ MAKSIMAL 5 element (Material Design qoidasi) — ko'proq bo'lsa yorliqlar
+     o'qib bo'lmas darajada kichrayadi. Markazdagi "+" tugmasi yorliqsiz,
+     chunki uning shakli va rangi maqsadini o'zi aytadi.
+
+  ⚠️ safe-area-inset-bottom: iPhone'dagi jest chizig'i tugmalarni bosib
+     qo'ymasligi uchun.
+
+  Kontekst: active_nav -> "feed" | "categories" | "experts" | "profile"
+{% endcomment %}
+<nav
+  class="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface/95 backdrop-blur-md lg:hidden"
+  style="padding-bottom: env(safe-area-inset-bottom)"
+  aria-label="Mobil navigatsiya"
+>
+  <div class="grid grid-cols-5">
+    <a href="{% url 'feed' %}"
+       class="flex min-h-14 flex-col items-center justify-center gap-0.5 {% if active_nav == 'feed' %}text-primary{% else %}text-fg-muted{% endif %}"
+       {% if active_nav == 'feed' %}aria-current="page"{% endif %}>
+      <svg class="h-[22px] w-[22px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 11 9-8 9 8v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+      <span class="text-[10px] {% if active_nav == 'feed' %}font-semibold{% else %}font-medium{% endif %}">Lenta</span>
+    </a>
+
+    <a href="{% url 'category_list' %}"
+       class="flex min-h-14 flex-col items-center justify-center gap-0.5 {% if active_nav == 'categories' %}text-primary{% else %}text-fg-muted{% endif %}"
+       {% if active_nav == 'categories' %}aria-current="page"{% endif %}>
+      <svg class="h-[22px] w-[22px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+      <span class="text-[10px] {% if active_nav == 'categories' %}font-semibold{% else %}font-medium{% endif %}">Toifalar</span>
+    </a>
+
+    <a href="{% url 'complaint_create' %}" class="flex min-h-14 flex-col items-center justify-center" aria-label="Yangi dard yozish">
+      <span class="grid h-11 w-11 place-items-center rounded-full bg-primary text-on-primary">
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+      </span>
+    </a>
+
+    <a href="{% url 'expert_list' %}"
+       class="flex min-h-14 flex-col items-center justify-center gap-0.5 {% if active_nav == 'experts' %}text-primary{% else %}text-fg-muted{% endif %}"
+       {% if active_nav == 'experts' %}aria-current="page"{% endif %}>
+      <svg class="h-[22px] w-[22px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 2 2.6 6.6L22 9.3l-5 4.6 1.3 7.1L12 17.8 5.7 21l1.3-7.1-5-4.6 7.4-.7z"/></svg>
+      <span class="text-[10px] {% if active_nav == 'experts' %}font-semibold{% else %}font-medium{% endif %}">Ekspert</span>
+    </a>
+
+    {% if request.user.is_authenticated %}
+      {% url 'profile' request.user.username as profil_url %}
+    {% else %}
+      {% url 'login' as profil_url %}
+    {% endif %}
+    <a href="{{ profil_url }}"
+       class="flex min-h-14 flex-col items-center justify-center gap-0.5 {% if active_nav == 'profile' %}text-primary{% else %}text-fg-muted{% endif %}"
+       {% if active_nav == 'profile' %}aria-current="page"{% endif %}>
+      <svg class="h-[22px] w-[22px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg>
+      <span class="text-[10px] {% if active_nav == 'profile' %}font-semibold{% else %}font-medium{% endif %}">Profil</span>
+    </a>
+  </div>
+</nav>
+
+{% comment %}Pastki nav kontentni bosib qolmasligi uchun bo'shliq{% endcomment %}
+<div class="h-16 lg:hidden" aria-hidden="true"></div>

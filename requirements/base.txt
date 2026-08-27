@@ -1,0 +1,12 @@
+# Dard.uz — barcha muhitlar uchun umumiy bog'liqliklar
+#
+# Qoida: yangi paket qo'shishdan oldin savol bering — "buni stdlib yoki
+# Django bilan qilib bo'ladimi?". Har bir bog'liqlik xavfsizlik yangilanishi,
+# versiya to'qnashuvi va o'rganish yuki olib keladi.
+
+Django==6.1.*
+psycopg[binary]==3.3.*
+
+# D0-T3 — fon vazifalari (trending D1-T11, Telegram avto-post D5-T3)
+celery[redis]==5.5.*
+redis==5.*

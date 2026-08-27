@@ -1,0 +1,32 @@
+{% comment %}
+  Bo'sh holat.
+
+  ⚠️ Bo'sh ekran — xato emas, LEKIN foydalanuvchi uni xato deb o'ylaydi.
+     Shuning uchun har doim: nima yo'qligi + KEYINGI QADAM.
+     Faqat "Ma'lumot topilmadi" yozish yetarli emas.
+
+  Kontekst:
+    title      -> sarlavha
+    text       -> tushuntirish
+    action_url -> tugma manzili (ixtiyoriy)
+    action     -> tugma matni
+    icon       -> "bookmark" | "search" | "plus" (standart: plus)
+{% endcomment %}
+<div class="card flex flex-col items-center justify-center px-6 py-14 text-center">
+  <span class="grid h-14 w-14 place-items-center rounded-full bg-surface-2 text-fg-muted">
+    {% if icon == "bookmark" %}
+      <svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21 12 16 5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+    {% elif icon == "search" %}
+      <svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+    {% else %}
+      <svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+    {% endif %}
+  </span>
+
+  <h3 class="mt-4 text-lg font-bold">{{ title }}</h3>
+  <p class="mt-2 max-w-sm text-[15px] leading-relaxed text-fg-muted">{{ text }}</p>
+
+  {% if action_url %}
+    <a href="{{ action_url }}" class="btn-primary btn-sm mt-5">{{ action }}</a>
+  {% endif %}
+</div>

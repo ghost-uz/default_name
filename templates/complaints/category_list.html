@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+
+{% block title %}Kategoriyalar — Dard.uz{% endblock %}
+{% block description %}Dard.uz kategoriyalari: karyera, munosabatlar, moliya, o'qish, sog'liq, uy-joy, huquq.{% endblock %}
+
+{# active_nav: categories — ko'rinishdan kontekstda beriladi #}
+
+{% block content %}
+<main id="main" class="mx-auto max-w-[1200px] px-4 py-8 lg:px-6">
+      <nav class="mb-4 flex items-center gap-1.5 text-[13px] text-fg-muted" aria-label="Yo'l">
+        <a href="{% url 'feed' %}" class="inline-block py-1 hover:text-fg hover:underline">Lenta</a>
+        <span aria-hidden="true">/</span>
+        <span class="text-fg" aria-current="page">Kategoriyalar</span>
+      </nav>
+
+      <h1 class="text-2xl font-extrabold sm:text-[32px]">Kategoriyalar</h1>
+      <p class="mt-1.5 text-[15px] text-fg-muted">
+        Sizni qiynayotgan mavzuni tanlang — o'sha sohaning mutaxassislari shu yerda.
+      </p>
+
+      <!-- Qidiruv -->
+      <form class="relative mt-6 max-w-md" role="search" onsubmit="return false">
+        <label for="cq" class="sr-only">Kategoriya qidirish</label>
+        <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-fg-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="cq" type="search" class="input !pl-9" placeholder="Kategoriya qidirish…" />
+      </form>
+
+      <!-- Kategoriyalar to'ri (Bento uslubi: birinchi 2 tasi kattaroq) -->
+      <div class="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <a href="{% url 'feed' %}" class="card card-hover group flex flex-col p-5 sm:col-span-2 lg:col-span-2">
+          <div class="flex items-start gap-4">
+            <span class="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary transition-transform duration-200 group-hover:scale-105">
+              <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+            </span>
+            <div class="min-w-0 flex-1">
+              <h2 class="text-lg font-bold">Karyera va ish</h2>
+              <p class="mt-1 text-[15px] leading-relaxed text-fg-muted">
+                Ish topish, kasb almashtirish, ish beruvchi bilan muammolar, o'sish va maosh.
+              </p>
+              <div class="tnum mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-fg-muted">
+                <span><strong class="font-bold text-fg">3 210</strong> muammo</span>
+                <span><strong class="font-bold text-solved">2 104</strong> yechilgan</span>
+                <span><strong class="font-bold text-karma">42</strong> ekspert</span>
+              </div>
+            </div>
+          </div>
+        </a>
+
+        <a href="{% url 'feed' %}" class="card card-hover group flex flex-col p-5">
+          <span class="grid h-11 w-11 place-items-center rounded-xl bg-genz-bg text-genz transition-transform duration-200 group-hover:scale-105">
+            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M19 14c1.5-1.5 2-3.2 2-5a7 7 0 0 0-14 0c0 1.8.5 3.5 2 5l5 6z"/></svg>
+          </span>
+          <h2 class="mt-3.5 font-bold">Munosabatlar</h2>
+          <p class="clamp-2 mt-1 flex-1 text-[14px] text-fg-muted">Oila, sevgi, do'stlik, ota-ona bosimi.</p>
+          <p class="tnum mt-3 text-[13px] text-fg-muted"><strong class="font-bold text-fg">2 940</strong> muammo</p>
+        </a>
+
+        <a href="{% url 'feed' %}" class="card card-hover group flex flex-col p-5">
+          <span class="grid h-11 w-11 place-items-center rounded-xl bg-solved-bg text-solved transition-transform duration-200 group-hover:scale-105">
+            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          </span>
+          <h2 class="mt-3.5 font-bold">Moliya</h2>
+          <p class="clamp-2 mt-1 flex-1 text-[14px] text-fg-muted">Kredit, ipoteka, jamg'arma, qarz.</p>
+          <p class="tnum mt-3 text-[13px] text-fg-muted"><strong class="font-bold text-fg">1 875</strong> muammo</p>
+        </a>
+
+        <a href="{% url 'feed' %}" class="card card-hover group flex flex-col p-5">
+          <span class="grid h-11 w-11 place-items-center rounded-xl bg-mil-bg text-mil transition-transform duration-200 group-hover:scale-105">
+            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M22 10 12 5 2 10l10 5z"/><path d="M6 12v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5"/></svg>
+          </span>
+          <h2 class="mt-3.5 font-bold">O'qish va ta'lim</h2>
+          <p class="clamp-2 mt-1 flex-1 text-[14px] text-fg-muted">Universitet, kurslar, chet elda o'qish.</p>
+          <p class="tnum mt-3 text-[13px] text-fg-muted"><strong class="font-bold text-fg">1 620</strong> muammo</p>
+        </a>
+
+        <a href="{% url 'feed' %}" class="card card-hover group flex flex-col p-5">
+          <span class="grid h-11 w-11 place-items-center rounded-xl bg-danger-bg text-danger transition-transform duration-200 group-hover:scale-105">
+            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 12h4l2 6 4-14 2 8h6"/></svg>
+          </span>
+          <h2 class="mt-3.5 font-bold">Sog'liq</h2>
+          <p class="clamp-2 mt-1 flex-1 text-[14px] text-fg-muted">Jismoniy va ruhiy salomatlik, stress.</p>
+          <p class="tnum mt-3 text-[13px] text-fg-muted"><strong class="font-bold text-fg">1 108</strong> muammo</p>
+        </a>
+
+        <a href="{% url 'feed' %}" class="card card-hover group flex flex-col p-5">
+          <span class="grid h-11 w-11 place-items-center rounded-xl bg-karma-bg text-karma transition-transform duration-200 group-hover:scale-105">
+            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+          </span>
+          <h2 class="mt-3.5 font-bold">Uy-joy</h2>
+          <p class="clamp-2 mt-1 flex-1 text-[14px] text-fg-muted">Ijara, sotib olish, qo'shnilar, ta'mir.</p>
+          <p class="tnum mt-3 text-[13px] text-fg-muted"><strong class="font-bold text-fg">986</strong> muammo</p>
+        </a>
+
+        <a href="{% url 'feed' %}" class="card card-hover group flex flex-col p-5">
+          <span class="grid h-11 w-11 place-items-center rounded-xl bg-surface-2 text-fg transition-transform duration-200 group-hover:scale-105">
+            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3v18M5 7h14M7 7l-3 7a3.5 3.5 0 0 0 6 0zM17 7l-3 7a3.5 3.5 0 0 0 6 0z"/></svg>
+          </span>
+          <h2 class="mt-3.5 font-bold">Huquq</h2>
+          <p class="clamp-2 mt-1 flex-1 text-[14px] text-fg-muted">Mehnat, oila, iste'molchi huquqlari.</p>
+          <p class="tnum mt-3 text-[13px] text-fg-muted"><strong class="font-bold text-fg">741</strong> muammo</p>
+        </a>
+
+        <!-- BO'SH HOLAT namunasi (UX: empty-states) -->
+        <div class="card flex flex-col items-center justify-center p-8 text-center">
+          <span class="grid h-12 w-12 place-items-center rounded-full bg-surface-2 text-fg-muted">
+            <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+          </span>
+          <h2 class="mt-3 font-bold">Kategoriya yetishmayaptimi?</h2>
+          <p class="mt-1.5 text-[14px] leading-relaxed text-fg-muted">
+            Taklif yuboring — jamoa ovoz bersa, qo'shamiz.
+          </p>
+          <button type="button" class="btn-outline btn-sm mt-4" data-toast="Taklif qabul qilindi, rahmat" data-toast-variant="success">
+            Taklif yuborish
+          </button>
+        </div>
+      </div>
+    </main>
+
+    <!-- Mobil pastki nav -->
+{% endblock %}

@@ -1,0 +1,161 @@
+# Dard.uz — SERVERDA ishlaydigan stack.
+#
+# ⚠️ Bu fayl MUSTAQIL: `docker-compose.yml` ni kengaytirmaydi.
+#    Sabab: serverda kod YO'Q, faqat shu fayl va `.env` bor. Uch qavatli
+#    override zanjiri ("qaysi qiymat qayerdan keldi?") nosozlik paytida
+#    eng keraksiz narsa.
+#
+# ⚠️ Obraz QURILMAYDI, TORTIB OLINADI.
+#    4GB dropletda `docker build` ishlab turgan Postgres va Gunicorn bilan
+#    xotira uchun kurashadi va OOM-killer'ga uchraydi. Obrazni CI quradi
+#    (GitHub Actions), server esa tayyorini oladi. Yon foyda: orqaga
+#    qaytarish = eski tegni tortib olish.
+#
+# Ishlatish (serverda, /opt/dard ichida):
+#     docker compose -f docker-compose.server.yml pull
+#     docker compose -f docker-compose.server.yml up -d
+
+name: dard
+
+x-app: &app
+  image: ${DARD_IMAGE:?DARD_IMAGE berilmagan (masalan ghcr.io/egasi/dard:abc123)}
+  env_file: [.env]
+  environment: &app-env
+    DJANGO_SETTINGS_MODULE: config.settings.prod
+    POSTGRES_HOST: db
+    POSTGRES_PORT: "5432"
+    REDIS_URL: redis://redis:6379/0
+    CELERY_BROKER_URL: redis://redis:6379/1
+    CELERY_RESULT_BACKEND: redis://redis:6379/2
+  volumes:
+    - static_data:/app/staticfiles
+    - media_data:/app/media
+  depends_on:
+    db: { condition: service_healthy }
+    redis: { condition: service_healthy }
+  restart: always
+  logging:
+    driver: json-file
+    options: { max-size: "10m", max-file: "3" }
+
+services:
+  db:
+    image: postgres:17-alpine
+    env_file: [.env]
+    environment:
+      POSTGRES_INITDB_ARGS: "--data-checksums"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backups:/backups # D7-T3 uchun
+    # ⚠️ ports YO'Q — baza tashqaridan KO'RINMAYDI.
+    #    Kerak bo'lsa: ssh -L 5432:localhost:5432 dard@<IP>
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    restart: always
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+  redis:
+    image: redis:7-alpine
+    command: >-
+      redis-server --appendonly yes
+      --maxmemory 256mb --maxmemory-policy noeviction
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: always
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+  web:
+    <<: *app
+    environment:
+      <<: *app-env
+      # ⚠️ Migratsiya FAQAT shu xizmatda. Worker va beat ham shu obrazni
+      #    ishlatadi — uchtasi parallel migratsiya qilsa poyga holati.
+      RUN_MIGRATIONS: "1"
+      RUN_COLLECTSTATIC: "1"
+    command:
+      - gunicorn
+      - config.wsgi:application
+      - --bind=0.0.0.0:8000
+      - --workers=3
+      - --timeout=60
+      - --access-logfile=-
+      - --error-logfile=-
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/health/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+
+  celery-worker:
+    <<: *app
+    command: celery -A config worker --loglevel=info --concurrency=2
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A config inspect ping -d celery@$$HOSTNAME"]
+      interval: 60s
+      timeout: 15s
+      retries: 3
+      start_period: 60s
+
+  celery-beat:
+    <<: *app
+    # ⚠️ FAQAT BITTA nusxa — ikkita bo'lsa rejalashtirilgan har bir vazifa
+    #    ikki marta yuboriladi (Telegram'ga takroriy post, ikki karra karma).
+    command: celery -A config beat --loglevel=info --schedule=/tmp/celerybeat-schedule
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /tmp/celerybeat-schedule"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 45s
+
+  nginx:
+    image: nginx:1.27-alpine
+    ports:
+      - "80:80"
+      # TLS qo'shilgandan keyin (DEPLOY.md "TLS qo'shish"):
+      # - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      # Statikni Django emas, nginx beradi — Gunicorn worker'lari bo'shaydi
+      - static_data:/var/www/static:ro
+      - media_data:/var/www/media:ro
+      # certbot uchun (TLS bosqichida):
+      # - ./certbot/www:/var/www/certbot:ro
+      # - ./certbot/conf:/etc/letsencrypt:ro
+    depends_on:
+      web: { condition: service_started }
+    healthcheck:
+      # ⚠️ `localhost` EMAS, `127.0.0.1`.
+      #    nginx `listen 80` bilan faqat IPv4'da tinglaydi, busybox `wget`
+      #    esa `localhost`ni avval IPv6 (`::1`) deb hal qiladi va
+      #    "Connection refused" oladi. Natijada nginx MANGU "unhealthy"
+      #    bo'lib turadi, sayt esa mukammal ishlaydi — bu holatni
+      #    tashxislash juda chalg'ituvchi.
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/health/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: always
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+volumes:
+  postgres_data:
+  redis_data:
+  static_data:
+  media_data:
