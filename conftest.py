@@ -52,28 +52,37 @@ def pytest_configure(config) -> None:
         )
 
 
-@pytest.fixture(scope="session", autouse=True)
-def _sinov_modellari_uchun_jadvallar(django_db_setup, django_db_blocker):
-    """⚠️ `apps/common/tests/test_models.py` dagi sinov modellari uchun
-    jadvallarni BUTUN SEANS davomida yaratib qo'yadi.
+@pytest.fixture(scope="session")
+def django_db_setup(django_db_setup, django_db_blocker):
+    """Test bazasi qurilgandan KEYIN sinov modellari jadvallarini qo'shadi.
 
     NEGA BU KERAK (vaqt yegan xato)
-       Abstrakt modelni sinash uchun o'sha faylda `SinovOchirish` kabi
-       konkret modellar e'lon qilinadi. Django ilova reyestri esa GLOBAL:
-       pytest test modulini yig'ish paytida import qilishi bilanoq bu
-       modellar BUTUN seansga ro'yxatga olinadi.
+       Abstrakt modelni sinash uchun `apps/common/tests/test_models.py` da
+       `SinovOchirish` kabi konkret modellar e'lon qilinadi. Django ilova
+       reyestri esa GLOBAL: pytest test modulini YIG'ISH paytida import
+       qilishi bilanoq bu modellar BUTUN seansga ro'yxatga olinadi.
 
-       Jadvallar esa avval faqat o'sha test sinfi ichida yaratilardi.
-       Natijada boshqa istalgan testda `user.delete()` chaqirilsa,
-       Django'ning `Collector` i barcha teskari aloqalarni aylanib chiqib
+       Jadvallar avval faqat o'sha test sinfi ichida yaratilardi. Natijada
+       boshqa istalgan testda `user.delete()` chaqirilsa, Django'ning
+       `Collector` i barcha teskari aloqalarni aylanib chiqib
        `UPDATE common_sinovochirish SET deleted_by_id = NULL` qilmoqchi
        bo'lardi — jadval esa yo'q:
 
            relation "common_sinovochirish" does not exist
 
        Eng yomoni — test YOLG'IZ ishlaganda o'tardi, to'liq to'plamda
-       yiqilardi. Sabab test faylining o'zida emas, butunlay boshqa
-       faylda edi.
+       yiqilardi. Sabab test faylining o'zida emas, boshqa faylda edi.
+
+    ⚠️ NEGA `autouse` SEANS FIXTURE'I EMAS, `django_db_setup` USTIGA
+       Birinchi urinish `autouse=True` seans fixture'i edi va u DEV
+       BAZASINI IFLOSLANTIRDI: faqat `SimpleTestCase` tanlangan seansda
+       (masalan bitta test fayli) test bazasi umuman qurilmaydi, fixture
+       esa baribir ishga tushib, jadvallarni HAQIQIY `dard` bazasida
+       yaratdi. Buni faqat bazani qo'lda ko'zdan kechirish oshkor qildi.
+
+       `django_db_setup` ustiga qurilganda esa u FAQAT baza haqiqatan
+       kerak bo'lgan seansda ishlaydi — bu pytest-django hujjatlaridagi
+       standart kengaytirish nuqtasi.
 
     Jadvallar o'chirilmaydi: test bazasi seans oxirida baribir tashlanadi.
     """

@@ -58,14 +58,38 @@ class StaticVTests(SimpleTestCase):
 class BaseShablonidaTests(SimpleTestCase):
     def test_barcha_statik_havolalar_versiyalangan(self):
         """⚠️ Bittasi unutilsa aynan o'sha fayl eski holicha keshlanadi —
-        va u odatda eng ko'p tahrirlanadigan fayl bo'ladi."""
+        va u odatda eng ko'p tahrirlanadigan fayl bo'ladi.
+
+        ⚠️ MAVJUD BO'LMAGAN FAYLLAR HISOBGA OLINMAYDI — bu testning
+           birinchi versiyasi CI'da yiqilgan edi.
+
+           `static/css/app.css` — Tailwind CHIQISHI va u `.gitignore` da
+           (manba `tailwind/input.css`). Ya'ni toza checkout'da fayl
+           YO'Q, `static_v` esa bunday holatda versiyasiz manzil
+           qaytaradi — bu to'g'ri xulq (sahifa yiqilmasin).
+
+           Ya'ni xato KODDA emas, TESTDA edi: u lokal muhit haqidagi
+           taxminni ("hamma statik fayl mavjud") qotirib qo'ygan.
+           Bunday testlar mahalliy mashinada doim yashil bo'ladi.
+        """
+        from django.contrib.staticfiles import finders
         from django.test import Client
 
         matn = Client().get("/kirish/").content.decode()
-        havolalar = re.findall(r'(?:src|href)="(/static/[^"]+)"', matn)
-
+        havolalar = re.findall(r'(?:src|href)="/static/([^"?]+)', matn)
         self.assertTrue(havolalar, "Statik havola topilmadi — test eskirgan")
-        versiyasiz = [h for h in havolalar if "?v=" not in h]
+
+        mavjudlar = [h for h in havolalar if finders.find(h)]
+        self.assertTrue(
+            mavjudlar,
+            "Tekshiriladigan mavjud statik fayl topilmadi — test ma'nosini "
+            "yo'qotdi (masalan barcha fayllar qurilma chiqishiga aylangan)",
+        )
+
+        matnda = re.findall(r'(?:src|href)="(/static/[^"]+)"', matn)
+        versiyasiz = [
+            h for h in matnda if "?v=" not in h and finders.find(h[len("/static/") :])
+        ]
         self.assertEqual(
             versiyasiz,
             [],
