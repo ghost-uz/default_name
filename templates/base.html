@@ -46,6 +46,7 @@
   <body
     class="{% block body_class %}{% endblock %}"
     data-guest="{{ request.user.is_authenticated|yesno:'false,true' }}"
+    data-login-url="{% url 'login' %}"
     hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
   >
     <a href="#main" class="skip-link">Asosiy kontentga o'tish</a>

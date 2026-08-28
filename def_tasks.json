@@ -809,11 +809,45 @@
       "bogliq": [
         "D1-T3"
       ],
-      "holat": "todo",
+      "holat": "done",
       "qabul_mezoni": [
         "min uzunlik server tomonda tekshiriladi",
         "tahrirlash oynasi cheklangan (masalan 30 daqiqa)"
-      ]
+      ],
+      "tugatilgan": "2026-08-28",
+      "natija": {
+        "yaratilgan": [
+          "apps/complaints/forms.py — ComplaintForm (server tomonda min uzunlik, faqat faol kategoriyalar, vidjet atributlari)",
+          "apps/complaints/views.py — complaint_create(), complaint_edit(), complaint_detail()",
+          "apps/complaints/models.py — TAHRIRLASH_OYNASI + Complaint.tahrirlay_oladimi()",
+          "templates/components/_field.html — maket markupi Django formasidan render qilinadi",
+          "templates/complaints/create.html — haqiqiy formaga ulandi (yaratish va tahrirlash bitta shablon)",
+          "static/js/app.js — qoralama avtosaqlash (localStorage, 600ms debounce)"
+        ],
+        "tekshirilgan": [
+          "min uzunlik SERVER tomonda (sarlavha 15, tavsif 50) — maketdagi data-minlen bilan bir xil",
+          "⭐ faqat bo'sh joydan iborat matn o'tmaydi (clean() validatordan KEYIN ishlaydi)",
+          "faol bo'lmagan kategoriyani tanlab bo'lmaydi",
+          "avlod oldindan tanlanmagan (maketda 'Gen Z' checked edi — ma'lumotni buzardi)",
+          "tahrirlash: muallif + 30 daqiqa + yechim kelmagan; oyna yopilganda 403 (404 emas)",
+          "anonimlikni tahrirlashda o'zgartirib bo'lmaydi (formada maydon yo'q + POST bilan majburlash ham ishlamaydi)",
+          "tahrirlash slugni o'zgartirmaydi",
+          "xato bo'lganda yozilgan matn yo'qolmaydi",
+          "⭐ JONLI BRAUZER: qoralama saqlanadi, sahifa qayta yuklanganda TIKLANADI, muvaffaqiyatli yuborishda tozalanadi"
+        ],
+        "qarorlar": [
+          "⚠️ Tahrirlash sharti UCHTA: muallif + 30 daqiqa + YECHIM KELMAGAN. Uchinchisi vaqtdan mustaqil va eng muhimi: aks holda zararsiz savol yozib, javoblarni yig'ib, keyin savol matnini almashtirish mumkin bo'lardi — o'nlab odamning javobi boshqa savolga 'javob berayotgandek' ko'rinardi.",
+          "Anonimlik post yozilgandan keyin O'ZGARMAYDI: 'Anonim' dan 'ismli' ga o'tish odamning o'zini fosh qilishi bo'lardi va u buni tugmani bosgan lahzada anglamasligi mumkin.",
+          "Qoralama localStorage'da, SERVERDA emas: qoralama yozilayotganda foydalanuvchi hali hech narsa e'lon qilmagan. Har harfni serverga yuborish — yozilmagan, ehtimol hech qachon yozilmaydigan matnni boshqa joyga ko'chirish; og'ir mavzuli platformada qabul qilinmaydi.",
+          "Maketdagi 'Teglar' maydoni OLIB TASHLANDI: Tag modeli yo'q, kiritilgan matn jimgina yo'qolardi. 'Boost' bloki qoldirildi — u o'zi haqida 'beta versiyada faol emas' deb ochiq aytadi.",
+          "Vidjet atributlari formada, shablonda emas -> `maxlength` model chegarasidan avtomatik olinadi (maketda 8000 yozilgan edi, modelda 5000 — foydalanuvchi 6000 belgi yozib rad javob olardi)."
+        ],
+        "topilgan_xatolar": [
+          "⚠️⚠️ ENG JIDDIYSI: app.js dagi `form[data-validate]` ishlovchisi `e.preventDefault()` chaqirib, `setTimeout` bilan SOXTA \"Dardingiz e'lon qilindi\" toast'ini ko'rsatardi va formani HECH QACHON YUBORMASDI. Maketda to'g'ri edi (backend yo'q edi); haqiqiy formaga ulanganda eng yomon xato turi bo'lardi — foydalanuvchi MUVAFFAQIYAT xabarini ko'radi, post esa hech qayerga yozilmaydi. Tuzatildi: xato bo'lsa to'xtatiladi, yaroqli bo'lsa brauzer formani o'zi yuboradi.",
+          "app.js login taklifidagi CTA `login.html` ga ishora qilardi (maket qoldig'i) — Django'da 404. Endi manzil `<body data-login-url>` dan olinadi.",
+          "Tugmani `disabled` qilish YUBORISHDAN OLDIN uning `name`/`value` ini so'rovdan chiqarib tashlaydi (ovoz formasidagi `qiymat` shunday yo'qolardi) -> `setTimeout(..., 0)` ga ko'chirildi."
+        ]
+      }
     },
     {
       "id": "D1-T10",
@@ -826,11 +860,52 @@
       "bogliq": [
         "D1-T4"
       ],
-      "holat": "todo",
+      "holat": "done",
       "qabul_mezoni": [
         "faqat muallif qabul qila oladi",
         "qabul qilish karma hodisasini yaratadi"
-      ]
+      ],
+      "tugatilgan": "2026-08-28",
+      "natija": {
+        "yaratilgan": [
+          "apps/solutions/forms.py — SolutionForm (min 30 belgi, anonim javob)",
+          "apps/solutions/views.py — solution_create(), solution_accept(), solution_unaccept()",
+          "apps/solutions/services.py — yechim_yozish() + accept/unaccept karma bilan",
+          "apps/gamification/models.py — KarmaEvent + KARMA_QIYMATLARI (D3-T1 ning asosi)",
+          "apps/gamification/services.py — karma_yoz(), karmani_qayta_hisoblash()",
+          "templates/components/_solution.html — yechim kartasi",
+          "templates/complaints/detail.html — haqiqiy ma'lumotga ulandi"
+        ],
+        "tekshirilgan": [
+          "faqat muammo muallifi qabul qila oladi (begonaga 403)",
+          "⭐ qabul qilish KARMA HODISASINI yaratadi (+15) va User.karma_cached yangilanadi",
+          "takroriy qabul karmani IKKILANTIRMAYDI (idempotent)",
+          "qabulni bekor qilish TESKARI yozuv qo'shadi (-15), yozuvni o'chirmaydi",
+          "boshqa yechimga o'tish eskisidan karmani qaytaradi",
+          "anonim yechimga ham karma beriladi (anonimlik faqat ko'rsatishga taalluqli)",
+          "karma jurnaldan qayta hisoblanadi (D7-T3 uchun)",
+          "yechim sanoqchini va has_expert_answer bayrog'ini yangilaydi",
+          "qabul qilingan yechim ro'yxatda BIRINCHI turadi",
+          "muallifning o'z ko'rishlari sanalmaydi",
+          "yashirilgan post muallifga ko'rinadi (sabab bilan), begonaga 404",
+          "⭐ JONLI BRAUZER: to'liq yo'l — yozish -> ikkinchi foydalanuvchi yechim yozdi -> muallif qabul qildi -> 'YECHILGAN' nishoni, qabul belgisi, yurist_aziz karmasi 15 ko'rindi"
+        ],
+        "qarorlar": [
+          "⚠️ Karma JURNAL (KarmaEvent), butun son EMAS — reja 6.1 talab qiladi. Yozuvlar O'CHIRILMAYDI, teskarisi yoziladi: +15, -15, +15 = sof +15. Sabab: (1) 'nega karmam kamaydi?' savoliga javob qoladi; (2) noyoblik cheklovi ikkinchi qabulni bloklardi; (3) audit (D2-T7) uchun tarix kerak.",
+          "Ball qiymati +15 — MAHSULOT QARORI (rejada berilmagan). StackOverflow'dagi 'qabul qilingan javob' bilan bir daraja: qabul qilish platformaning yakuniy qiymati, ya'ni ovozdan sezilarli qimmatroq.",
+          "Qabul qilish HTMX'siz, butun sahifa qayta yuklanadi: u sahifaning bir nechta joyini o'zgartiradi (nishon, yechimlar tartibi, eski qabulning belgisi, karma). Bo'lak-bo'lak almashtirish bir nechta `hx-swap-oob` talab qilardi va bittasi unutilsa sahifa ZIDDIYATLI holatda qolardi.",
+          "Yechim TAHRIRLASH formasi ataylab YO'Q: yechim ovoz berilgandan keyin tahrirlansa, odamlar BOSHQA MATNGA ovoz bergan bo'lib qoladi. Muammoda oyna bor, chunki unga hali javob berilmagan.",
+          "Sanoqchilar signalda EMAS, xizmatda yangilanadi: signal `bulk_create`/`loaddata`/ommaviy importda ishlamaydi va sanoqchi jimgina uziladi.",
+          "Maketdagi 'Saqlash' (D1-T13) va 'Shikoyat' (D2-T1) tugmalari olib tashlandi — modellari yo'q; 'O'xshash dardlar' bloki ham (D4-T7, qattiq yozilgan namunalar edi)."
+        ],
+        "topilgan_xatolar": [
+          "⚠️ app.js oxirida SOXTA 'qabul qilish' ishlovchisi bor edi: kartani vizual bo'yab, 'Yechim qabul qilindi — muallifga kontakt ochildi' toast'ini ko'rsatib, SERVERGA HECH NIMA YUBORMASDI. Olib tashlandi.",
+          "⚠️ JONLI SINOVDA TOPILGAN O'Z-O'ZIGA ZIDLIK: `is_closed` SOLVED va CLOSED ni birlashtiradi va u bilan yangi yechim to'silganda — `accept_solution()` ATAYLAB boshqa yechimga o'tishni qo'llasa-da, yechim qabul qilingandan keyin yangi javob umuman kela olmasdi. Yangi xossa: `yangi_yechim_qabul_qiladimi` (faqat CLOSED to'sadi). SOLVED da yaxshiroq javob hali ham qimmatli.",
+          "Qoralama TIKLASH 'jonli ko'rinish' dan OLDIN ishlardi -> tiklangan sarlavha yon paneldagi kartaga tushmasdi (maydonda matn bor, ko'rinishda 'Sarlavhangiz shu yerda ko'rinadi'). Tartib to'g'rilandi.",
+          "Maket guard testlari (`SahifaRenderTests`) endi haqiqiy ma'lumot talab qiladi: `/dard/<slug>/` mavjud postni, `/yozish/` kirgan foydalanuvchini. O'chirilmadi — endi ular haqiqiy sahifalarni ham qoplaydi.",
+          "mypy: `super().clean()` `None` qaytarishi mumkin; `self.fields[...]` umumiy `Field` deb tiplangan (ModelChoiceField uchun `cast` kerak); `@login_required` dan keyin ham `AnonymousUser` tipi qoladi."
+        ]
+      }
     },
     {
       "id": "D1-T11",
@@ -1094,12 +1169,27 @@
       "bogliq": [
         "D1-T10"
       ],
-      "holat": "todo",
+      "holat": "qisman",
       "qabul_mezoni": [
         "karma_cached = SUM(KarmaEvent.points) — test buni tasdiqlaydi",
         "kontent o'chirilsa teskari hodisa yoziladi",
         "profilda karma tarixi ko'rinadi"
-      ]
+      ],
+      "yangilangan": "2026-08-28",
+      "natija": {
+        "bajarilgan": [
+          "KarmaEvent jurnali (apps/gamification/models.py) — D1-T10 qabul mezoni talab qildi",
+          "karma_yoz() / karmani_qayta_hisoblash() xizmatlari",
+          "SOLUTION_ACCEPTED (+15) va SOLUTION_UNACCEPTED (-15) hodisalari",
+          "User.karma_cached F() bilan yangilanadi va jurnaldan qayta tiklanadi"
+        ],
+        "qolgan": [
+          "ovoz uchun karma (upvote/downvote hodisalari)",
+          "post o'chirilganda karmani qaytarish",
+          "karma tarixi profil sahifasida (D3-T4 bilan birga)",
+          "admin interfeysi"
+        ]
+      }
     },
     {
       "id": "D3-T2",

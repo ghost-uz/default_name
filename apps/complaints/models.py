@@ -7,13 +7,20 @@ Tag va SavedItem keyingi tasklarda qo'shiladi (D1-T13).
 from __future__ import annotations
 
 import secrets
+from datetime import timedelta
 
 from django.conf import settings
 from django.db import models
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.text import slugify
 
 from apps.common.models import ContentModel, TimeStampedModel, VotableModel, VoteModel
+
+# ⚠️ D1-T9 qabul mezoni: "tahrirlash oynasi cheklangan (masalan 30 daqiqa)".
+#    Sozlamaga chiqarilmadi — bu mahsulot qoidasi, muhitga bog'liq emas.
+#    O'zgartirilsa `Complaint.tahrirlay_oladimi()` testlari uni ushlaydi.
+TAHRIRLASH_OYNASI = timedelta(minutes=30)
 
 
 # ===========================================================================
@@ -307,6 +314,40 @@ class Complaint(ContentModel, VotableModel):
             return None
         return self.author
 
+    # -- Tahrirlash oynasi (D1-T9) -----------------------------------------
+    @property
+    def tahrirlash_oynasi_ochiqmi(self) -> bool:
+        """Yozilganidan keyin `TAHRIRLASH_OYNASI` o'tmaganmi."""
+        return timezone.now() - self.created_at <= TAHRIRLASH_OYNASI
+
+    def tahrirlay_oladimi(self, user) -> bool:
+        """Shu foydalanuvchi bu postni HOZIR tahrirlay oladimi.
+
+        Uch shart, uchalasi ham ayrim sababga ega:
+
+        1. **Muallif** — boshqa hech kim (moderator kontentni tahrirlamaydi,
+           u yashiradi yoki o'chiradi; D2-T2).
+        2. **30 daqiqa ichida** (D1-T9 qabul mezoni) — imlo xatosini
+           tuzatish uchun yetarli, lekin postni butunlay boshqa narsaga
+           aylantirish uchun emas.
+        3. **Yechim kelmagan bo'lsa** — ⚠️ bu eng muhimi va vaqt
+           chegarasidan mustaqil. Aks holda quyidagi suiiste'mol ochiq
+           qolardi: zararsiz savol yoziladi, javoblar yig'iladi, keyin
+           savol matni almashtiriladi — va o'nlab odamning javobi
+           butunlay boshqa savolga "javob berayotgandek" ko'rinadi.
+           Ularning nomidan aytilmagan gap aytilgan bo'lib qoladi.
+
+        Keyinchalik (D2) tahrir tarixi qo'shilsa, 2-shart yumshatilishi
+        mumkin — 3-shart esa qolishi kerak.
+        """
+        if not getattr(user, "is_authenticated", False):
+            return False
+        if self.author_id != user.pk:
+            return False
+        if self.solutions_count > 0:
+            return False
+        return self.tahrirlash_oynasi_ochiqmi
+
     # -- Hisoblanadigan holat ----------------------------------------------
     @property
     def is_solved(self) -> bool:
@@ -315,7 +356,27 @@ class Complaint(ContentModel, VotableModel):
 
     @property
     def is_closed(self) -> bool:
+        """Muhokama tugagan (ko'rsatish uchun): yechilgan YOKI yopilgan."""
         return self.status in (ComplaintStatus.SOLVED, ComplaintStatus.CLOSED)
+
+    @property
+    def yangi_yechim_qabul_qiladimi(self) -> bool:
+        """Bu muammoga hali yechim yozish mumkinmi.
+
+        ⚠️ `is_closed` BILAN ADASHTIRMANG — bu farq jonli sinovda topildi.
+
+        · `CLOSED` — muallif kutishni TO'XTATDI. Yangi javob endi kerak
+          emas va uni yozgan odam vaqtini behuda sarflaydi.
+        · `SOLVED` — javob topildi, LEKIN muhokama qimmatini yo'qotmaydi:
+          keyinroq yaxshiroq javob kelishi mumkin va muallif qabul
+          qilishni o'sha yechimga o'tkaza oladi.
+
+        Ikkalasini birga to'sish o'z-o'ziga zid bo'lardi:
+        `accept_solution()` ataylab BOSHQA yechimga o'tishni qo'llaydi
+        (eskisidan karmani qaytarib), lekin yangi yechim umuman kela
+        olmasa, o'sha yo'lga deyarli tushib bo'lmasdi.
+        """
+        return self.status != ComplaintStatus.CLOSED
 
 
 # ===========================================================================

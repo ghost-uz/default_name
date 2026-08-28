@@ -401,12 +401,14 @@ Faqat **`CI holati`** tekshiruvini tanlang, alohida job'larni emas.
 | D1-T6 | Anonimlik invarianti — `public_author` + guard testlar |
 | D1-T7 | Lenta: Qaynoq/Yangi/Eng yaxshi/Yechilgan + kategoriya va avlod filtri (holat URL'da) |
 | D1-T8 | HTMX ovoz berish — `<form>` ustiga qo'shilgan qatlam, JS'siz ham ishlaydi |
+| D1-T9 | Muammo yaratish/tahrirlash — server validatsiyasi, 30 daqiqalik oyna, qoralama avtosaqlash |
+| D1-T10 | Yechim yozish va qabul qilish + `KarmaEvent` jurnali (D3-T1 qisman) |
 
 **D0-T10 qisman:** barcha fayllar tayyor va lokal repetitsiyada tekshirilgan;
 server hali olinmagan. Ketma-ketlik: [`DEPLOY.md`](DEPLOY.md).
 
-Keyingi: **M1** — D1-T1 (Telegram login), D1-T9/T10 (formalar),
-D1-T11 (hot_score + Celery beat), D1-T12 (kursor sahifalash), D1-T14 (N+1).
+Keyingi: **M1** — D1-T1 (Telegram login), D1-T11 (hot_score + Celery beat),
+D1-T12 (kursor sahifalash), D1-T13 (xatcho'p), D1-T14 (N+1 auditi).
 
 ---
 

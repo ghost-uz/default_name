@@ -162,7 +162,10 @@
     head.append(text, close);
 
     const cta = document.createElement("a");
-    cta.href = "login.html";
+    /* ⚠️ Maketda `login.html` edi — Django'da bu 404 beradi.
+       Manzil `<body data-login-url>` dan olinadi, JS'ga qotirilmaydi:
+       URL'lar `urls.py` da o'zgarishi mumkin. */
+    cta.href = document.body.dataset.loginUrl || "/kirish/";
     cta.className = "btn-telegram btn-sm mt-3 w-full";
     cta.appendChild(icon(ICON_TELEGRAM, "h-4 w-4", true));
     cta.appendChild(document.createTextNode("Telegram orqali kirish"));
@@ -433,13 +436,22 @@
     });
   });
 
+  /* ⚠️ ILGARI BU YERDA SOXTA YUBORISH BOR EDI (D1-T9 da tuzatildi).
+     Maket versiyasi `e.preventDefault()` chaqirib, `setTimeout` bilan
+     "Dardingiz e'lon qilindi" toast'ini ko'rsatardi va formani HECH
+     QACHON yubormasdi. Backend yo'q paytda bu to'g'ri edi; haqiqiy
+     formaga ulanganda esa eng yomon xato turi bo'lardi — foydalanuvchi
+     MUVAFFAQIYAT xabarini ko'radi, post esa hech qayerga yozilmaydi.
+
+     Endi: xato bo'lsa to'xtatamiz, yaroqli bo'lsa brauzer formani
+     O'ZI yuboradi (server tomonda baribir qayta tekshiriladi). */
   $$("form[data-validate]").forEach((form) => {
     form.addEventListener("submit", (e) => {
-      e.preventDefault();
       const fields = $$("[data-field] .input", form);
       const invalid = fields.filter((f) => !validateField(f));
 
       if (invalid.length) {
+        e.preventDefault();
         // UX qoidasi (focus-management): birinchi xato maydonga fokus
         invalid[0].focus();
         invalid[0].scrollIntoView({ block: "center", behavior: "smooth" });
@@ -447,22 +459,50 @@
         return;
       }
 
-      // -> HTMX: bu blok hx-post bilan almashtiriladi
+      clearDraft(form);
+
       const submit = $("[type=submit]", form);
       if (submit) {
-        submit.disabled = true; // ikki marta yuborishning oldini olamiz
         submit.dataset.label = submit.textContent;
         submit.textContent = "Yuborilmoqda…";
+        /* ⚠️ `disabled` KEYINGI TIKDA: tugmani darhol o'chirish uning
+           `name`/`value` ini yuborishdan chiqarib tashlaydi (ovoz
+           formasidagi `qiymat` shunday yo'qolardi). Yuborish
+           navbatga qo'yilgandan keyin o'chirish xavfsiz. */
+        setTimeout(() => {
+          submit.disabled = true;
+        }, 0);
       }
-      setTimeout(() => {
-        if (submit) {
-          submit.disabled = false;
-          submit.textContent = submit.dataset.label;
-        }
-        toast("Dardingiz e'lon qilindi", "success");
-      }, 800);
     });
   });
+
+  /* ---------------------------------------------------------------------
+     7a. QORALAMA AVTOSAQLASH (D1-T9)
+     "Uzun forma tasodifan yopilsa matn yo'qoladi — bu foydalanuvchini
+     qaytmaydigan qiladi."
+
+     ⚠️ `localStorage`, serverga saqlash EMAS. Sabab: qoralama yozilayotgan
+        paytda foydalanuvchi hali hech narsa E'LON QILMAGAN. Har bosilgan
+        harfni serverga yuborish — yozilmagan, ehtimol hech qachon
+        yozilmaydigan matnni boshqa joyga ko'chirish degani. Og'ir
+        mavzuli platformada bu qabul qilinmaydi.
+
+     ⚠️ Kalitga forma manzili kiritiladi: yaratish va tahrirlash formalari
+        bir-birining matnini tortib olmasin.
+     --------------------------------------------------------------------- */
+  const DRAFT_PREFIX = "dard-draft:";
+
+  function draftKey(form) {
+    return DRAFT_PREFIX + (form.getAttribute("action") || location.pathname);
+  }
+
+  function clearDraft(form) {
+    try {
+      localStorage.removeItem(draftKey(form));
+    } catch (_) {
+      /* xususiy rejim yoki kvota — qoralama shunchaki ishlamaydi */
+    }
+  }
 
   /* ---------------------------------------------------------------------
      7b. JONLI KO'RINISH — sarlavha yozilgan sari yon paneldagi karta yangilanadi.
@@ -478,6 +518,58 @@
       mirrorTarget.classList.toggle("text-fg-muted", !value);
     });
   }
+
+  /* ⚠️ QORALAMA TIKLASH ENG OXIRIDA EMAS, LEKIN "JONLI KO'RINISH" DAN
+     KEYIN turishi shart. Ilgari u yuqorida edi va tiklangan sarlavha
+     yon paneldagi kartaga TUSHMASDI: `input` hodisasi yuborilganda
+     mirror ishlovchisi hali bog'lanmagan bo'lardi. Natija — maydonda
+     matn bor, ko'rinishda esa "Sarlavhangiz shu yerda ko'rinadi".
+     Xato emas, lekin foydalanuvchi buni nosozlik deb o'qiydi. */
+  $$("form[data-draft]").forEach((form) => {
+    const fields = $$("textarea, input[type=text]", form).filter((f) => f.name);
+    if (!fields.length) return;
+    const key = draftKey(form);
+
+    // 1) Tiklash — FAQAT maydon bo'sh bo'lsa. Server qaytargan qiymat
+    //    (masalan validatsiya xatosidan keyin) qoralamadan USTUN.
+    try {
+      const saqlangan = JSON.parse(localStorage.getItem(key) || "{}");
+      let tiklandi = false;
+      fields.forEach((f) => {
+        if (!f.value && saqlangan[f.name]) {
+          f.value = saqlangan[f.name];
+          f.dispatchEvent(new Event("input", { bubbles: true }));
+          tiklandi = true;
+        }
+      });
+      if (tiklandi) toast("Saqlangan qoralama tiklandi");
+    } catch (_) {
+      /* buzilgan qoralama — e'tiborsiz qoldiramiz */
+    }
+
+    // 2) Saqlash — yozishdan keyin 600ms jimlikda (har harfda emas)
+    let taymer = null;
+    const saqla = () => {
+      clearTimeout(taymer);
+      taymer = setTimeout(() => {
+        const holat = {};
+        fields.forEach((f) => {
+          if (f.value) holat[f.name] = f.value;
+        });
+        try {
+          if (Object.keys(holat).length) {
+            localStorage.setItem(key, JSON.stringify(holat));
+          } else {
+            localStorage.removeItem(key);
+          }
+        } catch (_) {
+          /* kvota to'lgan — qoralama shunchaki saqlanmaydi */
+        }
+      }, 600);
+    };
+    fields.forEach((f) => f.addEventListener("input", saqla));
+  });
+
 
   /* ---------------------------------------------------------------------
      8. CHIP FILTRLARI (avlod / saralash)
@@ -544,29 +636,21 @@
   });
 
   /* ---------------------------------------------------------------------
-     10. YECHIMNI QABUL QILISH (is_accepted) — muammo egasi uchun
+     10. YECHIMNI QABUL QILISH — OLIB TASHLANDI (D1-T10)
+
+     ⚠️ Bu yerda maketning SOXTA ishlovchisi turgan edi: u kartani
+        vizual "qabul qilingan" qilib bo'yab, "Yechim qabul qilindi —
+        muallifga kontakt ochildi" toast'ini ko'rsatardi va SERVERGA
+        HECH NIMA YUBORMASDI.
+
+        Backend yo'q paytda bu to'g'ri edi. Haqiqiy oqim ulangandan
+        keyin esa u eng yomon turdagi xatoga aylanardi: foydalanuvchi
+        muvaffaqiyat xabarini ko'radi, karma berilmaydi, muammo
+        "yechilgan" bo'lmaydi — va sahifani yangilaganda hammasi
+        yo'qoladi.
+
+        Endi qabul qilish `<form method="post">` orqali ketadi
+        (components/_solution.html) va sahifa qayta yuklanadi — sabab
+        `apps/solutions/views.py::solution_accept` docstring'ida.
      --------------------------------------------------------------------- */
-  $$("[data-accept]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const solution = btn.closest("[data-solution]");
-      if (!solution) return;
-
-      // Bitta muammoda faqat BITTA qabul qilingan yechim bo'ladi
-      $$("[data-solution]").forEach((s) => {
-        s.classList.remove("border-solved-icon", "bg-solved-bg/30");
-        const mark = $("[data-accepted-mark]", s);
-        if (mark) mark.hidden = true;
-        const b = $("[data-accept]", s);
-        if (b) b.hidden = false;
-      });
-
-      solution.classList.add("border-solved-icon", "bg-solved-bg/30");
-      const mark = $("[data-accepted-mark]", solution);
-      if (mark) mark.hidden = false;
-      btn.hidden = true;
-
-      toast("Yechim qabul qilindi — muallifga kontakt ochildi", "success");
-      if (navigator.vibrate) navigator.vibrate([10, 40, 10]);
-    });
-  });
 })();
