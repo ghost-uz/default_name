@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 
 from django.template import Context, Template
-from django.test import SimpleTestCase, override_settings
+from django.test import SimpleTestCase, TestCase, override_settings
 
 SHABLON = Template("{% load statik %}{% static_v 'js/app.js' %}")
 
@@ -55,7 +55,16 @@ class StaticVTests(SimpleTestCase):
 
 
 @override_settings(DEBUG=True)
-class BaseShablonidaTests(SimpleTestCase):
+class BaseShablonidaTests(TestCase):
+    """⚠️ `SimpleTestCase` DAN `TestCase` GA O'TDI (D1-T1).
+
+    `/kirish/` ilgari maketning statik sahifasi edi. Endi u haqiqiy
+    ko'rinish: sessiyani o'qiydi va `request.user` ni yuklaydi, ya'ni
+    BAZAGA TEGADI. Xato ko'rinishi chalg'ituvchi —
+    `DatabaseOperationForbidden` statik fayllarga umuman aloqasi
+    yo'qdek tuyuladi.
+    """
+
     def test_barcha_statik_havolalar_versiyalangan(self):
         """⚠️ Bittasi unutilsa aynan o'sha fayl eski holicha keshlanadi —
         va u odatda eng ko'p tahrirlanadigan fayl bo'ladi.

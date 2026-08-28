@@ -47,6 +47,7 @@ def _sahifa(shablon: str, active_nav: str = "", **qoshimcha):
 urlpatterns = [
     # ⚠️ BU YERDAN OLIB TASHLANGANLAR (haqiqiy ko'rinishga o'tdi):
     #      feed, complaint_create, complaint_detail -> apps/complaints/urls.py
+    #      login                                    -> apps/accounts/urls.py
     #    Ikkalasi qolsa `reverse()` OXIRGISINI olardi va maket haqiqiy
     #    sahifani jimgina bosib qo'yardi.
     path("tanishuv/", _sahifa("pages/landing.html"), name="landing"),
@@ -60,7 +61,6 @@ urlpatterns = [
         _sahifa("accounts/expert_list.html", "experts"),
         name="expert_list",
     ),
-    path("kirish/", _sahifa("accounts/login.html"), name="login"),
     path(
         "@<str:username>/", _sahifa("accounts/profile.html", "profile"), name="profile"
     ),

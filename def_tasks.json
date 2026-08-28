@@ -473,12 +473,62 @@
       "bogliq": [
         "D0-T2"
       ],
-      "holat": "todo",
+      "holat": "done",
       "qabul_mezoni": [
         "hash noto'g'ri bo'lsa 403",
         "auth_date 24 soatdan eski bo'lsa rad etiladi",
         "testda soxta hash bilan urinish qoplangan"
-      ]
+      ],
+      "tugatilgan": "2026-08-28",
+      "natija": {
+        "yaratilgan": [
+          "apps/accounts/telegram.py — HMAC tekshiruvi (sof funksiya, Django'ga bog'liq EMAS)",
+          "apps/accounts/views.py — login_page(), telegram_callback(), logout_view()",
+          "apps/accounts/urls.py — /kirish/, /kirish/telegram/, /chiqish/",
+          "apps/accounts/services.py — telegramdan_username_yasash(), usernameni_ozgartirish(), username_boyicha_topish()",
+          "apps/accounts/models.py — oldingi_username + username_ozgartirilgan (accounts 0002)",
+          "templates/accounts/login.html — Telegram Login Widget"
+        ],
+        "tekshirilgan": [
+          "hash noto'g'ri bo'lsa 403 (qabul mezoni)",
+          "auth_date 24 soatdan eski bo'lsa rad etiladi (qabul mezoni)",
+          "soxta hash bilan urinish testda qoplangan (qabul mezoni)",
+          "maydon o'zgartirilsa (masalan boshqa `id`) imzo buziladi",
+          "boshqa token bilan imzolangan javob o'tmaydi",
+          "TOKEN SOZLANMAGAN bo'lsa RAD etiladi (ochiq eshik qolmasin)",
+          "kelajakdagi auth_date rad etiladi, kichik soat farqi kechiriladi",
+          "`state` bir martalik; usiz yoki begona state bilan 403",
+          "ochirilgan hisob (is_active=False) kira olmaydi; BLOKLANGAN esa kira oladi (D0-T2)",
+          "ochiq yo'naltirishga yo'l yo'q (`next` tekshiriladi)",
+          "chiqish FAQAT POST (405 on GET)",
+          "token shablonga tushmaydi",
+          "⭐ JONLI BRAUZER: widget Telegram'dan yuklandi; soxta imzo -> 403; to'g'ri imzo -> kirdi, ?next= bo'yicha yo'naltirildi, `dard_f7b50e` yaratildi (kirillcha ism -> zaxira asos), parolsiz"
+        ],
+        "qarorlar": [
+          "⚠️ MAHSULOT QARORI (foydalanuvchi tanlovi 2026-08-28): nom AVTOMATIK yasaladi + keyin BIR MARTA o'zgartirish mumkin. Sabab: qo'shimcha 'nomingizni tanlang' ekrani '1 soniyada kirish' va'dasini buzadi va ro'yxatdan o'tishning eng ko'p tashlab ketiladigan qadami hisoblanadi; lekin avtomatik nom ba'zan chiroyli chiqmaydi (kirillcha ism -> dard_8f3a91).",
+          "Nom yasash tartibi: Telegram @username -> first_name dan slug -> `dard_<hex>` zaxira.",
+          "⚠️ Eski nom `oldingi_username` da BAND bo'lib qoladi (qisman noyob indeks) va `/@eski/` yangisiga yo'naltiriladi. Aks holda nomni boshqa odam olib, eski havolalarni o'ziga tortardi — taqlid uchun tayyor mexanizm.",
+          "⚠️ ALOHIDA TARIX JADVALI EMAS: o'zgartirish bir marta bo'lgani uchun har foydalanuvchida ko'pi bilan bitta eski nom bo'ladi.",
+          "⚠️ `state` NONCE — 'login CSRF' ga qarshi. Telegram imzosi foydalanuvchiga bog'langan, LEKIN BRAUZERGA emas: hujumchi o'z hisobining yaroqli imzosini havola qilib yuborsa, qurbon SEZMASDAN hujumchining hisobiga kirardi va o'zining eng shaxsiy muammosini o'sha hisobga yozardi. Dard.uz uchun bu jiddiy maxfiylik zarari.",
+          "Foydalanuvchi `telegram_id` bo'yicha topiladi, NOM bo'yicha emas: Telegram @username o'zgaradi va uni boshqa odam olishi mumkin.",
+          "`hmac.compare_digest` — oddiy `==` timing attack'ga ochiq.",
+          "Xato sababi FAQAT jurnalda: 'imzo noto'g'ri' bilan 'sana eskirgan' ni ajratib ko'rsatish hujumchiga qaysi qadamda to'xtaganini aytadi.",
+          "`data-request-access=\"write\"` ATAYLAB qo'yilmagan: u kirish lahzasida qo'shimcha ruxsat so'raydi. Bildirishnomalar uchun ruxsat D5-T2 da, foydalanuvchi ularni o'zi yoqqanda so'raladi.",
+          "Bot sozlanmagan bo'lsa tugma KO'RSATILMAYDI, holat ochiq aytiladi — ishlamaydigan tugma 'sayt buzuq' taassurotini qoldiradi.",
+          "⚠️ D2-T9 (CSP) uchun: `script-src` ga https://telegram.org va `frame-src` ga https://oauth.telegram.org qo'shilishi SHART, aks holda kirish butunlay ishlamay qoladi."
+        ],
+        "topilgan_xatolar": [
+          "⚠️ JONLI SINOVDA TOPILDI: `@ADMIN` -> `admin_62f95a`. 'Band' (boshqa odam olgan) va 'TAQIQLANGAN' (taqlid xavfi) ni ajratmagan edim — taqiqlangan nomga quyruq qo'shish `RESERVED_USERNAMES` ning butun ma'nosini yo'q qilardi (`admin_62f95a` hamon 'admin' bo'lib o'qiladi). Endi taqiqlangan asosdan butunlay voz kechiladi.",
+          "semgrep test tokenini haqiqiy Telegram kaliti deb belgiladi — asosli: soxta token skanerni yolg'on ogohlantirishga o'rgatadi va bir kuni HAQIQIY token e'tiborsiz qolib ketadi. Token endi qismlardan yig'iladi.",
+          "Maket guard testlari yana moslashtirildi: `/kirish/` endi haqiqiy ko'rinish (kirgan foydalanuvchini yo'naltiradi va bazaga tegadi) -> MEHMON sifatida ochiladi; `test_statik` SimpleTestCase dan TestCase ga o'tdi."
+        ],
+        "qolgan_qadamlar": [
+          "1. @BotFather da bot yaratish, /setdomain bilan domenni bog'lash",
+          "2. .env ga TELEGRAM_BOT_TOKEN va TELEGRAM_BOT_USERNAME yozish",
+          "3. Nomni o'zgartirish INTERFEYSI — D3-T4 (profil sozlamalari) bilan birga; xizmat va model tayyor",
+          "4. /@eski/ -> /@yangi/ 301 yo'naltirish — profil ko'rinishi bilan birga (username_boyicha_topish() tayyor)"
+        ]
+      }
     },
     {
       "id": "D1-T2",
@@ -1803,7 +1853,8 @@
         }
       ],
       "tavsiya": "MVP'da faqat Telegram, LEKIN autentifikatsiyani provayderdan mustaqil qilib yozing — ikkinchisini qo'shish keyin arzon bo'lsin.",
-      "holat": "ochiq"
+      "holat": "yopilgan",
+      "qaror": "MVP'da FAQAT Telegram. Telegram'ga xos hamma narsa `apps/accounts/telegram.py` da izolyatsiya qilindi; `services.py` dagi 'foydalanuvchini topish/yaratish' provayderdan mustaqil. Ikkinchi usul (email) qo'shilsa — yangi tekshiruv moduli va yangi ko'rinish, qolgani o'zgarmaydi. 2026-08-28."
     },
     {
       "id": "Q4",

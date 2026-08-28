@@ -47,6 +47,31 @@ class User(AbstractUser):
 
     bio = models.TextField("o'zi haqida", max_length=500, blank=True)
 
+    # -- Nomni bir marta o'zgartirish (D1-T1 mahsulot qarori) --------------
+    # Telegram'dan kirganda nom AVTOMATIK yasaladi ("1 soniyada kirish"
+    # va'dasi), lekin foydalanuvchi uni KEYINCHALIK BIR MARTA
+    # o'zgartira oladi. Sabab: avtomatik nom ba'zan chiroyli chiqmaydi
+    # (kirillcha ism -> `dard_8f3a91`), lekin cheksiz o'zgartirish
+    # taqlid va chalkashlik uchun eshik ochadi.
+    #
+    # ⚠️ ALOHIDA JADVAL EMAS, IKKI MAYDON: o'zgartirish BIR MARTA
+    #    bo'lgani uchun har foydalanuvchida ko'pi bilan BITTA eski nom
+    #    bo'ladi. Tarix jadvali ortiqcha JOIN va migratsiya degani.
+    oldingi_username = models.CharField(
+        "oldingi nom",
+        max_length=30,
+        blank=True,
+        editable=False,
+        help_text="Eski havolalar (/@eski/) shu orqali yangisiga yo'naltiriladi.",
+    )
+    username_ozgartirilgan = models.DateTimeField(
+        "nom o'zgartirilgan",
+        null=True,
+        blank=True,
+        editable=False,
+        help_text="To'ldirilgan bo'lsa — nom allaqachon bir marta o'zgartirilgan.",
+    )
+
     # -- Gamifikatsiya -----------------------------------------------------
     # ⚠️ DENORMALIZATSIYA. Haqiqiy manba — KarmaEvent jurnali (D3-T1).
     #    Bu maydonni QO'LDA o'zgartirmang: u SUM(KarmaEvent.points) dan
@@ -88,6 +113,18 @@ class User(AbstractUser):
                 name="accounts_user_username_ci_uniq",
                 violation_error_message="Bu foydalanuvchi nomi band.",
             ),
+            # ⚠️ Eski nom ham BAND bo'lib qoladi — aks holda nom
+            #    o'zgartirilgandan keyin uni boshqa odam olib, eski
+            #    havolalar (/@eski/) o'sha odamga olib borardi. Bu
+            #    taqlid uchun tayyor mexanizm bo'lardi.
+            #
+            #    Qisman indeks: bo'sh qiymat ko'p qatorda takrorlanadi.
+            models.UniqueConstraint(
+                Lower("oldingi_username"),
+                condition=~models.Q(oldingi_username=""),
+                name="accounts_user_oldingi_username_ci_uniq",
+                violation_error_message="Bu foydalanuvchi nomi band.",
+            ),
         ]
 
     def __str__(self) -> str:
@@ -123,6 +160,15 @@ class User(AbstractUser):
         if self.banned_until is None:
             return True  # doimiy
         return timezone.now() < self.banned_until
+
+    @property
+    def nomni_ozgartira_oladimi(self) -> bool:
+        """Nomni o'zgartirish imkoni HALI ISHLATILMAGANMI.
+
+        Interfeys (D3-T4 profil sozlamalari) shu xossaga qaraydi;
+        haqiqiy himoya esa `services.usernameni_ozgartirish()` da.
+        """
+        return self.username_ozgartirilgan is None
 
     @property
     def can_write(self) -> bool:

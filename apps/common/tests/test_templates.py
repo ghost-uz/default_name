@@ -99,6 +99,15 @@ class SahifaRenderTests(TestCase):
             "/@sardor92/",
         ]
 
+    def yol_mijozi(self, yol: str) -> Client:
+        """⚠️ `/kirish/` KIRGAN foydalanuvchini lentaga yo'naltiradi (302).
+
+        D1-T1 dan keyin u haqiqiy ko'rinish: kirgan odamga kirish
+        sahifasini ko'rsatish ma'nosiz. Shuning uchun uni MEHMON
+        sifatida ochamiz, qolganini esa kirgan foydalanuvchi sifatida.
+        """
+        return Client() if yol == "/kirish/" else self.mijoz()
+
     def mijoz(self) -> Client:
         """Kirgan foydalanuvchi — `/yozish/` login talab qiladi.
 
@@ -112,8 +121,8 @@ class SahifaRenderTests(TestCase):
         return c
 
     def test_barcha_sahifalar_200_qaytaradi(self):
-        c = self.mijoz()
         for yol in self.yollar():
+            c = self.yol_mijozi(yol)
             with self.subTest(yol=yol):
                 self.assertEqual(c.get(yol).status_code, 200)
 
@@ -121,8 +130,8 @@ class SahifaRenderTests(TestCase):
         """⚠️ Ko'p qatorli izoh noto'g'ri yopilsa, xom `{% ... %}`
         foydalanuvchiga KO'RINADI. Bu jim sodir bo'ladi — sahifa
         200 qaytaradi, lekin ichida kod matni turadi."""
-        c = self.mijoz()
         for yol in self.yollar():
+            c = self.yol_mijozi(yol)
             with self.subTest(yol=yol):
                 matn = c.get(yol).content.decode()
                 self.assertNotIn("{%", matn)
@@ -153,15 +162,15 @@ class SahifaRenderTests(TestCase):
 
     def test_har_sahifada_bitta_h1(self):
         """SEO va ekran o'quvchilar uchun (heading-hierarchy)."""
-        c = self.mijoz()
         for yol in self.yollar():
+            c = self.yol_mijozi(yol)
             with self.subTest(yol=yol):
                 matn = c.get(yol).content.decode()
                 self.assertEqual(matn.count("<h1"), 1)
 
     def test_skip_link_har_sahifada(self):
         """Klaviatura foydalanuvchilari navigatsiyani o'tkazib yubora olsin."""
-        c = self.mijoz()
         for yol in self.yollar():
+            c = self.yol_mijozi(yol)
             with self.subTest(yol=yol):
                 self.assertIn('class="skip-link"', c.get(yol).content.decode())

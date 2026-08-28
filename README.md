@@ -405,13 +405,33 @@ Faqat **`CI holati`** tekshiruvini tanlang, alohida job'larni emas.
 | D1-T10 | Yechim yozish va qabul qilish + `KarmaEvent` jurnali (D3-T1 qisman) |
 | D1-T11 | `hot_score` algoritmi + Celery beat (har 10 daqiqada, 7 kunlik oyna) |
 | D1-T12 | Kursor sahifalash (`?after=<pk>`) + HTMX «Yana yuklash» |
+| D1-T1 | Telegram login — HMAC, `auth_date`, `state` nonce, avtomatik username |
 
 **D0-T10 qisman:** barcha fayllar tayyor va lokal repetitsiyada tekshirilgan;
 server hali olinmagan. Ketma-ketlik: [`DEPLOY.md`](DEPLOY.md).
 
-Keyingi: **M1** — D1-T1 (Telegram login), D1-T13 (xatcho'p),
-D1-T14 (N+1 auditi). Shundan keyin **M2** (xavfsizlik va moderatsiya) —
-u ommaviy ishga tushirishdan OLDIN majburiy.
+Keyingi: **M1** — D1-T13 (xatcho'p), D1-T14 (N+1 auditi).
+Shundan keyin **M2** (xavfsizlik va moderatsiya) — u ommaviy ishga
+tushirishdan OLDIN majburiy.
+
+### ⚠️ Telegram login uchun sozlash
+
+```bash
+# 1) @BotFather da bot yarating
+# 2) /setdomain bilan domenni bog'lang (dev uchun ham shart)
+# 3) .env ga yozing:
+TELEGRAM_BOT_TOKEN=123456:AAH...
+TELEGRAM_BOT_USERNAME=dard_uz_bot
+```
+
+Bot sozlanmagan bo'lsa kirish sahifasi buni **ochiq aytadi** va tugma
+ko'rsatilmaydi — bosilganda hech nima bo'lmaydigan tugma «sayt buzuq»
+taassurotini qoldiradi.
+
+⚠️ **D2-T9 (CSP) uchun:** `script-src` ga `https://telegram.org`,
+`frame-src` ga `https://oauth.telegram.org` qo'shilishi **shart** —
+aks holda kirish butunlay ishlamay qoladi va sabab faqat brauzer
+konsolida qoladi.
 
 ---
 

@@ -6,88 +6,209 @@ shu yerda turadi — u testlanadigan va ko'rinishlardan mustaqil bo'lsin.
 
 from __future__ import annotations
 
-from django.db import IntegrityError, transaction
+import re
+import secrets
+
+from django.core.exceptions import ValidationError
+from django.db import IntegrityError, models, transaction
+from django.utils import timezone
+from django.utils.text import slugify
 
 from .models import User
-from .validators import RESERVED_USERNAMES, USERNAME_RE
+from .validators import RESERVED_USERNAMES, USERNAME_RE, validate_username
 
 
 def username_bandmi(nom: str) -> bool:
-    """Nom band yoki ishlatib bo'lmaydiganmi (registrga sezgir EMAS)."""
+    """Nom band yoki ishlatib bo'lmaydiganmi (registrga sezgir EMAS).
+
+    ⚠️ ESKI NOMLAR HAM BAND. Nom o'zgartirilgandan keyin eskisi
+       `oldingi_username` da qoladi va `/@eski/` yangisiga
+       yo'naltiriladi. Uni boshqa odam olsa, eski havolalar o'sha
+       odamga olib borardi — taqlid uchun tayyor mexanizm.
+    """
     if not USERNAME_RE.match(nom) or nom.lower() in RESERVED_USERNAMES:
         return True
-    return User.objects.filter(username__iexact=nom).exists()
+    return User.objects.filter(
+        models.Q(username__iexact=nom) | models.Q(oldingi_username__iexact=nom)
+    ).exists()
 
 
 # ---------------------------------------------------------------------------
-# QAROR KUTILMOQDA — D1-T1 (Telegram login) shu funksiyani chaqiradi
+# Telegram'dan foydalanuvchi nomi (D1-T1)
 # ---------------------------------------------------------------------------
+# ⚠️ MAHSULOT QARORI: "avtomatik yasash + keyin BIR MARTA o'zgartirish"
+#    (foydalanuvchi tanlovi, 2026-08-28).
+#
+#    Sabab: "Telegram orqali 1 soniyada kirish" va'dasi qo'shimcha ekran
+#    (nom so'rash) bilan buziladi — ro'yxatdan o'tishning eng ko'p
+#    tashlab ketiladigan qadami aynan shunday oynalar. Lekin avtomatik
+#    nom ba'zan chiroyli chiqmaydi (kirillcha ism -> `dard_8f3a91`),
+#    shuning uchun keyin bir marta tuzatish imkoni beriladi.
+#
+#    Cheksiz o'zgartirish RAD ETILDI: nom URL'da (`/@sardor92/`) va uni
+#    tez-tez almashtirish taqlid hamda chalkashlik uchun eshik ochadi.
+ZAXIRA_ASOS = "dard"
+MIN_UZUNLIK = 3
+MAX_UZUNLIK = 30
+
+
+def _tasodifiy_quyruq(baytlar: int = 3) -> str:
+    return secrets.token_hex(baytlar)
+
+
+def _nomzod_tozalash(xom: str) -> str:
+    """Istalgan matndan foydalanuvchi nomiga yaroqli asos yasaydi.
+
+    ⚠️ `slugify` lotin bo'lmagan belgilarni TASHLAB YUBORADI: kirillcha
+       yoki emoji ismdan bo'sh satr qoladi. Bu xato emas — chaqiruvchi
+       zaxira asosga o'tadi.
+    """
+    asos = slugify(xom).replace("-", "_")
+    asos = re.sub(r"[^a-z0-9_]", "", asos.lower())
+    # Nom HARF bilan boshlanishi shart (validators.USERNAME_RE).
+    asos = asos.lstrip("0123456789_")
+    return asos[:MAX_UZUNLIK]
+
+
 def telegramdan_username_yasash(telegram_data: dict) -> str:
     """Telegram ma'lumotidan Dard.uz foydalanuvchi nomini yasaydi.
 
-    Telegram quyidagilarni beradi (hammasi ham kafolatlanmagan):
+    Tartib:
+      1. Telegram `@username` — odam o'zi tanlagan, eng tanish variant.
+      2. `first_name` dan yasalgan asos — lotin yozuvida bo'lsa ishlaydi.
+      3. `dard_<tasodif>` — kirillcha/emoji ism yoki hammasi band bo'lsa.
 
-        id          -> 123456789        (har doim bor)
-        first_name  -> "Sardor"         (har doim bor)
-        last_name   -> "Rasulov"        (BO'LMASLIGI mumkin)
-        username    -> "sardor_92"      (BO'LMASLIGI mumkin, o'zgarishi mumkin)
+    Har bosqichda nom band bo'lsa, oxiriga tasodifiy quyruq qo'shiladi.
 
-    Bizga esa quyidagilarga mos nom kerak:
-    - 3-30 belgi, harf bilan boshlanadi, [a-z0-9_]
-    - band nomlar ro'yxatida emas (validators.py)
-    - mavjud nom bilan registrdan qat'i nazar to'qnashmaydi
-
-    TODO: qarorni shu yerga yozing (5-10 qator).
-
-    Yordamchi: `username_bandmi(nom)` tekshiruvni bitta chaqiruvda qiladi.
-
-    ⚠️ Bu MAHSULOT qarori, texnik emas. Rejangizdagi "Telegram orqali 1
-       soniyada avtorizatsiya" va'dasi bilan "foydalanuvchi o'z nomiga ega
-       bo'lsin" ehtiyoji aynan shu yerda to'qnashadi:
-
-       A. Telegram username'ini olish, bo'lmasa ismdan yasash, oxiriga
-          raqam qo'shish.
-          + Nol ishqalanish, va'daga sodiq.
-          - Telegram username o'zgaruvchan; ism kirilcha yoki emoji bo'lsa
-            yasab bo'lmaydi; "sardor_4831" kabi chiroyli bo'lmagan nom chiqadi.
-
-       B. Birinchi kirishda foydalanuvchidan nom so'rash.
-          + Yaxshi identifikatsiya, odam o'z nomini biladi.
-          - "1 soniya" va'dasi buziladi; ro'yxatdan o'tishning eng ko'p
-            tashlab ketiladigan qadami aynan shunday oynalar.
-
-       C. Avtomatik yasash + keyin bir marta o'zgartirish imkoni.
-          + Ikkalasining foydasi.
-          - Nom URL'da (`/@sardor92/`) — o'zgarganda eski havolalar buziladi,
-            ya'ni yo'naltirish (redirect) va eski nomni band qilib turish
-            kerak bo'ladi.
-
-       Qaysi biri Dard.uz uchun to'g'ri — sizning qaroringiz. Anonimlik
-       platformaning markazida ekanini ham hisobga oling: ba'zi
-       foydalanuvchilar uchun nomning tanib bo'lmasligi afzallik bo'lishi
-       mumkin.
+    ⚠️ Bu funksiya "band emasligini" KAFOLATLAMAYDI — u faqat yaxshi
+       nomzod beradi. Poyga holati (ikki parallel kirish bir xil nomni
+       yasashi) chaqiruvchidagi `IntegrityError` sikli va bazadagi
+       noyoblik cheklovi bilan yopiladi.
     """
-    raise NotImplementedError(
-        "telegramdan_username_yasash() hali yozilmagan — D1-T1 uchun qaror kutilmoqda"
-    )
+    nomzodlar: list[str] = []
+
+    telegram_nom = _nomzod_tozalash(telegram_data.get("username") or "")
+    if len(telegram_nom) >= MIN_UZUNLIK:
+        nomzodlar.append(telegram_nom)
+
+    ismdan = _nomzod_tozalash(telegram_data.get("first_name") or "")
+    if len(ismdan) >= MIN_UZUNLIK:
+        nomzodlar.append(ismdan)
+
+    for nomzod in nomzodlar:
+        # ⚠️⚠️ "BAND" va "TAQIQLANGAN" — IKKI XIL HOLAT (jonli sinovda topildi).
+        #
+        #    Boshqa odam olgan nomga quyruq qo'shish to'g'ri:
+        #        @demo -> demo_165260
+        #
+        #    Taqiqlangan nomga quyruq qo'shish esa `RESERVED_USERNAMES`
+        #    ning butun MA'NOSINI yo'q qiladi — u taqlidga qarshi
+        #    yozilgan:
+        #        @ADMIN -> admin_62f95a     <- hamon "admin" bo'lib o'qiladi
+        #        @moderator -> moderator_9f  <- hamon "moderator"
+        #
+        #    Shuning uchun taqiqlangan asosdan BUTUNLAY voz kechiladi va
+        #    keyingi nomzodga (ism, keyin zaxira) o'tiladi.
+        if nomzod.lower() in RESERVED_USERNAMES:
+            continue
+
+        if not username_bandmi(nomzod):
+            return nomzod
+
+        # Band bo'lsa — asosni saqlab, quyruq qo'shamiz.
+        quyruqli = f"{nomzod[: MAX_UZUNLIK - 7]}_{_tasodifiy_quyruq()}"
+        if not username_bandmi(quyruqli):
+            return quyruqli
+
+    # ⚠️ Oxirgi zaxira HAR DOIM yaroqli: `dard_` harf bilan boshlanadi va
+    #    16 million variantdan biri. Bu yerga kirillcha ismli va
+    #    Telegram username'siz foydalanuvchi tushadi.
+    return f"{ZAXIRA_ASOS}_{_tasodifiy_quyruq()}"
 
 
+@transaction.atomic
+def usernameni_ozgartirish(*, user: User, yangi_nom: str) -> User:
+    """Nomni BIR MARTA o'zgartiradi va eskisini band qilib qoldiradi.
+
+    ⚠️ Interfeys (D3-T4 profil sozlamalari) hali yo'q — bu xizmat va
+       model shu qaror bilan birga yozildi, chunki maydonlarni keyin
+       qo'shish katta jadvalga migratsiya degani. Ko'rinish qo'shilganda
+       u shu funksiyani chaqiradi.
+
+    ⚠️ Eski nom O'CHIRILMAYDI, `oldingi_username` ga ko'chadi: `/@eski/`
+       manzili yangisiga yo'naltirilishi kerak (301) va nomni boshqa
+       odam olib, eski havolalarni o'ziga tortib ketmasligi shart.
+    """
+    if not user.nomni_ozgartira_oladimi:
+        raise ValidationError("Nomni faqat bir marta o'zgartirish mumkin.")
+
+    yangi_nom = (yangi_nom or "").strip()
+    if yangi_nom.lower() == user.username.lower():
+        raise ValidationError("Yangi nom eskisidan farq qilishi kerak.")
+    validate_username(yangi_nom)
+    if username_bandmi(yangi_nom):
+        raise ValidationError("Bu foydalanuvchi nomi band.")
+
+    user.oldingi_username = user.username
+    user.username = yangi_nom
+    user.username_ozgartirilgan = timezone.now()
+    user.save(update_fields=["username", "oldingi_username", "username_ozgartirilgan"])
+    return user
+
+
+def username_boyicha_topish(nom: str) -> tuple[User | None, bool]:
+    """`(user, yonaltirish_kerakmi)` — profil sahifasi uchun.
+
+    Eski nom bilan kelingan bo'lsa `yonaltirish_kerakmi=True` qaytadi va
+    ko'rinish 301 bilan yangi manzilga yuboradi.
+
+    ⚠️ Ko'rinish tomoni D3-T4 (profil sahifasi) bilan birga ulanadi —
+       hozir profil hali maketda. Funksiya shu yerda turadi, chunki u
+       nom o'zgartirish qarorining ajralmas qismi: usiz eski havolalar
+       jimgina 404 bo'lardi.
+    """
+    user = User.objects.filter(username__iexact=nom).first()
+    if user is not None:
+        return user, False
+
+    eski = User.objects.filter(oldingi_username__iexact=nom).first()
+    if eski is not None:
+        return eski, True
+
+    return None, False
+
+
+@transaction.atomic
 def telegram_foydalanuvchisini_olish_yoki_yaratish(
     telegram_data: dict,
 ) -> tuple[User, bool]:
     """Telegram ma'lumoti bo'yicha foydalanuvchini topadi yoki yaratadi.
 
-    D1-T1 da to'ldiriladi. Skelet shu yerda, chunki u yuqoridagi qarorga
-    bog'liq.
+    `(user, yangi_yaratildimi)` qaytaradi.
+
+    ⚠️ FOYDALANUVCHI `telegram_id` BO'YICHA TOPILADI, nom bo'yicha EMAS.
+       Telegram `@username` ni odam istalgan vaqtda o'zgartira oladi va
+       uni BOSHQA ODAM olishi mumkin. Nom bo'yicha qidirilsa, eski nomni
+       olgan begona odam sizning hisobingizga kirib qolardi.
 
     ⚠️ Poyga holati: ikki parallel so'rov bir xil nomni yasashi mumkin —
-       shuning uchun yaratish `IntegrityError` ni ushlab, qayta urinishi kerak.
+       shuning uchun yaratish `IntegrityError` ni ushlab qayta urinadi.
        DB cheklovi (Lower(username) unique) oxirgi himoya chizig'i.
+
+    ⚠️ Mavjud foydalanuvchining ismi HAR KIRISHDA yangilanadi (Telegram'da
+       o'zgargan bo'lishi mumkin), NOMI esa YO'Q: u bizniki va foydalanuvchi
+       uni faqat o'zi o'zgartira oladi (`usernameni_ozgartirish`).
     """
     telegram_id = int(telegram_data["id"])
+    ism = (telegram_data.get("first_name") or "")[:150]
+    familiya = (telegram_data.get("last_name") or "")[:150]
 
     mavjud = User.objects.filter(telegram_id=telegram_id).first()
     if mavjud is not None:
+        if (mavjud.first_name, mavjud.last_name) != (ism, familiya):
+            mavjud.first_name = ism
+            mavjud.last_name = familiya
+            mavjud.save(update_fields=["first_name", "last_name"])
         return mavjud, False
 
     for _ in range(5):  # nom to'qnashuvida qayta urinish
@@ -97,10 +218,13 @@ def telegram_foydalanuvchisini_olish_yoki_yaratish(
                 user = User.objects.create_user(
                     username=nom,
                     telegram_id=telegram_id,
-                    first_name=telegram_data.get("first_name", "")[:150],
-                    last_name=telegram_data.get("last_name", "")[:150],
+                    first_name=ism,
+                    last_name=familiya,
                 )
-                user.set_unusable_password()  # parol ishlatilmaydi
+                # ⚠️ Parol ATAYLAB ishlatib bo'lmaydigan: bu hisobga faqat
+                #    Telegram orqali kirish mumkin. Bo'sh parol qo'yilsa
+                #    "parolni tiklash" oqimi orqali kirish yo'li ochilardi.
+                user.set_unusable_password()
                 user.save(update_fields=["password"])
                 return user, True
         except IntegrityError:

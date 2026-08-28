@@ -127,6 +127,12 @@ ignore = [
     "RUF002",
     "RUF003",
     "RUF012",   # ClassVar talabi — Django Meta/model uslubiga to'g'ri kelmaydi
+    # N818 istisno nomi "Error" bilan tugashini talab qiladi. Bu loyihada
+    # identifikatorlar o'zbekcha (`Xatosi` = error) va aralashtirish
+    # izchillikni buzardi: `TelegramAuthError` yonida `tekshirish()`,
+    # `imzo_yasash()` turardi. Qoida ingliz tilidagi kodda foydali, bu
+    # yerda esa faqat shovqin.
+    "N818",
 ]
 
 [tool.ruff.lint.per-file-ignores]
