@@ -415,6 +415,76 @@ Faqat **`CI holati`** tekshiruvini tanlang, alohida job'larni emas.
 |---|---|
 | D2-T3 | Ko'rinish invarianti — ikki qatlamli guard (`visible()` majburlanadi) |
 | D2-T1 | Shikoyat (`Report`) modeli va oqimi — eskalatsiya navbatni o'zgartiradi, ko'rinishni emas |
+| D2-T2 | Moderatsiya navbati — obyekt bo'yicha guruhlangan holatlar, klaviatura, qaytariladigan qarorlar |
+
+### Moderatsiya navbati (D2-T2) — `/moderatsiya/`
+
+Staff uchun. Boshqalarga **404** (403 emas: 403 manzil borligini
+tasdiqlab beradi va qidirish uchun boshlang'ich nuqta bo'ladi).
+
+⚠️ **Navbat shikoyat bo'yicha emas, OBYEKT bo'yicha guruhlanadi.**
+Admin shikoyatlarni birma-bir ko'rsatadi: bitta postga 5 ta shikoyat
+kelsa, moderator bir xil kontentni 5 marta o'qib, 5 marta bir xil qaror
+qabul qiladi. Qaror esa kontent haqida, shikoyat haqida emas — shuning
+uchun bitta qaror obyektning **barcha** ochiq shikoyatlarini yopadi.
+
+**Tartib** (mahsulot qarori):
+
+| # | Guruh | Ichida |
+|---|---|---|
+| 1 | `XAVF` sababi bor | har doim tepada |
+| 2 | SLA buzilgan (>24 soat) | eskisidan yangisiga |
+| 3 | Qolganlari | shikoyat soni ko'pdan kamga |
+
+24 soat — tasodifiy son emas: shikoyat sahifasi foydalanuvchiga aynan
+shuni va'da qiladi. 2 va 3 ataylab teskari mantiqda — faqat son bo'lsa
+yolg'iz haqiqiy shikoyat cheksiz kutardi, faqat vaqt bo'lsa tez
+tarqalayotgan zarar navbat oxirida qolardi.
+
+**Klaviatura:** `j`/`k` holatlar, `i` izoh, `Esc` chiqish, `1`…`4`
+choralar (yengildan og'irga), `?` yordam. Bu **qo'shimcha qatlam** —
+hammasi haqiqiy `<button>`/`<input>`, ya'ni Tab + Enter bilan ham to'liq
+ishlaydi. Matn yozayotganda qisqa tugmalar o'chadi.
+
+---
+
+### ⚠️ Moderator qarori qaytariladi, jurnal esa o'chirilmaydi
+
+`ModerationAction` — **faqat qo'shiladi**. Bekor qilish yozuvni
+o'chirmaydi: jurnalga `BEKOR_QILISH` turidagi yangi yozuv qo'shiladi va
+u `bekor_qiladi` orqali asl qarorga bog'lanadi (`KarmaEvent` dagi
+kompensatsiya naqshi bilan bir xil).
+
+Nima uchun bu muhim: klaviatura bilan tez ishlash **chalkashishni ham**
+tezlashtiradi. Bitta noto'g'ri tugma — va odam o'zining eng og'ir
+shaxsiy postini yo'qotadi. Shuning uchun bekor qilish ikki joyda:
+HTMX'da kartaning o'rnida, JavaScript'siz esa «So'nggi qarorlar»
+bo'limida.
+
+⚠️ Kontent `oldingi_holat` ga qaytariladi, `VISIBLE` ga **emas**: post
+yashirilishidan oldin allaqachon `PENDING` da turgan bo'lishi mumkin va
+uni jimgina ko'rinadigan qilib yuborish tekshiruvni chetlab o'tardi.
+
+⚠️ `Report.yopgan_chora` FK bor, chunki bekor qilish **aynan o'sha chora
+yopgan** shikoyatlarni ochishi kerak — vaqt bo'yicha taxmin («bir xil
+soniyada yopilganlar») bitta obyektga ketma-ket ikki marta chora
+ko'rilganda buzilardi.
+
+---
+
+### ⚠️ Anonim post moderatorga anonim EMAS
+
+Navbat haqiqiy muallifni ko'rsatadi (`selectors.Holat.muallif`), chunki
+takroriy qoidabuzarni tanish kerak — D2-T11 (uch ogohlantirish) shunga
+tayanadi va anonim post ortiga yashiringan odam aks holda cheksiz davom
+etardi.
+
+Anonimlik guard'i (`test_anonimlik.py`) shablonlarda xom `.author` ni
+taqiqlaydi va **bu to'g'ri**: istisno qarori kodda, izoh bilan turadi —
+shablonga sochilmaydi. **D2-T10 (maxfiylik siyosati) buni ochiq yozishi
+shart.**
+
+---
 
 ### ⚠️ Shikoyat eskalatsiyasi kontentni YASHIRMAYDI (D2-T1)
 

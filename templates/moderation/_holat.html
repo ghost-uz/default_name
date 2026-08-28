@@ -1,0 +1,158 @@
+{% comment %}
+  Bitta moderatsiya holati (D2-T2).
+
+  Kontekst:
+    holat    -> selectors.Holat
+    choralar -> [(qiymat, yorliq), ...]
+
+  ⚠️ KARTA O'ZI YETARLI BO'LISHI KERAK. Task tavsifidagi muammo shu edi:
+     "moderator har bir holatda 5 ta sahifa ochishi kerak bo'ladi".
+     Shuning uchun kontent to'liq shu yerda — havolaga bosish SHART emas.
+     Havola faqat kontekst kerak bo'lganda (post qaysi muhokamada turibdi).
+
+  ⚠️ Kontent `linebreaks` bilan chiqadi: Django uni avtomatik ekranlaydi.
+     Moderator ko'radigan matn — eng ishonchsiz matn (aynan u haqida
+     shikoyat bor), shuning uchun bu yerda `safe` HECH QACHON ishlatilmaydi.
+{% endcomment %}
+{% if holat.turi == 'muammo' %}
+  {% url 'moderatsiya_qaror_muammo' holat.target.pk as qaror_url %}
+{% else %}
+  {% url 'moderatsiya_qaror_yechim' holat.target.pk as qaror_url %}
+{% endif %}
+<article
+  id="holat-{{ holat.kalit }}"
+  class="card overflow-hidden {% if holat.shoshilinchmi %}border-danger{% elif holat.kechikkanmi %}border-boom{% endif %}"
+  data-holat
+  tabindex="-1"
+  aria-label="{{ holat.turi }} #{{ holat.target.pk }}, {{ holat.soni }} ta shikoyat"
+>
+  {% if holat.shoshilinchmi %}
+    <div class="flex items-center gap-1.5 bg-danger px-4 py-2 text-xs font-bold uppercase tracking-wider text-white">
+      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 9v4m0 4h.01M10.3 3.9 2.4 17.5A2 2 0 0 0 4.1 20.5h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0"/></svg>
+      Zarar yetkazish xavfi — birinchi navbatda
+    </div>
+  {% elif holat.kechikkanmi %}
+    <div class="flex items-center gap-1.5 bg-boom-bg px-4 py-2 text-xs font-bold uppercase tracking-wider text-boom">
+      24 soatdan oshdi — {{ holat.birinchi_shikoyat|timesince }} kutmoqda
+    </div>
+  {% endif %}
+
+  <div class="border-b border-line px-4 py-3">
+    <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px]">
+      <span class="font-bold">
+        {% if holat.turi == 'muammo' %}Muammo{% else %}Yechim{% endif %}
+        #{{ holat.target.pk }}
+      </span>
+
+      <span class="text-fg-muted" aria-hidden="true">·</span>
+
+      {% comment %}
+        ⚠️ MODERATOR HAQIQIY MUALLIFNI KO'RADI, `public_author` ni EMAS.
+           Qaror va uning sababi `selectors.Holat.muallif` da — shablon
+           `.author` ga to'g'ridan-to'g'ri cho'zilmaydi (anonimlik
+           guard'i buni taqiqlaydi va bu to'g'ri).
+      {% endcomment %}
+      {% if holat.muallif %}
+        <a href="{% url 'profile' holat.muallif.username %}" class="font-semibold hover:text-primary">
+          {{ holat.muallif.username }}
+        </a>
+        <span class="tnum text-fg-muted">{{ holat.muallif.karma_cached }} karma</span>
+        {% if holat.target.is_anonymous %}
+          <span class="badge">anonim chiqadi</span>
+        {% endif %}
+      {% else %}
+        <span class="text-fg-muted">muallif o'chirilgan</span>
+      {% endif %}
+
+      <span class="text-fg-muted" aria-hidden="true">·</span>
+      <time class="text-fg-muted" datetime="{{ holat.target.created_at|date:'c' }}">
+        {{ holat.target.created_at|timesince }} oldin yozilgan
+      </time>
+
+      {% if holat.ochirilganmi %}
+        <span class="badge">muallif o'chirgan</span>
+      {% endif %}
+      {% if holat.target.moderation_status != 'visible' %}
+        <span class="badge">{{ holat.target.get_moderation_status_display }}</span>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="px-4 py-3">
+    {% if holat.turi == 'muammo' %}
+      <h3 class="text-base font-bold leading-snug">
+        <a href="{{ holat.target.get_absolute_url }}" class="hover:text-primary">{{ holat.target.title }}</a>
+      </h3>
+      <div class="prose-body mt-1.5 max-h-64 overflow-y-auto text-[15px]">{{ holat.target.description|linebreaks }}</div>
+    {% else %}
+      <p class="mb-1.5 text-[13px] text-fg-muted">
+        Javob:
+        <a href="{{ holat.target.complaint.get_absolute_url }}" class="link">{{ holat.target.complaint.title|truncatechars:70 }}</a>
+      </p>
+      <div class="prose-body max-h-64 overflow-y-auto text-[15px]">{{ holat.target.content|linebreaks }}</div>
+    {% endif %}
+  </div>
+
+  <div class="border-t border-line bg-surface-2 px-4 py-3">
+    <p class="text-[13px] font-semibold">
+      {{ holat.soni }} ta shikoyat
+      <span class="font-normal text-fg-muted">· birinchisi {{ holat.birinchi_shikoyat|timesince }} oldin</span>
+    </p>
+    <ul class="mt-1.5 flex flex-wrap gap-1.5">
+      {% for yorliq, son in holat.sabablar %}
+        <li class="badge">{{ yorliq }}{% if son > 1 %} × {{ son }}{% endif %}</li>
+      {% endfor %}
+    </ul>
+    {% if holat.izohlar %}
+      <ul class="mt-2 space-y-1 text-[13px] leading-relaxed text-fg-muted">
+        {% for izoh in holat.izohlar %}
+          <li>«{{ izoh }}»</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  </div>
+
+  {% comment %}
+    ⚠️ ODDIY `<form method="post">` — JavaScript'siz ham to'liq ishlaydi.
+       HTMX faqat sahifani qayta yuklamaslik uchun USTIGA qo'shilgan
+       qatlam (`hx-post` bir xil manzilga ketadi).
+
+    ⚠️ TO'RTTA CHORA — BITTA FORMA. Har biriga alohida forma yozilsa,
+       izoh maydoni ham to'rt marta takrorlanardi (yoki formalar
+       tashqarisida qolardi — HTML'da ichma-ich forma yo'q).
+       Buning o'rniga tugmalar `name="action"` bilan farqlanadi:
+       brauzer BOSILGAN tugmaning qiymatini yuboradi.
+  {% endcomment %}
+  <form
+    method="post"
+    action="{{ qaror_url }}"
+    id="qaror-{{ holat.kalit }}"
+    class="border-t border-line px-4 py-3"
+    hx-post="{{ qaror_url }}"
+    hx-target="#holat-{{ holat.kalit }}"
+    hx-swap="outerHTML"
+  >
+    {% csrf_token %}
+    <label class="sr-only" for="izoh-{{ holat.kalit }}">Muallifga izoh</label>
+    <input
+      class="input mb-2.5 !py-2 text-sm"
+      type="text"
+      id="izoh-{{ holat.kalit }}"
+      name="izoh"
+      maxlength="300"
+      placeholder="Muallifga izoh — nega chora ko'rildi (ixtiyoriy, lekin tavsiya etiladi)"
+      data-holat-izoh
+    />
+    <div class="flex flex-wrap gap-2">
+      {% for qiymat, yorliq in choralar %}
+        <button
+          type="submit"
+          name="action"
+          value="{{ qiymat }}"
+          data-chora="{{ qiymat }}"
+          class="btn-sm {% if qiymat == 'olib_tashlash' %}btn bg-danger text-white hover:opacity-90{% elif qiymat == 'yashirish' %}btn-outline !border-danger/50 !text-danger{% else %}btn-outline{% endif %}"
+        >{{ yorliq }}</button>
+      {% endfor %}
+    </div>
+  </form>
+</article>

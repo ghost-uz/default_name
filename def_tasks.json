@@ -1239,11 +1239,80 @@
       "bogliq": [
         "D2-T1"
       ],
-      "holat": "todo",
+      "holat": "done",
       "qabul_mezoni": [
         "bitta ekranda qaror qabul qilinadi",
         "klaviatura bilan tez ishlash mumkin"
-      ]
+      ],
+      "tugatilgan": "2026-08-29",
+      "eslatma": "Navbat SHIKOYAT bo'yicha emas, OBYEKT bo'yicha guruhlanadi — task tavsifidagi 'har bir holatda 5 ta sahifa' muammosining ildizi shu edi. Navbat tartibi FOYDALANUVCHI TANLAGAN mahsulot qarori (xavf -> kechikkanlar eskisidan -> keyin shikoyat soni).",
+      "natija": {
+        "yaratilgan": [
+          "apps/moderation/models.py — ModerationAction, ModerationActionType, CHORA_HOLATI; Report.yopgan_chora",
+          "apps/moderation/selectors.py — Holat (dataclass), navbat(), _tartib_kaliti(), SLA=24s",
+          "apps/moderation/services.py — qaror_qabul_qilish(), qarorni_bekor_qilish(), BekorQilibBolmaydi",
+          "apps/moderation/views.py — moderator_kerak dekoratori, navbat, qaror_muammo/qaror_yechim, qarorni_bekor",
+          "apps/moderation/migrations/0002_moderationaction_report_yopgan_chora_and_more.py",
+          "templates/moderation/navbat.html, _holat.html, _bajarildi.html",
+          "templates/components/_header.html — staff uchun 'Navbat' havolasi",
+          "static/js/app.js — 11-bo'lim: klaviatura qatlami",
+          "apps/moderation/admin.py — ModerationActionAdmin (TO'LIQ read-only)",
+          "apps/moderation/tests_navbat.py — 32 test"
+        ],
+        "tekshirilgan": [
+          "qabul mezoni: BITTA EKRANDA QAROR — navbat obyekt bo'yicha guruhlanadi, bitta qaror obyektning BARCHA ochiq shikoyatlarini yopadi",
+          "qabul mezoni: KLAVIATURA — j/k (holatlar), i (izoh), Esc (chiqish), 1..4 (choralar), ? (yordam)",
+          "klaviatura qatlami SHART EMAS: hammasi haqiqiy <button>/<input>, Tab+Enter bilan to'liq ishlaydi",
+          "matn yozayotganda qisqa tugmalar O'CHADI (izohda 'jjj111' yozilishi jonli tekshirildi)",
+          "navbat tartibi: XAVF -> kechikkanlar (eskisidan) -> shikoyat soni (ko'pdan)",
+          "SLA=24 soat shikoyat sahifasidagi va'da bilan bir xil (test qotirgan)",
+          "mehmon va oddiy foydalanuvchi -> 404 (403 EMAS: 403 manzil borligini tasdiqlardi)",
+          "qaror GET bilan qabul qilinmaydi (405)",
+          "bekor qilish OLDINGI holatga qaytaradi, VISIBLE ga EMAS (PENDING bilan tekshirilgan)",
+          "bekor qilish FAQAT o'zi yopgan shikoyatlarni ochadi (ketma-ket ikki chora bilan tekshirilgan)",
+          "bekor qilishning o'zini bekor qilib bo'lmaydi; ikki marta ham bo'lmaydi",
+          "kontent HTML sifatida EKRANLANADI (<script> testi)",
+          "so'rov soni HOLATLAR SONIGA BOG'LIQ EMAS (2 va 22 holat — bir xil)",
+          "🌐 JONLI: 6 holat, tartib aynan tanlangan variantdek chiqdi",
+          "🌐 JONLI: '3' tugmasi -> HTMX kartani 'bajarildi' tasmasiga almashtirdi -> bekor qilish ishladi",
+          "🌐 JONLI: JavaScript O'CHIRILGAN brauzerda ham chora va bekor qilish to'liq ishladi (5->6 holat, flash xabar)"
+        ],
+        "qarorlar": [
+          "NAVBAT TARTIBI (foydalanuvchi tanlagan): 1) XAVF har doim tepada — muhokama qilinmaydi; 2) SLA buzilganlar (>24 soat) eskisidan yangisiga — shikoyat sahifasi '24 soat ichida' deb va'da beradi va navbat o'sha va'dani bajarishi kerak; 3) qolganlari shikoyat soni bo'yicha — tez tarqalayotgan kontent tepaga chiqadi. 2 va 3 ATAYLAB teskari mantiqda: faqat son bo'lsa yolg'iz haqiqiy shikoyat cheksiz kutardi, faqat vaqt bo'lsa tez tarqalayotgan zarar oxirda qolardi.",
+          "GURUHLASH OBYEKT BO'YICHA. Qaror KONTENT haqida, shikoyat haqida emas — 5 ta shikoyat bitta kartada bir marta ko'riladi.",
+          "Guruhlash Python'da, SQL'da emas: tartib kaliti ikki bosqichli va shartli, uni SQL'da yozish o'qib bo'lmaydigan CASE WHEN berardi. Navbat hajmi yuzlab, million emas. O'ssa — birinchi qadam cheklov (LIMIT), SQL'ga ko'chirish emas.",
+          "Staff bo'lmaganga 404, 403 EMAS: 403 'bu manzil bor' degani va moderatsiya interfeysini qidirish uchun boshlang'ich nuqta beradi. staff_member_required ham to'g'ri kelmaydi — u admin login sahifasiga yo'naltiradi.",
+          "BEKOR QILISH — YOZUVNI O'CHIRISH EMAS: jurnalga BEKOR_QILISH turidagi yangi yozuv qo'shiladi (KarmaEvent kompensatsiya naqshi). 'Qaror qildi, keyin qaytarib oldi' ning o'zi ma'lumot: tez-tez takrorlansa qoidalar tushunarsiz degani.",
+          "`oldingi_holat` saqlanadi: post yashirilishidan oldin PENDING da turgan bo'lishi mumkin va 'VISIBLE ga qaytar' deb qotirish uni jimgina ko'rinadigan qilib yuborardi — tekshiruvni chetlab o'tardi.",
+          "`Report.yopgan_chora` FK: bekor qilish AYNAN o'sha chora yopgan shikoyatlarni ochishi kerak. Vaqt bo'yicha taxmin mo'rt — bitta obyektga ketma-ket ikki marta chora ko'rilishi mumkin.",
+          "`target_author` denormalizatsiya: kontent bir kuni haqiqatan o'chirilishi mumkin (D2-T8), chora esa 'kimga nisbatan' ma'lumotini yo'qotmasin — D2-T11 shuni sanaydi.",
+          "RAD_ETISH shikoyatlarni RAD_ETILDI qiladi, qolganlari HAL_QILINDI: 'shikoyat asossiz edi' va 'chora ko'rildi' ikki xil ma'lumot; D2-T5 shikoyatchining aniqligini shu farqdan o'lchaydi.",
+          "Chora tugmalari YENGILDAN OG'IRGA: interfeys eng oson topiladigan tugmani eng og'ir chora qilib qo'ymasin.",
+          "Bekor qilish IKKI yo'lda: HTMX'da kartaning o'rnida, JS'siz esa 'So'nggi qarorlar' bo'limida. Klaviatura tezligi chalkashishni ham tezlashtiradi — qaytarish o'sha zahoti kerak.",
+          "ModerationAction admin TO'LIQ read-only (add/change/delete yopiq): jurnal tahrirlansa dalil bo'lishdan to'xtaydi. D2-T7 shu qoidani butun auditga yoyadi."
+        ],
+        "topilgan_xatolar": [
+          "Anonimlik guard'i shablonda xom `.author` ni ushladi. Moderator HAQIQIY muallifni ko'rishi KERAK (D2-T11 uch ogohlantirish shunga tayanadi), lekin to'g'ri yechim guard'ga yangi teshik ochish emas edi: `Holat.muallif` xossasi qo'shildi — istisno qarori KODDA, izoh bilan turadi, shablonga sochilmaydi. D2-T10 maxfiylik siyosati buni ochiq yozishi shart: 'anonim post moderatorga anonim EMAS'.",
+          "`{{ holat.kutgan_vaqt|timesince }}` — `timesince` DATETIME kutadi, `timedelta` emas: AttributeError bilan 5 ta test yiqildi. `birinchi_shikoyat|timesince` ga almashtirildi.",
+          "`_bajarildi.html` da `id` `target_nomi|slugify` dan qurilgandi va TASODIFAN to'g'ri chiqardi ('muammo #8' -> 'muammo-8'). `id` HTMX almashtirish shartnomasi — matn formati o'zgarsa jimgina buzilardi. FK'dan quriladigan qilindi + testga qotirildi.",
+          "ruff SIM300 `assert SLA == timedelta(hours=24)` ni 'Yoda' deb hisoblab teskari qilib qo'ydi va o'qish yomonlashdi — `SLA.total_seconds() == 24*3600` ga o'zgartirildi.",
+          "Jonli sinov ma'lumotini `get_or_create` bilan yozganda `defaults` MAVJUD yozuvga qo'llanmaydi — sabab eski qiymatda qolib, ssenariy kutilganidan farq qildi (kod xatosi emas, seed skript xatosi)."
+        ],
+        "olchangan_holat": {
+          "testlar": 476,
+          "qamrov_foiz": 94.86,
+          "d2_t2_testlari": 32,
+          "moderation_jami": 75,
+          "pre_commit_hooklar": 17
+        },
+        "keyingi_uchun_eslatma": [
+          "D2-T7 (audit jurnali): ModerationAction allaqachon append-only va admin'da read-only. Qolgani — staff'ning KONTENTDAN TASHQARI harakatlarini ham qamrash (bloklash, rol berish) va 'So'nggi qarorlar' bo'limini to'liq filtrlanadigan ko'rinishga aylantirish.",
+          "D2-T11 (uch ogohlantirish): ModerationAction.target_author + action bo'yicha indeks tayyor; OGOHLANTIRISH turini sanash yetadi.",
+          "D2-T6 (inqiroz): navbatda XAVF allaqachon birinchi va ajratib ko'rsatiladi.",
+          "OCHIQ SAVOL (D2-T11 ga): complaint_edit muallifga YASHIRILGAN postini tahrirlashga ruxsat beradi — moderator yashirgan postni muallif tahrirlab, navbatga qaytarmasdan 'tuzatishi' mumkin.",
+          "Navbat hozir CHEKLOVSIZ (sahifalash yo'q). Ochiq holatlar yuzdan oshsa sahifa og'irlashadi — birinchi qadam `navbat()` ga LIMIT."
+        ]
+      }
     },
     {
       "id": "D2-T3",

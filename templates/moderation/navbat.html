@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+
+{% block title %}Moderatsiya navbati — Dard.uz{% endblock %}
+{% block description %}Ochiq shikoyatlar bo'yicha qaror qabul qilish.{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-[900px] px-4 py-6 lg:px-6">
+  <main id="main">
+    <div class="mb-5 flex flex-wrap items-end justify-between gap-3">
+      <div>
+        <h1 class="text-2xl font-extrabold">Moderatsiya navbati</h1>
+        <p class="mt-1 text-[15px] text-fg-muted">
+          {% if holatlar %}
+            {{ holatlar|length }} ta holat
+            {% if shoshilinchlar %}
+              · <strong class="text-danger">{{ shoshilinchlar }} shoshilinch</strong>
+            {% endif %}
+            {% if kechikkanlar %}
+              · <strong class="text-boom">{{ kechikkanlar }} kechikkan</strong>
+            {% endif %}
+          {% else %}
+            Ochiq holat yo'q.
+          {% endif %}
+        </p>
+      </div>
+    </div>
+
+    {% comment %}
+      ⚠️ QABUL MEZONI: "klaviatura bilan tez ishlash mumkin".
+
+         Asosiy qatlam JavaScript'siz ham klaviatura bilan ishlaydi —
+         hammasi haqiqiy `<button>` va `<input>`, ya'ni Tab + Enter
+         yetarli. Pastdagi qisqa tugmalar shunchaki TEZLIK qatlami.
+
+         Ro'yxat EKRANDA ko'rsatiladi, hujjatda emas: ko'rsatilmagan
+         qisqa tugma — mavjud bo'lmagan qisqa tugma.
+    {% endcomment %}
+    {% if holatlar %}
+      <details class="card mb-4 px-4 py-3 text-[13px]" data-klaviatura-yordam>
+        <summary class="cursor-pointer font-semibold">Klaviatura bilan tez ishlash</summary>
+        <dl class="mt-2.5 grid gap-x-6 gap-y-1.5 sm:grid-cols-2">
+          <div class="flex items-center gap-2">
+            <dt><kbd class="badge">j</kbd> / <kbd class="badge">k</kbd></dt>
+            <dd class="text-fg-muted">keyingi / oldingi holat</dd>
+          </div>
+          <div class="flex items-center gap-2">
+            <dt><kbd class="badge">i</kbd></dt>
+            <dd class="text-fg-muted">izoh yozish (chiqish — Esc)</dd>
+          </div>
+          <div class="flex items-center gap-2">
+            <dt><kbd class="badge">1</kbd>…<kbd class="badge">4</kbd></dt>
+            <dd class="text-fg-muted">chora: yengildan og'irga</dd>
+          </div>
+          <div class="flex items-center gap-2">
+            <dt><kbd class="badge">?</kbd></dt>
+            <dd class="text-fg-muted">shu ro'yxat</dd>
+          </div>
+        </dl>
+        <p class="mt-2 text-fg-muted">
+          Chora raqamlari tugmalar tartibida:
+          {% for qiymat, yorliq in choralar %}<strong>{{ forloop.counter }}</strong> {{ yorliq }}{% if not forloop.last %} · {% endif %}{% endfor %}
+        </p>
+      </details>
+    {% endif %}
+
+    {% if holatlar %}
+      <div class="space-y-4" data-navbat>
+        {% for holat in holatlar %}
+          {% include "moderation/_holat.html" %}
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="card px-6 py-10 text-center">
+        <p class="text-lg font-bold">Navbat bo'sh</p>
+        <p class="mt-1.5 text-[15px] text-fg-muted">
+          Ko'rib chiqilmagan shikoyat yo'q. Bu yaxshi belgi.
+        </p>
+      </div>
+    {% endif %}
+
+    {% if songgi_qarorlar %}
+      {% comment %}
+        ⚠️ Bu bo'lim JavaScript'siz ishlaydigan BEKOR QILISH yo'li.
+           HTMX bilan qaror qabul qilinganda bekor qilish tugmasi
+           kartaning o'rnida chiqadi; JavaScript'siz esa sahifa qayta
+           yuklanadi va tugma faqat shu yerda qoladi.
+
+           D2-T7 (audit jurnali) bu ro'yxatni to'liq, filtrlanadigan
+           ko'rinishga aylantiradi.
+      {% endcomment %}
+      <section class="mt-8" aria-labelledby="songgi-sarlavha">
+        <h2 id="songgi-sarlavha" class="mb-2.5 text-[13px] font-bold uppercase tracking-wider text-fg-muted">
+          So'nggi qarorlar
+        </h2>
+        <ul class="card divide-y divide-line">
+          {% for chora in songgi_qarorlar %}
+            <li class="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5 text-[13px]">
+              <span class="font-semibold">{{ chora.get_action_display }}</span>
+              <span class="text-fg-muted">{{ chora.target_nomi }}</span>
+              <span class="text-fg-muted" aria-hidden="true">·</span>
+              <span class="text-fg-muted">
+                {% if chora.moderator %}{{ chora.moderator.username }}{% else %}o'chirilgan hisob{% endif %},
+                {{ chora.created_at|timesince }} oldin
+              </span>
+              {% if chora.bekor_qilinganmi %}
+                <span class="badge ml-auto">bekor qilingan</span>
+              {% elif chora.qaytarilishi_mumkinmi %}
+                <form method="post" action="{% url 'moderatsiya_bekor' chora.pk %}" class="ml-auto">
+                  {% csrf_token %}
+                  <button type="submit" class="btn-ghost btn-sm !text-fg-muted">Bekor qilish</button>
+                </form>
+              {% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+      </section>
+    {% endif %}
+  </main>
+</div>
+{% endblock %}

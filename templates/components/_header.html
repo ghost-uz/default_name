@@ -64,6 +64,16 @@
         <a href="{% url 'expert_list' %}"
            class="btn-ghost {% if active_nav == 'experts' %}!text-fg !bg-surface-2{% endif %}"
            {% if active_nav == 'experts' %}aria-current="page"{% endif %}>Ekspertlar</a>
+        {% comment %}
+          Moderatsiya navbati — FAQAT staff (D2-T2). Havola ko'rinmasa
+          moderator manzilni yodda saqlashi kerak bo'lardi va navbat
+          amalda ishlatilmay qolardi.
+        {% endcomment %}
+        {% if request.user.is_staff %}
+          <a href="{% url 'moderatsiya_navbat' %}"
+             class="btn-ghost {% if active_nav == 'moderatsiya' %}!text-fg !bg-surface-2{% endif %}"
+             {% if active_nav == 'moderatsiya' %}aria-current="page"{% endif %}>Navbat</a>
+        {% endif %}
       </nav>
 
       <button type="button" class="btn-ghost !px-2" data-theme-toggle aria-label="Yorug'/qorong'i rejimni almashtirish">

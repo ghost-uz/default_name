@@ -1,4 +1,4 @@
-"""Moderatsiya — xizmat funksiyalari (D2-T1)."""
+"""Moderatsiya — xizmat funksiyalari (D2-T1, D2-T2)."""
 
 from __future__ import annotations
 
@@ -7,7 +7,14 @@ import logging
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import IntegrityError, transaction
 
-from .models import ESKALATSIYA_CHEGARASI, Report, ReportStatus
+from .models import (
+    CHORA_HOLATI,
+    ESKALATSIYA_CHEGARASI,
+    ModerationAction,
+    ModerationActionType,
+    Report,
+    ReportStatus,
+)
 
 log = logging.getLogger(__name__)
 
@@ -116,3 +123,161 @@ def shikoyatni_yopish(
         ]
     )
     return report
+
+
+# ===========================================================================
+# Moderator qarori (D2-T2)
+# ===========================================================================
+class BekorQilibBolmaydi(ValidationError):
+    """Bu qarorni bekor qilib bo'lmaydi."""
+
+
+def _maqsad_kwargs(target) -> dict:
+    """`Complaint` yoki `Solution` ni FK nomiga aylantiradi."""
+    from apps.complaints.models import Complaint
+
+    return (
+        {"complaint": target, "solution": None}
+        if isinstance(target, Complaint)
+        else {"complaint": None, "solution": target}
+    )
+
+
+def _moderatorni_tekshirish(moderator) -> None:
+    if not getattr(moderator, "is_staff", False):
+        raise PermissionDenied("Faqat moderator chora ko'ra oladi.")
+
+
+@transaction.atomic
+def qaror_qabul_qilish(
+    *, moderator, target, action: str, izoh: str = ""
+) -> ModerationAction:
+    """Kontent ustidan chora ko'radi va uning BARCHA ochiq shikoyatlarini yopadi.
+
+    ⚠️ BITTA QAROR — BARCHA SHIKOYATLAR. Bu D2-T2 ning "bitta ekranda
+       qaror qabul qilinadi" qabul mezonining asosi.
+
+       Django admin shikoyatlarni BIRMA-BIR ko'rsatadi: bitta postga 5 ta
+       shikoyat kelsa, moderator bir xil kontentni 5 marta o'qib, 5 marta
+       bir xil qaror qabul qiladi. Aslida qaror KONTENT haqida, shikoyat
+       haqida emas — shuning uchun navbat obyekt bo'yicha guruhlanadi va
+       qaror hammasini birdan yopadi.
+
+    ⚠️ `RAD_ETISH` shikoyatlarni `RAD_ETILDI` qiladi, qolganlari
+       `HAL_QILINDI`. Farq muhim: "shikoyat asossiz edi" va "shikoyat
+       o'rinli edi, chora ko'rildi" — bu ikki xil ma'lumot va D2-T5
+       (spam evristikasi) shikoyatchining aniqligini shu farqdan
+       o'lchaydi.
+    """
+    from django.utils import timezone
+
+    _moderatorni_tekshirish(moderator)
+
+    if action == ModerationActionType.BEKOR_QILISH:
+        raise ValueError("Bekor qilish uchun `qarorni_bekor_qilish()` ishlatiladi.")
+    if action not in CHORA_HOLATI:
+        raise ValueError(f"Noma'lum chora: {action}")
+
+    kwargs = _maqsad_kwargs(target)
+    izoh = izoh.strip()[:300]
+
+    chora = ModerationAction.objects.create(
+        moderator=moderator,
+        action=action,
+        target_author_id=target.author_id,
+        note=izoh,
+        oldingi_holat=target.moderation_status,
+        **kwargs,
+    )
+
+    yangi_holat = CHORA_HOLATI[action]
+    if yangi_holat is not None:
+        target.moderation_status = yangi_holat
+        # ⚠️ Izoh kontentga ham yoziladi: muallif "nega ko'rinmayapti?"
+        #    degan savol bilan qolmasligi kerak (D1-T10 sahifasi buni
+        #    ko'rsatadi).
+        target.moderation_note = izoh
+        target.save(
+            update_fields=["moderation_status", "moderation_note", "updated_at"]
+        )
+
+    yopildi = (
+        Report.objects.ochiq()
+        .filter(**kwargs)
+        .update(
+            status=(
+                ReportStatus.RAD_ETILDI
+                if action == ModerationActionType.RAD_ETISH
+                else ReportStatus.HAL_QILINDI
+            ),
+            resolved_by=moderator,
+            resolved_at=timezone.now(),
+            resolution_note=izoh,
+            yopgan_chora=chora,
+            updated_at=timezone.now(),
+        )
+    )
+
+    log.info(
+        "Chora: %s %s izoh=%r yopilgan_shikoyat=%s",
+        action,
+        chora.target_nomi,
+        izoh[:60],
+        yopildi,
+    )
+    return chora
+
+
+@transaction.atomic
+def qarorni_bekor_qilish(*, moderator, chora: ModerationAction) -> ModerationAction:
+    """Qarorni ORQAGA QAYTARADI — yozuvni o'chirmasdan.
+
+    ⚠️ NEGA O'CHIRMAYMIZ: jurnal tahrirlansa dalil bo'lishdan to'xtaydi.
+       `KarmaEvent` da ham xuddi shu naqsh — kompensatsiya yozuvi.
+       Qo'shimcha foydasi bor: "qaror qildi, keyin qaytarib oldi" ning
+       o'zi ma'lumot. Agar bu tez-tez uchrasa, qoidalar tushunarsiz.
+
+    ⚠️ Kontent `oldingi_holat` ga qaytariladi, `VISIBLE` ga EMAS:
+       post yashirilishidan oldin allaqachon `PENDING` da turgan bo'lishi
+       mumkin va uni jimgina ko'rinadigan qilib yuborish xato bo'lardi.
+
+    Shu chora yopgan shikoyatlar ham navbatga QAYTADI — ular aslida
+    ko'rib chiqilmagan.
+    """
+    _moderatorni_tekshirish(moderator)
+
+    if not chora.qaytarilishi_mumkinmi:
+        raise BekorQilibBolmaydi("Bekor qilishning o'zini bekor qilib bo'lmaydi.")
+    if chora.bekor_qilinganmi:
+        raise BekorQilibBolmaydi("Bu qaror allaqachon bekor qilingan.")
+
+    target = chora.target
+    kwargs = _maqsad_kwargs(target)
+
+    qaytarish = ModerationAction.objects.create(
+        moderator=moderator,
+        action=ModerationActionType.BEKOR_QILISH,
+        target_author_id=target.author_id,
+        note=f"Bekor qilindi: {chora.get_action_display()}",
+        oldingi_holat=target.moderation_status,
+        bekor_qiladi=chora,
+        **kwargs,
+    )
+
+    if chora.oldingi_holat and target.moderation_status != chora.oldingi_holat:
+        target.moderation_status = chora.oldingi_holat
+        target.moderation_note = ""
+        target.save(
+            update_fields=["moderation_status", "moderation_note", "updated_at"]
+        )
+
+    chora.yopilgan_shikoyatlar.update(
+        status=ReportStatus.OCHIQ,
+        resolved_by=None,
+        resolved_at=None,
+        resolution_note="",
+        yopgan_chora=None,
+    )
+
+    log.info("Chora bekor qilindi: #%s %s", chora.pk, chora.target_nomi)
+    return qaytarish

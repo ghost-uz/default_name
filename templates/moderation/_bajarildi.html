@@ -1,0 +1,41 @@
+{% comment %}
+  Qaror qabul qilingandan keyingi tasma (D2-T2).
+
+  HTMX holat kartasini shu bilan almashtiradi.
+
+  ⚠️ BEKOR QILISH SHU YERDA TURISHI SHART.
+     Klaviatura bilan tez ishlash chalkashishni ham tezlashtiradi:
+     bitta noto'g'ri tugma — va odam o'zining eng og'ir shaxsiy postini
+     yo'qotadi. Bekor qilish o'sha zahoti, shu joyda bo'lishi kerak —
+     boshqa sahifadan qidirib topiladigan emas.
+
+     Yozuvning o'zi o'chirilmaydi: bekor qilish JURNALGA YANGI yozuv
+     qo'shadi (`ModerationAction.BEKOR_QILISH`) — `KarmaEvent` dagi
+     kompensatsiya naqshi bilan bir xil.
+{% endcomment %}
+{% comment %}
+  ⚠️ `id` FK'dan quriladi, `target_nomi|slugify` dan EMAS.
+     Boshida shunday yozilgan edi va TASODIFAN to'g'ri ishlardi
+     ("muammo #8" -> "muammo-8"), lekin `target_nomi` matni bir kuni
+     o'zgarsa `id` jimgina boshqacha bo'lib qolardi. `Holat.kalit`
+     bilan bir xil qoida — aniq va bog'liq.
+{% endcomment %}
+<div
+  id="holat-{% if chora.complaint_id %}muammo-{{ chora.complaint_id }}{% else %}yechim-{{ chora.solution_id }}{% endif %}"
+  class="card flex flex-wrap items-center gap-x-3 gap-y-2 border-line-strong bg-surface-2 px-4 py-3"
+  role="status"
+>
+  <svg class="h-4 w-4 shrink-0 text-solved" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m20 6-11 11-5-5"/></svg>
+
+  <span class="min-w-0 flex-1 text-sm">
+    <strong>{{ chora.get_action_display }}</strong>
+    <span class="text-fg-muted">— {{ chora.target_nomi }}</span>
+  </span>
+
+  <form method="post" action="{% url 'moderatsiya_bekor' chora.pk %}">
+    {% csrf_token %}
+    <button type="submit" class="btn-ghost btn-sm !text-fg-muted" data-bekor>
+      Bekor qilish
+    </button>
+  </form>
+</div>

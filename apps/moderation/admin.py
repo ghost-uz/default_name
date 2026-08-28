@@ -1,4 +1,4 @@
-"""Moderatsiya — admin paneli (D2-T1).
+"""Moderatsiya — admin paneli (D2-T1, D2-T2).
 
 ⚠️ Bu VAQTINCHALIK yechim. To'liq navbat interfeysi — D2-T2:
    "Django admin bu ish uchun juda sekin — moderator har bir holatda
@@ -15,7 +15,7 @@ from django.contrib import admin
 from django.db import models
 from django.http import HttpRequest
 
-from .models import Report, ReportStatus
+from .models import ModerationAction, Report, ReportStatus
 
 
 @admin.register(Report)
@@ -108,3 +108,44 @@ class ReportAdmin(admin.ModelAdmin):
             .order_by("_ochiqmi", "-created_at")
             .select_related("reporter", "complaint", "solution", "resolved_by")
         )
+
+
+@admin.register(ModerationAction)
+class ModerationActionAdmin(admin.ModelAdmin):
+    """⚠️ TO'LIQ FAQAT O'QISH UCHUN — bu jurnal, jadval emas.
+
+    Qo'shish ham, tahrirlash ham, o'chirish ham yopiq. Chora faqat
+    moderatsiya navbati orqali yoziladi (`services.qaror_qabul_qilish`),
+    xato bo'lsa esa BEKOR QILINADI — ya'ni yangi yozuv qo'shiladi.
+
+    Adminda tahrirlashga ruxsat berilsa, jurnal dalil bo'lishdan
+    to'xtaydi: "kim, nima, qachon" savoliga javob keyinchalik
+    o'zgartirilgan bo'lishi mumkin bo'lardi. D2-T7 shu qoidani butun
+    audit jurnaliga yoyadi.
+    """
+
+    list_display = ("created_at", "action", "target_nomi", "moderator", "bekor_belgi")
+    list_filter = ("action", "created_at")
+    search_fields = ("note",)
+    date_hierarchy = "created_at"
+
+    @admin.display(description="bekor qilingan", boolean=True)
+    def bekor_belgi(self, obj: ModerationAction) -> bool:
+        return obj.bekor_qilinganmi
+
+    def get_queryset(self, request: HttpRequest) -> models.QuerySet[ModerationAction]:
+        return (
+            super()
+            .get_queryset(request)
+            .select_related("moderator", "complaint", "solution")
+            .prefetch_related("bekor_qilishlar")
+        )
+
+    def has_add_permission(self, request, obj=None) -> bool:
+        return False
+
+    def has_change_permission(self, request, obj=None) -> bool:
+        return False
+
+    def has_delete_permission(self, request, obj=None) -> bool:
+        return False

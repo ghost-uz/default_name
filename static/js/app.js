@@ -667,4 +667,118 @@
         (components/_solution.html) va sahifa qayta yuklanadi — sabab
         `apps/solutions/views.py::solution_accept` docstring'ida.
      --------------------------------------------------------------------- */
+
+  /* ---------------------------------------------------------------------
+     11. MODERATSIYA NAVBATI — KLAVIATURA (D2-T2)
+
+     ⚠️ BU QATLAM SHART EMAS. Navbat JavaScript'siz ham to'liq ishlaydi:
+        hammasi haqiqiy <button> va <input>, ya'ni Tab + Enter yetarli.
+        Bu yerda faqat TEZLIK qo'shiladi — moderator sichqonchaga qo'l
+        uzatmasdan o'nlab holatni ko'rib chiqa oladi. Qabul mezoni
+        ("klaviatura bilan tez ishlash mumkin") ikkala qatlamda ham
+        bajariladi.
+
+     ⚠️ MATN YOZAYOTGANDA QISQA TUGMALAR O'CHADI — bu majburiy.
+        Aks holda izohda "j" harfini yozib bo'lmasdi, "1" bosgan odam
+        esa postni bilmasdan yashirib qo'yardi.
+     --------------------------------------------------------------------- */
+  const navbat = $("[data-navbat]");
+  if (navbat) {
+    const yozayotgan = (el) =>
+      !!el &&
+      (el.tagName === "INPUT" ||
+        el.tagName === "TEXTAREA" ||
+        el.isContentEditable);
+
+    const holatlar = () => $$("[data-holat]", navbat);
+
+    /* Fokusdagi karta — ichidagi tugma yoki maydon fokusda bo'lsa ham. */
+    const joriy = () =>
+      document.activeElement
+        ? document.activeElement.closest("[data-holat]")
+        : null;
+
+    const fokus = (karta) => {
+      if (!karta) return;
+      karta.focus({ preventScroll: true });
+      karta.scrollIntoView({ block: "center", behavior: "smooth" });
+    };
+
+    const siljish = (yonalish) => {
+      const royxat = holatlar();
+      if (!royxat.length) return;
+      const hozir = joriy();
+      if (!hozir) {
+        fokus(royxat[0]);
+        return;
+      }
+      const keyingi = royxat.indexOf(hozir) + yonalish;
+      if (keyingi >= 0 && keyingi < royxat.length) fokus(royxat[keyingi]);
+    };
+
+    document.addEventListener("keydown", (e) => {
+      /* Esc — izoh maydonidan chiqib, kartaga qaytish. */
+      if (e.key === "Escape" && yozayotgan(document.activeElement)) {
+        const karta = joriy();
+        document.activeElement.blur();
+        fokus(karta);
+        return;
+      }
+
+      if (
+        yozayotgan(document.activeElement) ||
+        e.metaKey ||
+        e.ctrlKey ||
+        e.altKey
+      )
+        return;
+
+      if (e.key === "j" || e.key === "k") {
+        e.preventDefault();
+        siljish(e.key === "j" ? 1 : -1);
+        return;
+      }
+
+      if (e.key === "?") {
+        const yordam = $("[data-klaviatura-yordam]");
+        if (yordam) {
+          e.preventDefault();
+          yordam.open = !yordam.open;
+        }
+        return;
+      }
+
+      if (e.key === "i") {
+        const karta = joriy() || holatlar()[0];
+        const izoh = karta && $("[data-holat-izoh]", karta);
+        if (izoh) {
+          e.preventDefault();
+          izoh.focus();
+        }
+        return;
+      }
+
+      /* 1..9 — chora tugmalari, EKRANDAGI tartibda (yengildan og'irga). */
+      if (e.key >= "1" && e.key <= "9") {
+        const karta = joriy();
+        if (!karta) return;
+        const tugma = $$("[data-chora]", karta)[Number(e.key) - 1];
+        if (tugma) {
+          e.preventDefault();
+          tugma.click();
+        }
+      }
+    });
+
+    /* ⚠️ Almashtirilgandan keyin fokus yo'qoladi — brauzer uni <body> ga
+       qaytaradi va keyingi "j" navbat boshidan boshlanardi. Shuning uchun
+       fokus almashgan kartadan KEYINGISIGA o'tkaziladi. */
+    document.body.addEventListener("htmx:afterSwap", (e) => {
+      const ichida = e.target.closest && e.target.closest("[data-navbat]");
+      if (!ichida) return;
+      let el = e.target.nextElementSibling;
+      while (el && !el.matches("[data-holat]")) el = el.nextElementSibling;
+      fokus(el || holatlar()[0]);
+    });
+  }
 })();
