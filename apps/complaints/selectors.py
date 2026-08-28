@@ -166,3 +166,109 @@ def yon_panel_kategoriyalari() -> models.QuerySet[Category]:
         #    tekshirardi, TARTIBNI emas.
         .order_by("order", "name")
     )
+
+
+# ===========================================================================
+# Kursor bo'yicha sahifalash (D1-T12)
+# ===========================================================================
+def kursor_filtri(*, sort: str, oxirgi: Complaint) -> models.Q:
+    """ "Shu elementdan KEYIN kelganlar" shartini quradi.
+
+    ⚠️ NEGA OFFSET EMAS
+       `LIMIT 20 OFFSET 400` bazadan 420 ta qatorni O'QIB, birinchi 400
+       tasini TASHLAB YUBORISHNI talab qiladi — sahifa raqami o'sgan sari
+       so'rov sekinlashadi. Kursor esa indeksdagi aniq nuqtadan boshlaydi:
+       20-sahifa ham 1-sahifa kabi tez (D1-T12 qabul mezoni).
+
+       Ikkinchi sabab muhimroq: OFFSET paytida yangi post qo'shilsa,
+       hamma narsa bir pozitsiyaga suriladi va foydalanuvchi ALLAQACHON
+       KO'RGAN postni yana ko'radi (yoki bittasi butunlay tushib qoladi).
+       Kursor qiymatga bog'langani uchun bunday bo'lmaydi.
+
+    ⚠️ TENGLIKNI UZISH ZANJIRI
+       Saralash maydonlari teng bo'lishi mumkin (masalan ikki postda
+       `hot_score` bir xil), shuning uchun shart bosqichma-bosqich
+       quriladi:
+
+           hot_score < H
+           YOKI (hot_score = H VA created_at < C)
+           YOKI (hot_score = H VA created_at = C VA id < I)
+
+       `SARALASH` da har bir tartib `-id` bilan tugagani uchun oxirgi
+       bosqich har doim NOYOB — ya'ni element ikki marta ham chiqmaydi,
+       tushib ham qolmaydi.
+
+    ⚠️ Barcha saralashlar KAMAYISH tartibida (`-` bilan), shuning uchun
+       taqqoslash bir xilda `__lt`. Aralash yo'nalish qo'shilsa bu
+       funksiya ham o'zgarishi kerak — pastdagi tekshiruv shuni eslatadi.
+    """
+    maydonlar = SARALASH[sort]
+    if not all(m.startswith("-") for m in maydonlar):
+        raise ValueError(
+            f"`{sort}` saralashida o'sish tartibidagi maydon bor; "
+            "kursor mantiqi faqat kamayish uchun yozilgan."
+        )
+
+    shart = models.Q()
+    tenglik: dict[str, object] = {}
+    for maydon in (m.lstrip("-") for m in maydonlar):
+        qiymat = getattr(oxirgi, maydon)
+        shart |= models.Q(**tenglik, **{f"{maydon}__lt": qiymat})
+        tenglik[maydon] = qiymat
+    return shart
+
+
+def lenta_sahifasi(
+    filtr: LentaFiltri, *, after_pk: int | None = None
+) -> tuple[list[Complaint], int | None]:
+    """Bir sahifa muammo + keyingi kursor (`None` bo'lsa oxiri).
+
+    ⚠️ KURSOR — POST'NING `pk` I, KODLANGAN QIYMATLAR EMAS
+       Saralash qiymatlarini (`hot_score`, `created_at`, `id`) URL'ga
+       kodlash mumkin edi, lekin u holda: (1) ularni tahlil qilish va
+       tekshirish kerak, (2) buzilgan kursor 500 beradi, (3) foydalanuvchi
+       qiymatlarni o'zgartirib so'rovni buzishi mumkin.
+
+       `pk` esa bitta indeksli qidiruvga tushadi va qolgan hamma narsa
+       bazadan olinadi. Narxi — sahifaga bitta arzon so'rov.
+
+    ⚠️ `SAHIFA_HAJMI + 1` OLINADI, `COUNT(*)` QILINMAYDI
+       "Yana bormi?" savoliga javob uchun butun natijani sanash shart
+       emas — bitta ortiqcha qator yetarli. `COUNT(*)` katta jadvalda
+       sahifaning o'zidan qimmatroq tushadi.
+
+    ⚠️ CHEGARA HOLATI: `hot_score` har 10 daqiqada qayta hisoblanadi
+       (D1-T11). Foydalanuvchi sahifalar orasida turganda ballar
+       o'zgarsa, ba'zi postlar takrorlanishi yoki tushib qolishi mumkin.
+       Bu O'ZGARUVCHAN reyting bo'yicha sahifalashning tabiati (Reddit'da
+       ham shunday); "Yangi" saralashida bunday bo'lmaydi, chunki
+       `created_at` o'zgarmaydi.
+    """
+    qs = lenta_queryset(filtr)
+
+    if after_pk is not None:
+        # ⚠️ Kursor posti o'chirilgan/yashirilgan bo'lishi mumkin — o'shanda
+        #    `all_objects`: uning saralash qiymatlari hamon to'g'ri chegara
+        #    beradi. Umuman topilmasa kursor e'tiborsiz qoldiriladi
+        #    (birinchi sahifa) — 404 dan ko'ra tushunarli xulq.
+        oxirgi = Complaint.all_objects.filter(pk=after_pk).first()
+        if oxirgi is not None:
+            qs = qs.filter(kursor_filtri(sort=filtr.sort, oxirgi=oxirgi))
+
+    natijalar = list(qs[: SAHIFA_HAJMI + 1])
+    yana_bor = len(natijalar) > SAHIFA_HAJMI
+    natijalar = natijalar[:SAHIFA_HAJMI]
+    keyingi = natijalar[-1].pk if (yana_bor and natijalar) else None
+    return natijalar, keyingi
+
+
+def kursorni_oqish(GET) -> int | None:  # noqa: N803 — Django uslubi
+    """`?after=123` -> `123`. Noto'g'ri qiymat 500 BERMAYDI.
+
+    Bunday havolalar botlardan va qo'lda tahrirlangan URL'lardan doim
+    keladi; ular birinchi sahifani ko'rsatishi kerak.
+    """
+    xom = (GET.get("after") or "").strip()
+    if not xom.isdigit():
+        return None
+    return int(xom)

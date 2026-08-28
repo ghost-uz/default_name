@@ -36,8 +36,15 @@ def lenta_url(context: dict, **kwargs: object) -> str:
         else:
             params[kalit] = str(qiymat)
 
-    # Filtr o'zgarganda sahifalash boshidan boshlansin (D1-T12).
-    params.pop("after", None)
+    # ⚠️ Filtr o'zgarganda sahifalash BOSHIDAN boshlansin (D1-T12): aks
+    #    holda "Yangi" tabiga o'tganda eski kursor qolib, foydalanuvchi
+    #    lentaning o'rtasiga tushardi.
+    #
+    #    Lekin `after` OCHIQ berilgan bo'lsa (aynan "Yana yuklash"
+    #    havolasi) uni o'chirmaymiz — aks holda tugma har doim birinchi
+    #    sahifani qaytarardi va sahifalash umuman ishlamasdi.
+    if "after" not in kwargs:
+        params.pop("after", None)
 
     sorov = params.urlencode()
     return f"{request.path}?{sorov}" if sorov else request.path

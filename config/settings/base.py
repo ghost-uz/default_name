@@ -249,6 +249,28 @@ CELERY_TASK_TIME_LIMIT = env_int("CELERY_TASK_TIME_LIMIT", 300)
 CELERY_TASK_SOFT_TIME_LIMIT = env_int("CELERY_TASK_SOFT_TIME_LIMIT", 240)
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 
+# --------------------------------------------------------------------------
+# Reja bo'yicha ishlaydigan vazifalar (D1-T11)
+# --------------------------------------------------------------------------
+# ⚠️ Interval `crontab()` EMAS, oddiy sekund: shunda `settings.py` celery'ni
+#    IMPORT QILMAYDI. Sozlama moduli og'ir bog'liqliklarsiz qolsin — u
+#    `manage.py` ning har chaqiruvida yuklanadi.
+#
+# ⚠️ 600 sekund (10 daqiqa) — D1-T11 tavsifidagi qiymat. Tez-tez ishlatish
+#    lentani jonliroq qiladi, lekin har ishga tushish oxirgi 7 kunlik
+#    postlarni aylanadi.
+CELERY_BEAT_SCHEDULE = {
+    "hot-score-yangilash": {
+        "task": "apps.complaints.tasks.hot_scorelarni_yangilash",
+        "schedule": 600.0,
+        # ⚠️ `expires` — beat vazifani navbatga qo'yadi, lekin worker band
+        #    bo'lsa u kutib qoladi. 9 daqiqadan keyin eskirgan vazifa
+        #    ma'nosiz: keyingisi baribir kelayotgan bo'ladi va navbatda
+        #    bir xil ishning nusxalari to'planib qolmaydi.
+        "options": {"expires": 540},
+    },
+}
+
 
 # --------------------------------------------------------------------------
 # Tashqi integratsiyalar

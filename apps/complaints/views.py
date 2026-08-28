@@ -28,11 +28,11 @@ from apps.solutions.models import Solution, SolutionVote
 from .forms import ComplaintForm
 from .models import Complaint, ComplaintVote, Generation
 from .selectors import (
-    SAHIFA_HAJMI,
     SARALASH_SARLAVHASI,
     SARALASH_TABI,
     filtrni_oqish,
-    lenta_queryset,
+    kursorni_oqish,
+    lenta_sahifasi,
     yon_panel_kategoriyalari,
 )
 
@@ -50,7 +50,9 @@ def feed(request: HttpRequest) -> HttpResponse:
     # ⚠️ `list(...)` ATAYLAB: quyida `user_votes_for` shu ro'yxatni oladi.
     #    QuerySet bo'lsa u ikki marta bajarilardi (biri ovozlar uchun,
     #    biri shablon uchun) — bu jim ikkilanish, xato bermaydi.
-    muammolar = list(lenta_queryset(filtr)[:SAHIFA_HAJMI])
+    muammolar, keyingi_kursor = lenta_sahifasi(
+        filtr, after_pk=kursorni_oqish(request.GET)
+    )
 
     # ⚠️ Ovozlar BITTA so'rovda olinadi va obyektlarga YOPISHTIRILADI.
     #    Shablonga lug'at berib `user_votes[complaint.pk]` deb yozib
@@ -67,20 +69,27 @@ def feed(request: HttpRequest) -> HttpResponse:
     for muammo in muammolar:
         muammo.user_vote = ovozlar.get(muammo.pk)
 
-    return render(
-        request,
-        "complaints/feed.html",
-        {
-            "active_nav": "feed",
-            "show_search": True,
-            "complaints": muammolar,
-            "filtr": filtr,
-            "sarlavha": SARALASH_SARLAVHASI[filtr.sort],
-            "tablar": SARALASH_TABI.items(),
-            "kategoriyalar": yon_panel_kategoriyalari(),
-            "avlodlar": Generation.choices,
-        },
-    )
+    kontekst = {
+        "active_nav": "feed",
+        "show_search": True,
+        "complaints": muammolar,
+        "keyingi_kursor": keyingi_kursor,
+        "filtr": filtr,
+        "sarlavha": SARALASH_SARLAVHASI[filtr.sort],
+        "tablar": SARALASH_TABI.items(),
+        "kategoriyalar": yon_panel_kategoriyalari(),
+        "avlodlar": Generation.choices,
+    }
+
+    # ⚠️ HTMX "Yana yuklash" faqat KARTALARNI so'raydi.
+    #    Butun sahifani qaytarish yon panel va sarlavhani qaytadan
+    #    qurish degani — bekorga trafik, va HTMX uni baribir tashlab
+    #    yuborardi. Bu shart JavaScript'siz yo'lni buzmaydi: oddiy
+    #    havola bilan kelgan so'rov to'liq sahifani oladi.
+    if htmx_sorovimi(request):
+        return render(request, "complaints/_feed_sahifa.html", kontekst)
+
+    return render(request, "complaints/feed.html", kontekst)
 
 
 # ===========================================================================

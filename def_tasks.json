@@ -918,12 +918,38 @@
       "bogliq": [
         "D1-T5"
       ],
-      "holat": "todo",
+      "holat": "done",
       "qabul_mezoni": [
         "bulk_update bilan yangilanadi",
         "vazifa 5 sekunddan kam ishlaydi",
         "formula testda qoplangan"
-      ]
+      ],
+      "tugatilgan": "2026-08-28",
+      "natija": {
+        "yaratilgan": [
+          "apps/complaints/tasks.py — hot_score_hisobla() + hot_scorelarni_yangilash() Celery vazifasi",
+          "config/settings/base.py — CELERY_BEAT_SCHEDULE (har 10 daqiqada, expires=540)"
+        ],
+        "tekshirilgan": [
+          "formula testda qoplangan (7 ta test): yangilik, ovoz, logarifmik shkala, manfiy ovoz, vaqt og'irligi",
+          "bulk_update bilan yangilanadi — so'rov soni postlar soniga BOG'LIQ EMAS (60 post -> <=6 so'rov)",
+          "faqat 7 kunlik oyna qayta hisoblanadi",
+          "o'chirilgan post yangilanmaydi, yashirilgani YANGILANADI (tiklansa balli tayyor bo'lsin)",
+          "o'zgarmagan ball qayta yozilmaydi (ikkinchi ishga tushirish 0 qaytaradi)",
+          "⭐ JONLI: 24 post seed qilinib, natija lentada tekshirildi — 6 ovozli 10 soatlik post ovozsiz 0.6 soatlik postdan yuqori"
+        ],
+        "qarorlar": [
+          "⚠️⚠️ TAVSIFDAGI FORMULA IKKI JOYDA NOTO'G'RI EDI, TUZATILDI. (1) `yosh_sekundlarda` — yosh vaqt o'tishi bilan O'SADI, ya'ni ESKI postlar kattaroq ball olardi va «Qaynoq» lenta TESKARIGA aylanardi; Reddit'dagi kabi `created_at - BOSHLANG'ICH` ishlatildi. (2) `sign` VAQT hadida edi — u holda eski minusli post yangi minusli postdan yuqori turardi; Reddit varianti `sign * tartib + vaqt`.",
+          "Boshlang'ich nuqta 2026-01-01 (loyiha yili) — ballar kichik sonlar bo'lsin.",
+          "45000 sekund (~12.5 soat) saqlandi: post 12.5 soat yangiroq bo'lsa 10 barobar ko'proq ovozli postga teng keladi.",
+          "Interval `crontab()` emas, oddiy 600.0 sekund — `settings.py` celery'ni IMPORT QILMASIN (u har `manage.py` chaqiruvida yuklanadi).",
+          "`expires: 540` — worker band bo'lsa navbatda bir xil ishning nusxalari to'planib qolmasin.",
+          "Faqat 7 kunlik oyna: 7 kundan eski postning balli allaqachon shu qadar past-ki, qayta hisoblash lentaga ta'sir qilmaydi; butun bazani har 10 daqiqada aylanish esa serverni doimiy yuk ostida qoldiradi."
+        ],
+        "topilgan_xatolar": [
+          "⚠️ VAQT YEDI: `.only()` ro'yxatida `score_cached` YO'Q edi. U GENERATED ustun bo'lsa-da BAZADA HAQIQIY ustun — `.only()` uni KECHIKTIRDI va sikldagi har `muammo.score_cached` ALOHIDA SELECT ishga tushirdi (60 post = 60 qo'shimcha so'rov). Ya'ni `.only()` optimizatsiya sifatida qo'yilib, aynan teskarisiga aylandi. Xato JIM: natija to'g'ri, vazifa shunchaki sekin. Faqat so'rov-sanog'i testi fosh qildi."
+        ]
+      }
     },
     {
       "id": "D1-T12",
@@ -936,10 +962,42 @@
       "bogliq": [
         "D1-T7"
       ],
-      "holat": "todo",
+      "holat": "done",
       "qabul_mezoni": [
         "20-sahifada ham so'rov vaqti barqaror"
-      ]
+      ],
+      "tugatilgan": "2026-08-28",
+      "natija": {
+        "yaratilgan": [
+          "apps/complaints/selectors.py — kursor_filtri(), lenta_sahifasi(), kursorni_oqish()",
+          "templates/complaints/_feed_sahifa.html — kartalar + 'Yana yuklash' (HTMX va JS'siz)",
+          "apps/complaints/views.py — feed() HTMX so'rovida faqat bo'lakni qaytaradi",
+          "apps/complaints/templatetags/lenta.py — ochiq berilgan `after` saqlanadi"
+        ],
+        "tekshirilgan": [
+          "ikkinchi sahifa takrorlanmaydi va element tushib qolmaydi",
+          "sahifalar orasida yangi post qo'shilsa ikkinchi sahifa SURILMAYDI (OFFSET ning kasali)",
+          "TENG qiymatlarda ham (bir xil hot_score va created_at) takror yo'q — `-id` zanjiri",
+          "barcha saralashlarda (hot/new/top) ishlaydi",
+          "kursor posti o'chirilsa sahifalash buzilmaydi",
+          "noto'g'ri kursor (abc, -5, 1.5, <script>) 500 bermaydi",
+          "filtrlar saqlanadi; filtr o'zgarganda kursor tushiriladi",
+          "HTMX so'rovi faqat kartalarni qaytaradi, JS'siz havola to'liq sahifani",
+          "so'rov soni barqaror (<=6)",
+          "⭐ JONLI BRAUZER: 20 -> 30 karta, takror yo'q, sahifa yangilanmadi, kartalar #feed ning bevosita bolasi; HTMX bilan yuklangan kartada OVOZ BERISH ham ishlaydi"
+        ],
+        "qarorlar": [
+          "⚠️ Kursor — post'ning `pk` i, KODLANGAN QIYMATLAR emas. Qiymatlarni URL'ga kodlash tahlil/tekshiruv talab qiladi, buzilgan kursor 500 beradi va foydalanuvchi ularni o'zgartirib so'rovni buzishi mumkin. `pk` bitta indeksli qidiruvga tushadi.",
+          "`SAHIFA_HAJMI + 1` olinadi, `COUNT(*)` qilinmaydi: 'yana bormi?' uchun bitta ortiqcha qator yetarli.",
+          "Tenglikni uzish zanjiri: hot_score < H YOKI (=H VA created_at < C) YOKI (=H VA =C VA id < I). `SARALASH` da har tartib `-id` bilan tugagani uchun oxirgi bosqich noyob.",
+          "`hx-target` tugmaning o'zi emas, o'rab turgan blok: `this` bo'lsa yangi kartalar markazlashtirilgan flex konteyner ichiga tushib, bir ustunda siqilib qolardi.",
+          "'Yana yuklash' `<a href>` — JavaScript'siz keyingi sahifani to'liq ochadi (progressiv yaxshilanish).",
+          "⚠️ Chegara holati hujjatlashtirildi: `hot_score` har 10 daqiqada o'zgargani uchun sahifalar orasida ba'zi postlar takrorlanishi mumkin. Bu o'zgaruvchan reyting bo'yicha sahifalashning tabiati (Reddit'da ham shunday); 'Yangi' saralashida bunday bo'lmaydi."
+        ],
+        "topilgan_xatolar": [
+          "`{% lenta_url %}` `after` ni SHARTSIZ o'chirardi (filtr o'zgarganda kursor tushishi uchun) — natijada 'Yana yuklash' havolasi har doim birinchi sahifani qaytarardi va sahifalash umuman ishlamasdi. Endi faqat OCHIQ berilmagan bo'lsa o'chiriladi."
+        ]
+      }
     },
     {
       "id": "D1-T13",

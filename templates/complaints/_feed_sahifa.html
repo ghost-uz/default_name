@@ -1,0 +1,51 @@
+{% load lenta %}{% comment %}
+  Lentaning BIR SAHIFASI: kartalar + "Yana yuklash" (D1-T12).
+
+  Kontekst:
+    complaints      -> shu sahifadagi muammolar
+    keyingi_kursor  -> keyingi sahifaning `after` qiymati (yoki None)
+    filtr           -> LentaFiltri (bo'sh holat matnini tanlash uchun)
+
+  ⚠️ Bu bo'lak IKKI JOYDA ishlatiladi:
+     · `feed.html` ichida — birinchi sahifa;
+     · to'g'ridan-to'g'ri javob sifatida — HTMX "Yana yuklash" bosilganda.
+     Shuning uchun u BUTUN `#feed` konteynerini emas, faqat UNING
+     ICHIDAGINI beradi.
+
+  ⚠️ "Yana yuklash" `<a>` (tugma emas) va `href` ga EGA:
+     JavaScript'siz brauzerda u oddiy havola bo'lib keyingi sahifani
+     to'liq ochadi. HTMX bor bo'lsa — o'zini yangi kartalar bilan
+     ALMASHTIRADI (`hx-swap="outerHTML"`), ya'ni kartalar ro'yxat
+     oxiriga qo'shiladi va yangi tugma o'z o'rnida paydo bo'ladi.
+{% endcomment %}
+{% for complaint in complaints %}
+  {% include "components/_complaint_card.html" with complaint=complaint index=forloop.counter0 %}
+{% empty %}
+  {% if filtr.faolmi %}
+    {% include "components/_empty_state.html" with icon="search" title="Bu filtrda hech nima yo'q" text="Tanlangan kategoriya yoki avlod bo'yicha muammo topilmadi. Filtrni kengaytirib ko'ring." action_url="/" action="Butun lentani ko'rish" %}
+  {% else %}
+    {% include "components/_empty_state.html" with title="Hozircha bo'sh" text="Birinchi dardni siz yozing — kimdir aynan shu holatdan o'tgan bo'lishi mumkin." action_url="/yozish/" action="Dard yozish" %}
+  {% endif %}
+{% endfor %}
+
+{% if keyingi_kursor %}
+  {% comment %}
+    ⚠️ `hx-target` — TUGMANING O'ZI emas, uni o'rab turgan blok.
+       `this` bo'lsa yangi kartalar shu markazlashtirilgan `flex`
+       konteyner ICHIGA tushardi va lenta oxirida bir ustunda
+       siqilib qolardi. Butun blokni almashtirish esa kartalarni
+       `#feed` ning bevosita bolasi qilib qo'yadi — ya'ni ular
+       qolganlari bilan bir xil ko'rinadi.
+  {% endcomment %}
+  <div class="yana-yuklash mt-2 flex justify-center">
+    <a
+      href="{% lenta_url after=keyingi_kursor %}"
+      hx-get="{% lenta_url after=keyingi_kursor %}"
+      hx-target="closest .yana-yuklash"
+      hx-swap="outerHTML"
+      class="btn-outline w-full sm:w-auto sm:min-w-56"
+    >
+      Yana yuklash
+    </a>
+  </div>
+{% endif %}

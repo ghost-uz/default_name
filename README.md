@@ -403,12 +403,15 @@ Faqat **`CI holati`** tekshiruvini tanlang, alohida job'larni emas.
 | D1-T8 | HTMX ovoz berish — `<form>` ustiga qo'shilgan qatlam, JS'siz ham ishlaydi |
 | D1-T9 | Muammo yaratish/tahrirlash — server validatsiyasi, 30 daqiqalik oyna, qoralama avtosaqlash |
 | D1-T10 | Yechim yozish va qabul qilish + `KarmaEvent` jurnali (D3-T1 qisman) |
+| D1-T11 | `hot_score` algoritmi + Celery beat (har 10 daqiqada, 7 kunlik oyna) |
+| D1-T12 | Kursor sahifalash (`?after=<pk>`) + HTMX «Yana yuklash» |
 
 **D0-T10 qisman:** barcha fayllar tayyor va lokal repetitsiyada tekshirilgan;
 server hali olinmagan. Ketma-ketlik: [`DEPLOY.md`](DEPLOY.md).
 
-Keyingi: **M1** — D1-T1 (Telegram login), D1-T11 (hot_score + Celery beat),
-D1-T12 (kursor sahifalash), D1-T13 (xatcho'p), D1-T14 (N+1 auditi).
+Keyingi: **M1** — D1-T1 (Telegram login), D1-T13 (xatcho'p),
+D1-T14 (N+1 auditi). Shundan keyin **M2** (xavfsizlik va moderatsiya) —
+u ommaviy ishga tushirishdan OLDIN majburiy.
 
 ---
 

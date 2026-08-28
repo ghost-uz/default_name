@@ -74,24 +74,9 @@
         </div>
 
         <div class="flex flex-col gap-3" id="feed">
-          {% for complaint in complaints %}
-            {% include "components/_complaint_card.html" with complaint=complaint index=forloop.counter0 %}
-          {% empty %}
-            {% if filtr.faolmi %}
-              {% include "components/_empty_state.html" with icon="search" title="Bu filtrda hech nima yo'q" text="Tanlangan kategoriya yoki avlod bo'yicha muammo topilmadi. Filtrni kengaytirib ko'ring." action_url="/" action="Butun lentani ko'rish" %}
-            {% else %}
-              {% include "components/_empty_state.html" with title="Hozircha bo'sh" text="Birinchi dardni siz yozing — kimdir aynan shu holatdan o'tgan bo'lishi mumkin." action_url="/yozish/" action="Dard yozish" %}
-            {% endif %}
-          {% endfor %}
+          {% include "complaints/_feed_sahifa.html" %}
         </div>
 
-        {% comment %}
-          ⚠️ "Yana yuklash" tugmasi ATAYLAB YO'Q — D1-T12 gacha.
-             Maketdagi tugma hech qayerga olib bormasdi. Ishlamaydigan
-             tugma qo'yishdan ko'ra qo'ymagan yaxshi: foydalanuvchi uni
-             bosib, hech nima bo'lmaganini "sayt buzuq" deb tushunadi.
-             D1-T12 kursor (created_at + id) bo'yicha sahifalashni qo'shadi.
-        {% endcomment %}
       </main>
 
       <!-- ---------- O'ng ustun ---------- -->
