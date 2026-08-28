@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import cast
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import models
@@ -15,6 +17,7 @@ from django.http import (
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
+from apps.accounts.models import User
 from apps.common.vote_views import (
     htmx_sorovimi,
     ovoz_qiymatini_oqish,
@@ -26,13 +29,16 @@ from apps.solutions.forms import SolutionForm
 from apps.solutions.models import Solution, SolutionVote
 
 from .forms import ComplaintForm
-from .models import Complaint, ComplaintVote, Generation
+from .models import Complaint, ComplaintVote, Generation, SavedComplaint
 from .selectors import (
+    SAHIFA_HAJMI,
     SARALASH_SARLAVHASI,
     SARALASH_TABI,
     filtrni_oqish,
     kursorni_oqish,
     lenta_sahifasi,
+    saqlangan_idlari,
+    saqlanganlar_queryset,
     yon_panel_kategoriyalari,
 )
 
@@ -66,8 +72,10 @@ def feed(request: HttpRequest) -> HttpResponse:
         user=request.user,
         targets=muammolar,
     )
+    saqlanganlar_toplami = saqlangan_idlari(user=request.user, targets=muammolar)
     for muammo in muammolar:
         muammo.user_vote = ovozlar.get(muammo.pk)
+        muammo.saqlangan = muammo.pk in saqlanganlar_toplami
 
     kontekst = {
         "active_nav": "feed",
@@ -196,6 +204,9 @@ def complaint_detail(
         user=request.user,
         targets=[muammo],
     ).get(muammo.pk)
+    muammo.saqlangan = muammo.pk in saqlangan_idlari(
+        user=request.user, targets=[muammo]
+    )
 
     yechim_ovozlari = user_votes_for(
         vote_model=SolutionVote,
@@ -280,4 +291,72 @@ def complaint_edit(request: HttpRequest, slug: str) -> HttpResponse:
         request,
         "complaints/create.html",
         {"form": form, "tahrirlash": True, "complaint": muammo},
+    )
+
+
+# ===========================================================================
+# Saqlanganlar (D1-T13)
+# ===========================================================================
+@require_POST
+def dard_saqlash(request: HttpRequest, pk: int) -> HttpResponse:
+    """Saqlash / saqlanganlardan olib tashlash — bitta tugma, ikki holat.
+
+    ⚠️ Ovoz berish bilan BIR XIL naqsh: `<form>` + ustiga HTMX, mehmonga
+       401 (ko'rinish darajasida app.js login taklifini ko'rsatadi).
+    """
+    if (javob := ovoz_ruxsati(request)) is not None:
+        return javob
+
+    muammo = get_object_or_404(Complaint.objects.visible(), pk=pk)
+
+    # `ovoz_ruxsati()` autentifikatsiyani kafolatlaydi, lekin tip
+    # tekshiruvchi buni bilmaydi (`AnonymousUser` qolib ketadi).
+    user = cast(User, request.user)
+
+    # ⚠️ `delete()` qaytargan sonni ishlatamiz: "bor edimi?" ni alohida
+    #    `exists()` bilan so'rash ikkita so'rov va poyga holati degani.
+    ochirildi, _ = SavedComplaint.objects.filter(user=user, complaint=muammo).delete()
+    if not ochirildi:
+        # ⚠️ `get_or_create`: takroriy so'rov (ikki marta bosish, HTMX
+        #    qayta urinishi) `IntegrityError` bermasin.
+        SavedComplaint.objects.get_or_create(user=user, complaint=muammo)
+
+    muammo.saqlangan = not ochirildi
+
+    if not htmx_sorovimi(request):
+        return redirect(ovozdan_keyingi_manzil(request, muammo.get_absolute_url()))
+
+    return render(
+        request,
+        "components/_save_button.html",
+        {"complaint": muammo, "korsatilsin": request.POST.get("korsatilsin") == "1"},
+    )
+
+
+@login_required
+def saqlanganlar(request: HttpRequest) -> HttpResponse:
+    """Foydalanuvchi saqlagan muammolar ro'yxati.
+
+    ⚠️ ALOHIDA SAHIFA, profil tabi EMAS — hozircha.
+       Maketda "Saqlanganlar" profil sahifasining tabi, lekin profil
+       hali maket (D3-T4). Ishlaydigan alohida sahifa ishlamaydigan
+       tabdan foydaliroq; D3-T4 uni profilga ko'chirishi mumkin —
+       o'shanda faqat shablon o'zgaradi, `selectors` qoladi.
+    """
+    muammolar = list(saqlanganlar_queryset(user=request.user)[:SAHIFA_HAJMI])
+
+    ovozlar = user_votes_for(
+        vote_model=ComplaintVote,
+        target_field="complaint",
+        user=request.user,
+        targets=muammolar,
+    )
+    for muammo in muammolar:
+        muammo.user_vote = ovozlar.get(muammo.pk)
+        muammo.saqlangan = True  # ta'rifi bo'yicha hammasi saqlangan
+
+    return render(
+        request,
+        "complaints/saqlanganlar.html",
+        {"active_nav": "profile", "complaints": muammolar},
     )

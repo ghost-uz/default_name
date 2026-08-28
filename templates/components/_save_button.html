@@ -1,0 +1,42 @@
+{% comment %}
+  Saqlash / saqlanganlardan olib tashlash (D1-T13).
+
+  Kontekst:
+    complaint -> Complaint; `complaint.saqlangan` ko'rinishda qo'yiladi
+    save_target -> HTMX almashtiradigan element (standart: forma o'zi)
+
+  ⚠️ Ovoz blokidagi bilan BIR XIL naqsh: oddiy `<form>`, ustiga HTMX.
+     JavaScript yuklanmasa saqlash YO'QOLMAYDI — sahifa qayta yuklanadi.
+
+  ⚠️ Maketda bu yerda `data-toast="Saqlanganlarga qo'shildi"` tugmasi
+     turgan edi: u SERVERGA HECH NIMA YUBORMASDAN "saqlandi" deb
+     yozardi. Backend yo'q paytda to'g'ri edi; haqiqiy modelga
+     ulanmasa esa foydalanuvchi hech qachon saqlanmagan ro'yxatni
+     qidirib yurardi.
+
+  ⚠️ Mehmonda `hx-post` YO'Q — app.js login taklifini ko'rsatadi
+     (ovoz berish bilan bir xil, hal qilingan C varianti).
+{% endcomment %}
+{% url 'dard_saqlash' complaint.pk as save_url %}
+<form
+  method="post"
+  action="{{ save_url }}"
+  class="contents"
+  {% if request.user.is_authenticated %}
+    hx-post="{{ save_url }}"
+    hx-target="{{ save_target|default:'this' }}"
+    hx-swap="outerHTML"
+  {% endif %}
+>
+  {% csrf_token %}
+  <button
+    type="submit"
+    class="btn-ghost btn-sm {% if complaint.saqlangan %}!text-primary{% endif %}"
+    data-save
+    aria-pressed="{% if complaint.saqlangan %}true{% else %}false{% endif %}"
+    aria-label="{% if complaint.saqlangan %}Saqlanganlardan olib tashlash{% else %}Saqlash{% endif %}"
+  >
+    <svg class="h-4 w-4" viewBox="0 0 24 24" {% if complaint.saqlangan %}fill="currentColor"{% else %}fill="none"{% endif %} stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21 12 16 5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+    {% if korsatilsin %}{% if complaint.saqlangan %}Saqlangan{% else %}Saqlash{% endif %}{% endif %}
+  </button>
+</form>

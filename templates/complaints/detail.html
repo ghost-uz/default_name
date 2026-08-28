@@ -93,11 +93,13 @@
                   </a>
                 {% endif %}
 
+                {% include "components/_save_button.html" with complaint=complaint korsatilsin=True %}
+
                 {% comment %}
-                  ⚠️ Maketdagi "Saqlash" va "Shikoyat" tugmalari OLIB TASHLANDI:
-                     `SavedItem` (D1-T13) va `Report` (D2-T1) modellari hali yo'q.
-                     Bosilganda hech nima bo'lmaydigan tugma foydalanuvchida
-                     "sayt buzuq" degan taassurot qoldiradi — yo'qligi yaxshiroq.
+                  ⚠️ Maketdagi "Shikoyat" tugmasi hamon OLIB TASHLANGAN:
+                     `Report` modeli D2-T1 da qo'shiladi. Bosilganda hech
+                     nima bo'lmaydigan tugma "sayt buzuq" taassurotini
+                     qoldiradi — yo'qligi yaxshiroq.
                 {% endcomment %}
               </div>
             </div>

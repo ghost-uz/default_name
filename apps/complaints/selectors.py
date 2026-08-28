@@ -9,11 +9,18 @@ qolsa, har joyda qaytadan yoziladi — va ko'rinish invariantlaridan biri
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 
 from django.db import models
 
-from .models import Category, Complaint, ComplaintStatus, Generation
+from .models import (
+    Category,
+    Complaint,
+    ComplaintStatus,
+    Generation,
+    SavedComplaint,
+)
 
 # ⚠️ Kalitlar MAKETDAGI havolalar bilan bir xil: `?sort=hot|new|top|solved`
 #    (templates/complaints/feed.html). O'zgartirilsa ulashilgan havolalar
@@ -272,3 +279,44 @@ def kursorni_oqish(GET) -> int | None:  # noqa: N803 — Django uslubi
     if not xom.isdigit():
         return None
     return int(xom)
+
+
+# ===========================================================================
+# Saqlanganlar (D1-T13)
+# ===========================================================================
+def saqlangan_idlari(*, user, targets: Sequence[Complaint]) -> set[int]:
+    """`{muammo_id, ...}` — lentadagi barcha kartalar uchun BITTA so'rovda.
+
+    ⚠️ `user_votes_for` bilan bir xil sabab (D1-T14): har karta uchun
+       "saqlaganmanmi?" deb alohida so'rash 20 ta kartada 20 ta
+       qo'shimcha so'rov degani.
+
+    Kirmagan foydalanuvchi uchun bo'sh to'plam — so'rov umuman ketmaydi.
+    """
+    if not targets or not getattr(user, "is_authenticated", False):
+        return set()
+
+    return set(
+        SavedComplaint.objects.filter(user=user, complaint__in=targets).values_list(
+            "complaint_id", flat=True
+        )
+    )
+
+
+def saqlanganlar_queryset(*, user) -> models.QuerySet[Complaint]:
+    """Foydalanuvchi saqlagan muammolar — eng yangi saqlangani birinchi.
+
+    ⚠️ `SavedComplaint` orqali emas, `Complaint` orqali qaytariladi:
+       shablon `_complaint_card.html` ni qayta ishlatadi va u
+       `Complaint` kutadi.
+
+    ⚠️ `visible()` BU YERDA HAM: moderator yashirgan post saqlanganlar
+       ro'yxatida qolib ketmasin — u lentada yo'q, demak bu yerda ham
+       bo'lmasligi kerak (D2-T3).
+    """
+    return (
+        Complaint.objects.visible()
+        .filter(saved_by__user=user)
+        .select_related("author", "category")
+        .order_by("-saved_by__created_at", "-id")
+    )

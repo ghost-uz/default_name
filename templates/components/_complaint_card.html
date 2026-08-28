@@ -80,9 +80,14 @@
           Ulashish
         </button>
 
-        <button type="button" class="btn-ghost btn-sm" data-toast="Saqlanganlarga qo'shildi" aria-label="Saqlash">
-          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21 12 16 5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
-        </button>
+        {% comment %}
+          ⚠️ Bu yerda maketning SOXTA tugmasi turgan edi: u
+             `data-toast="Saqlanganlarga qo'shildi"` bilan xabar
+             ko'rsatib, SERVERGA HECH NIMA YUBORMASDI. Haqiqiy modelga
+             ulanmasa, foydalanuvchi hech qachon saqlanmagan ro'yxatni
+             qidirib yurardi (D1-T13).
+        {% endcomment %}
+        {% include "components/_save_button.html" with complaint=complaint %}
 
         {% if complaint.is_solved %}
           <span class="badge-solved ml-auto">

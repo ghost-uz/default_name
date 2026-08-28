@@ -406,13 +406,30 @@ Faqat **`CI holati`** tekshiruvini tanlang, alohida job'larni emas.
 | D1-T11 | `hot_score` algoritmi + Celery beat (har 10 daqiqada, 7 kunlik oyna) |
 | D1-T12 | Kursor sahifalash (`?after=<pk>`) + HTMX «Yana yuklash» |
 | D1-T1 | Telegram login — HMAC, `auth_date`, `state` nonce, avtomatik username |
+| D1-T13 | Saqlanganlar (xatcho'p) — `SavedComplaint` + `/saqlanganlar/` |
+| D1-T14 | N+1 auditi — so'rov soni element soniga bog'liq emasligi qotirildi |
+
+**M1 (yadro) TO'LIQ TUGADI** — 14/14 task.
 
 **D0-T10 qisman:** barcha fayllar tayyor va lokal repetitsiyada tekshirilgan;
 server hali olinmagan. Ketma-ketlik: [`DEPLOY.md`](DEPLOY.md).
 
-Keyingi: **M1** — D1-T13 (xatcho'p), D1-T14 (N+1 auditi).
-Shundan keyin **M2** (xavfsizlik va moderatsiya) — u ommaviy ishga
-tushirishdan OLDIN majburiy.
+Keyingi: **M2 — xavfsizlik va moderatsiya.** Reja uni ommaviy ishga
+tushirishdan **OLDIN majburiy** deb belgilagan: shikoyat oqimi (D2-T1),
+moderatsiya navbati (D2-T2), tezlik cheklovi (D2-T4), inqirozli kontent
+siyosati (D2-T6), huquqiy sahifalar (D2-T10).
+
+### So'rov sonlari (D1-T14 da o'lchangan)
+
+| Sahifa | Mehmon | Kirgan |
+|---|---|---|
+| Lenta (20 karta) | 2 | 6 |
+| Lenta, 2-sahifa | — | 7 |
+| Batafsil (15 yechim) | 3 | 8 |
+| Saqlanganlar | — | 4 |
+
+Sonlar **element soniga bog'liq emas** — `test_n_plus_1.py` buni
+qotirgan (5 va 50 element bir xil son berishi shart).
 
 ### ⚠️ Telegram login uchun sozlash
 

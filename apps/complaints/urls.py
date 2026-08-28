@@ -18,4 +18,6 @@ urlpatterns = [
     # ⚠️ Yo'nalish URL'da emas, POST tanasida (`qiymat=+1|-1`).
     #    Sabab: apps/common/vote_views.py -> ovoz_qiymatini_oqish().
     path("ovoz/dard/<int:pk>/", views.dard_ovoz, name="dard_ovoz"),
+    path("saqlash/dard/<int:pk>/", views.dard_saqlash, name="dard_saqlash"),
+    path("saqlanganlar/", views.saqlanganlar, name="saqlanganlar"),
 ]

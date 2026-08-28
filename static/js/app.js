@@ -233,6 +233,20 @@
      yo'qoladi, mehmon taklifi chiqmaydi). Buni topish qiyin: HTMX
      so'rovi baribir ketaveradi. */
   document.addEventListener("click", (e) => {
+    /* Saqlash tugmasi (D1-T13) — mehmonda ovoz berish bilan bir xil
+       xulq: forma yuborilmaydi, tugma yonida login taklifi chiqadi. */
+    const saveBtn = e.target.closest("[data-save]");
+    if (saveBtn && IS_GUEST) {
+      e.preventDefault();
+      showLoginHint(
+        saveBtn,
+        "Saqlash uchun kiring",
+        "Saqlanganlar ro'yxati faqat sizga ko'rinadi."
+      );
+      if (navigator.vibrate) navigator.vibrate(12);
+      return;
+    }
+
     const btn = e.target.closest("[data-vote]");
     if (btn) {
       /* ⚠️ `preventDefault` SHART: tugma endi `type="submit"` (forma

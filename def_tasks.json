@@ -1060,10 +1060,43 @@
       "bogliq": [
         "D1-T3"
       ],
-      "holat": "todo",
+      "holat": "done",
       "qabul_mezoni": [
         "unique_together(user, target)"
-      ]
+      ],
+      "tugatilgan": "2026-08-28",
+      "natija": {
+        "yaratilgan": [
+          "apps/complaints/models.py — SavedComplaint (complaints 0003)",
+          "apps/complaints/selectors.py — saqlangan_idlari(), saqlanganlar_queryset()",
+          "apps/complaints/views.py — dard_saqlash() (toggle), saqlanganlar() ro'yxati",
+          "templates/components/_save_button.html + templates/complaints/saqlanganlar.html",
+          "static/js/app.js — mehmon uchun login taklifi (ovoz berish bilan bir xil)"
+        ],
+        "tekshirilgan": [
+          "unique_together(user, target) — DB darajasida (qabul mezoni)",
+          "bitta tugma: saqlash va olib tashlash",
+          "javob faqat tugmani qaytaradi (HTMX), JS'siz esa 302",
+          "kirmagan foydalanuvchida 401; GET bilan saqlab bo'lmaydi (405)",
+          "yashirilgan postni saqlab bo'lmaydi (404) va ro'yxatda ko'rinmaydi",
+          "ro'yxat FAQAT o'ziniki (maxfiylik)",
+          "takroriy so'rov IntegrityError bermaydi",
+          "saqlangan_idlari BITTA so'rov, mehmonda NOL so'rov",
+          "GUARD: maketning soxta `data-toast=\"Saqlanganlarga qo'shildi\"` tugmasi qolmagan",
+          "⭐ JONLI BRAUZER: tugma bosildi -> holat o'zgardi (to'ldirilgan ko'k xatcho'p), sahifa yangilanmadi; /saqlanganlar/ da post ko'rindi"
+        ],
+        "qarorlar": [
+          "⚠️ `SavedItem` (ContentType) EMAS, `SavedComplaint`: ovoz jadvallari bilan bir xil qaror (Q1) — baza darajasidagi FK butunligi muhimroq. Yechim saqlash kerak bo'lsa `SavedSolution` qo'shiladi.",
+          "Yumshoq o'chirish YO'Q: xatcho'p foydalanuvchining SHAXSIY ro'yxati, kontent emas. 'Olib tashlash' = yo'q qilish.",
+          "ALOHIDA sahifa (/saqlanganlar/), profil tabi emas — profil hali maket (D3-T4). Ishlaydigan alohida sahifa ishlamaydigan tabdan foydaliroq; D3-T4 uni ko'chirsa faqat shablon o'zgaradi.",
+          "`delete()` qaytargan sonni ishlatamiz: alohida `exists()` ikkita so'rov va poyga holati degani.",
+          "Sahifalash ATAYLAB yo'q: ro'yxat shaxsiy va odatda kichik; kerak bo'lsa D1-T12 kursor mantiqi qo'llanadi."
+        ],
+        "topilgan_xatolar": [
+          "Maketdagi 'Saqlash' tugmasi SOXTA edi: `data-toast` bilan 'Saqlanganlarga qo'shildi' deb yozib, serverga hech nima yubormasdi. Foydalanuvchi hech qachon saqlanmagan ro'yxatni qidirib yurardi. Guard test qo'shildi.",
+          "Guard testning birinchi versiyasi O'Z TUSHUNTIRISH IZOHINI topdi (yolg'on ogohlantirish) — `{% comment %}` bloklari olib tashlanadigan qilindi."
+        ]
+      }
     },
     {
       "id": "D1-T14",
@@ -1076,12 +1109,45 @@
       "bogliq": [
         "D1-T7"
       ],
-      "holat": "todo",
+      "holat": "done",
       "qabul_mezoni": [
         "lenta sahifasi ≤ 8 so'rov",
         "test so'rov sonini qotiradi"
       ],
-      "eslatma": "Sayt bo'ylab kontekst-protsessorni keshlash so'rov-sanog'i testlarini buzadi (birinchi render +1, ikkinchisi 0) — keshlamang yoki testni moslang."
+      "eslatma": "Sayt bo'ylab kontekst-protsessorni keshlash so'rov-sanog'i testlarini buzadi (birinchi render +1, ikkinchisi 0) — keshlamang yoki testni moslang.",
+      "tugatilgan": "2026-08-28",
+      "natija": {
+        "yaratilgan": [
+          "apps/complaints/tests/test_n_plus_1.py — 10 ta test"
+        ],
+        "tekshirilgan": [
+          "⭐ lenta so'rov soni KARTALAR SONIGA BOG'LIQ EMAS (3 va 20 karta — AYNAN bir xil)",
+          "⭐ batafsil so'rov soni YECHIMLAR SONIGA BOG'LIQ EMAS (2 va 15 yechim)",
+          "lenta <= 8 so'rov (qabul mezoni; amalda 6)",
+          "mehmon uchun <= 3 so'rov (ovoz/saqlanganlar so'rovlari umuman ketmaydi)",
+          "filtrlangan lenta ham barqaror",
+          "2-sahifa aynan BITTA qo'shimcha so'rov (kursor posti)",
+          "muallif ko'rinishi BITTA KAM so'rov (views_count yangilanmaydi)",
+          "saqlanganlar sahifasi barqaror",
+          "qat'iy son: lenta (kirgan) = 6 so'rov"
+        ],
+        "olchangan_holat": {
+          "lenta_mehmon": 2,
+          "lenta_kirgan": 6,
+          "lenta_2_sahifa": 7,
+          "batafsil_mehmon": 3,
+          "batafsil_kirgan": 8,
+          "saqlanganlar": 4,
+          "yozish_formasi": 3
+        },
+        "qarorlar": [
+          "⚠️ IKKI XIL TEKSHIRUV, ikkalasi ham kerak: (1) qat'iy son `assertNumQueries` — jimgina o'sishga qarshi; (2) ELEMENTLAR SONIGA BOG'LIQLIK — asosiy tekshiruv. Qat'iy son N+1 ni ISBOTLAMAYDI, u faqat bugungi holatni yozib qo'yadi: kimdir N+1 qo'shib, sonni 'tuzatib' qo'ysa test yashil qolaveradi.",
+          "N+1 TOPILMADI: `select_related('author','category')` (lenta), `select_related('author')` (yechimlar) va to'plamli ovoz/saqlanganlar so'rovlari D1-T7/T8/T10/T13 da allaqachon to'g'ri qo'yilgan edi. Bu task ularni QOTIRDI."
+        ],
+        "topilgan_xatolar": [
+          "Test birinchi versiyasida muallif va begona ko'rinishlar TENG so'rov qiladi deb kutilgan edi va yiqildi — KOD emas, TAXMIN noto'g'ri edi (muallifda `views_count` UPDATE'i ketmaydi). Farq tenglashtirilmadi, QOTIRILDI: shunda `views_count` mantiqi tasodifan o'zgarsa test aytadi."
+        ]
+      }
     },
     {
       "id": "D2-T1",

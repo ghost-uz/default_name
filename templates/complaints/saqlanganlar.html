@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block title %}Saqlanganlar — Dard.uz{% endblock %}
+{% block description %}Keyinroq qaytmoqchi bo'lgan muammolaringiz.{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-[820px] px-4 py-6 lg:px-6">
+  <main id="main" class="min-w-0">
+    <nav class="mb-4 flex items-center gap-1.5 text-[13px] text-fg-muted" aria-label="Yo'l">
+      <a href="{% url 'feed' %}" class="inline-block py-1 hover:text-fg hover:underline">Lenta</a>
+      <span aria-hidden="true">/</span>
+      <span class="text-fg" aria-current="page">Saqlanganlar</span>
+    </nav>
+
+    <h1 class="text-2xl font-extrabold sm:text-[28px]">Saqlanganlar</h1>
+    <p class="mt-1.5 text-[15px] text-fg-muted">
+      Faqat siz ko'rasiz. Muallif kim saqlaganini bilmaydi.
+    </p>
+
+    <div class="mt-6 flex flex-col gap-3" id="feed">
+      {% for complaint in complaints %}
+        {% include "components/_complaint_card.html" with complaint=complaint index=forloop.counter0 %}
+      {% empty %}
+        {% include "components/_empty_state.html" with icon="bookmark" title="Hozircha bo'sh" text="Kartadagi xatcho'p belgisini bosing — muammo shu yerga tushadi va keyinroq osongina topasiz." action_url="/" action="Lentaga o'tish" %}
+      {% endfor %}
+    </div>
+
+    {% comment %}
+      ⚠️ Sahifalash bu yerda ATAYLAB yo'q: saqlanganlar ro'yxati shaxsiy
+         va odatda kichik bo'ladi. Kerak bo'lganda `lenta_sahifasi()`
+         dagi kursor mantiqi shu yerga ham qo'llanadi (D1-T12).
+    {% endcomment %}
+  </main>
+</div>
+{% endblock %}

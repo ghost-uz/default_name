@@ -149,6 +149,14 @@ class Complaint(ContentModel, VotableModel):
        (xossani ORM filtrlay olmaydi).
     """
 
+    # ⚠️ MAYDON EMAS — ko'rinish to'ldiradigan vaqtinchalik atribut (D1-T13),
+    #    xuddi `VotableModel.user_vote` kabi. Shablon
+    #    `{{ complaint.saqlangan }}` deb o'qiydi.
+    #
+    #    Standart `False` ATAYLAB: obyekt boshqa joydan kelsa (Telegram
+    #    avto-post, D5-T3) shablon "saqlangan" deb ko'rsatib qo'ymasin.
+    saqlangan: bool = False
+
     # -- Muallif -----------------------------------------------------------
     # ⚠️ SET_NULL, CASCADE EMAS. Hisob o'chganda (D2-T8) jamoa yaratgan
     #    kontent — savol va uning ostidagi yechimlar — YO'QOLMASLIGI kerak;
@@ -411,3 +419,61 @@ class ComplaintVote(VoteModel):
                 violation_error_message="Bu muammoga allaqachon ovoz bergansiz.",
             ),
         ]
+
+
+# ===========================================================================
+# Saqlanganlar / xatcho'p (D1-T13)
+# ===========================================================================
+class SavedComplaint(TimeStampedModel):
+    """Foydalanuvchi keyinroq qaytmoqchi bo'lgan muammo.
+
+    ⚠️ NEGA `SavedItem` EMAS, `SavedComplaint`
+       Taskda "SavedItem: user, target" deb yozilgan — ya'ni umumiy
+       (`ContentType`) model nazarda tutilgan. Bu yerda ovoz jadvallari
+       bilan BIR XIL qaror qabul qilindi (ochiq qaror Q1): alohida
+       jadval, chunki baza darajasidagi FK butunligi muhimroq —
+       o'chirilgan post uchun yetim yozuv qolmaydi.
+
+       Hozircha faqat muammo saqlanadi (maketda ham faqat unda "Saqlash"
+       tugmasi bor). Yechim saqlash kerak bo'lsa — `SavedSolution`,
+       xuddi `SolutionVote` kabi.
+
+    ⚠️ YUMSHOQ O'CHIRISH YO'Q: xatcho'p — foydalanuvchining SHAXSIY
+       ro'yxati, kontent emas. "Saqlanganlardan olib tashlash" degani
+       aynan "yo'q qilish" — uni tarixda saqlash foydalanuvchi
+       kutmaydigan xulq bo'lardi (va D2-T8 eksportida chiqib qolardi).
+    """
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        verbose_name="foydalanuvchi",
+        on_delete=models.CASCADE,
+        related_name="saved_complaints",
+    )
+    complaint = models.ForeignKey(
+        Complaint,
+        verbose_name="muammo",
+        on_delete=models.CASCADE,
+        related_name="saved_by",
+    )
+
+    class Meta:
+        verbose_name = "saqlangan muammo"
+        verbose_name_plural = "saqlangan muammolar"
+        ordering = ("-created_at",)
+        constraints = [
+            # Qabul mezoni: unique_together(user, target).
+            # ⚠️ Kodda `get_or_create` yetarli emas: ikki bir vaqtli so'rov
+            #    ikkalasi ham "yo'q ekan" deb ko'radi.
+            models.UniqueConstraint(
+                fields=["user", "complaint"],
+                name="savedcomplaint_user_target_uniq",
+            ),
+        ]
+        indexes = [
+            # "Saqlanganlarim" ro'yxati: yangisidan eskisiga.
+            models.Index(fields=["user", "-created_at"], name="saved_user_vaqt_idx"),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.user_id} -> {self.complaint_id}"
