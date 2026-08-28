@@ -1194,11 +1194,43 @@
       "bogliq": [
         "D2-T2"
       ],
-      "holat": "todo",
+      "holat": "done",
       "qabul_mezoni": [
         "visible() manager metodi yagona kirish nuqtasi",
         "har bir ommaviy ko'rinish uchun test"
-      ]
+      ],
+      "tugatilgan": "2026-08-28",
+      "natija": {
+        "yaratilgan": [
+          "apps/common/tests/test_korinish_invarianti.py — 8 ta test, IKKI QATLAMLI guard",
+          "12 ta ataylab qilingan istisnoga `# korinish-istisno: <sabab>` izohi qo'yildi",
+          "apps/common/models.py — `visible()` docstring'iga guard'ga ishora"
+        ],
+        "audit_natijasi": "SIZIB CHIQISH TOPILMADI. Barcha ommaviy so'rovlar allaqachon `visible()` dan o'tar edi (D1-T7/T8/T10/T13 da to'g'ri qo'yilgan). Bu task ularni MAJBURLADI.",
+        "tekshirilgan": [
+          "⭐ URLconf'dagi BARCHA yo'llar avtomatik aylanadi (mehmon + kirgan) va yashirin marker javobda yo'qligi tekshiriladi — ro'yxat qo'lda yuritilmaydi, yangi ko'rinish (sitemap/RSS/API) AVTOMATIK qamrab olinadi",
+          "yashirin postning O'Z MANZILI begonaga 404 (havolani biladigan odam ham ocha olmaydi)",
+          "MUALLIF o'zining yashirin postini ko'radi (ataylab qilingan istisno) va sababini o'qiydi",
+          "STAFF yashirin postni ko'radi (D2-T2 uchun)",
+          "OCHIQ postdagi YASHIRILGAN YECHIM ko'rinmaydi (oson unutiladigan holat)",
+          "saqlanganlar ro'yxatida ham yashirin/o'chirilgan ko'rinmaydi",
+          "yon panel sanog'i ham 'ko'rinadigan' ma'nosini saqlaydi",
+          "manba kodida `visible()` siz so'rov yo'q (AST bo'yicha aniq tekshiruv)",
+          "⭐⭐ IKKALA GUARD HAM HAQIQATAN ISHLASHI ISBOTLANDI: kod ataylab buzilib, har biri xatoni topgani tasdiqlandi"
+        ],
+        "qarorlar": [
+          "⚠️ IKKI QATLAMLI GUARD, ikkalasi ham kerak: (1) ish vaqtida — URLconf avtomatik aylanadi, lekin faqat MAVJUD yo'llarni qoplaydi; (2) manba kodida — hali ko'rinishga ulanmagan kodni ham (yangi selectors funksiyasi) qoplaydi. Faqat birinchisi bo'lsa sitemap yozilib testsiz qolsa hech kim payqamaydi; faqat ikkinchisi bo'lsa shablon darajasidagi sizib chiqish ko'rinmay qoladi.",
+          "Istisnolar TAQIQLANMAYDI, KO'RINADIGAN qilinadi: `# korinish-istisno: <sabab>` izohi majburiy. Sababsiz istisno qo'shib bo'lmaydi.",
+          "`admin.py` skanerdan tashqarida: u moderator interfeysi va yashirilgan kontentni KO'RSATISHI kerak; himoyasi `visible()` emas, staff huquqi.",
+          "Istisnolar toifalari: yozish amallari, sanoqchi yangilash, qator qulflash, kursor qiymatlari, hot_score (yashirin post tiklansa balli tayyor bo'lsin), muallif/staff ko'rinishi."
+        ],
+        "topilgan_xatolar": [
+          "⚠️ Guardning birinchi versiyasi SATR QIDIRISH ishlatardi va `\"Complaint.objects\" in matn` `SavedComplaint.objects` ni ham ushlardi — yolg'on ogohlantirish. Guardda bu eng zararli nuqson: odam unga ko'nikadi va bir kuni haqiqiysini ham e'tiborsiz qoldiradi. AST bo'yicha aniq tugun tekshiruviga o'tkazildi."
+        ],
+        "qolgan_kuzatuv": [
+          "`complaint_edit` yashirilgan postni MUALLIFGA tahrirlashga ruxsat beradi (post baribir yashirinligicha qoladi). Bu ko'rinish sizib chiqishi EMAS, lekin moderatsiya siyosati masalasi — D2-T2/T11 da qayta ko'rib chiqilsin."
+        ]
+      }
     },
     {
       "id": "D2-T4",

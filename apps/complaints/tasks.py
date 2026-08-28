@@ -98,6 +98,9 @@ def hot_scorelarni_yangilash(kunlar: int = HOT_OYNA_KUNLARI) -> int:
        (10 daqiqa ichida) o'z ballini oladi.
     """
     chegara = timezone.now() - timedelta(days=kunlar)
+    # korinish-istisno: yashirilgan post ham hisoblanadi — u tiklansa
+    # balli TAYYOR bo'lishi kerak, aks holda lentaning eng pastida
+    # paydo bo'lardi. Bu yerda hech nima KO'RSATILMAYDI.
     qs = (
         Complaint.objects.filter(created_at__gte=chegara)
         # ⚠️⚠️ `score_cached` SHU YERDA BO'LISHI SHART (vaqt yedi).
@@ -122,6 +125,7 @@ def hot_scorelarni_yangilash(kunlar: int = HOT_OYNA_KUNLARI) -> int:
     def bolakni_yozish() -> None:
         nonlocal yangilangan
         if bolak:
+            # korinish-istisno: yozish amali, ko'rsatish emas.
             Complaint.objects.bulk_update(bolak, ["hot_score"])
             yangilangan += len(bolak)
             bolak.clear()

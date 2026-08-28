@@ -40,6 +40,8 @@ def yechim_yozish(
     if complaint.is_deleted or not complaint.is_publicly_visible:
         raise ValidationError("Bu muammoga yechim yozib bo'lmaydi.")
 
+    # korinish-istisno: YARATISH. Muammoning ko'rinishi yuqorida
+    # `is_publicly_visible` bilan allaqachon tekshirilgan.
     yechim = Solution.objects.create(
         complaint=complaint,
         author=author,
@@ -56,6 +58,7 @@ def yechim_yozish(
     if yechim.is_by_expert:
         yangilanish["has_expert_answer"] = True
 
+    # korinish-istisno: sanoqchilarni yangilash, ko'rsatish emas.
     Complaint.all_objects.filter(pk=complaint.pk).update(**yangilanish)
     return yechim
 
@@ -79,6 +82,8 @@ def accept_solution(*, solution: Solution, by_user) -> Solution:
        BERILMAYDI. Usiz tugmani ikki marta bosish (yoki HTMX'ning takroriy
        so'rovi) ballarni ikkilantirardi.
     """
+    # korinish-istisno: qatorni QULFLASH (yozish). Ruxsat quyida
+    # tekshiriladi va yechimning ko'rinishi ham alohida.
     complaint = Complaint.objects.select_for_update().get(pk=solution.complaint_id)
 
     if complaint.author_id != getattr(by_user, "pk", None):
@@ -95,12 +100,14 @@ def accept_solution(*, solution: Solution, by_user) -> Solution:
         return solution  # allaqachon qabul qilingan — hech nima o'zgarmaydi
 
     # 1) Eskisini bekor qilamiz (bor bo'lsa) — karma teskari yozuvi bilan.
+    # korinish-istisno: eski qabulni bekor qilish (yozish amali).
     eskilar = list(
         Solution.objects.filter(complaint=complaint, is_accepted=True).exclude(
             pk=solution.pk
         )
     )
     if eskilar:
+        # korinish-istisno: yozish amali.
         Solution.objects.filter(pk__in=[s.pk for s in eskilar]).update(
             is_accepted=False, accepted_at=None, updated_at=timezone.now()
         )
@@ -131,6 +138,7 @@ def unaccept_solution(*, solution: Solution, by_user) -> Solution:
     ishlamagani ma'lum bo'ladi. Qaytarib bo'lmaydigan tugma foydalanuvchini
     umuman bosmaslikka undaydi.
     """
+    # korinish-istisno: qatorni QULFLASH (yozish), ruxsat quyida.
     complaint = Complaint.objects.select_for_update().get(pk=solution.complaint_id)
 
     if complaint.author_id != getattr(by_user, "pk", None):

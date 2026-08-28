@@ -411,6 +411,31 @@ Faqat **`CI holati`** tekshiruvini tanlang, alohida job'larni emas.
 
 **M1 (yadro) TO'LIQ TUGADI** — 14/14 task.
 
+| Task | Nima |
+|---|---|
+| D2-T3 | Ko'rinish invarianti — ikki qatlamli guard (`visible()` majburlanadi) |
+
+### ⚠️ Ko'rinish invarianti (D2-T3)
+
+Yashirilgan kontent hech qaysi ommaviy yo'lda chiqmasligi kerak. Qoida
+`apps/common/tests/test_korinish_invarianti.py` da **ikki qatlamda**
+majburlanadi:
+
+1. **Ish vaqtida** — URLconf'dagi *barcha* yo'llar avtomatik aylanadi.
+   Yangi ko'rinish (sitemap, RSS, API) qo'shilsa u **avtomatik**
+   qamrab olinadi; ro'yxatni yangilash shart emas.
+2. **Manba kodida** — `Complaint.objects` / `Solution.objects`
+   `visible()` siz ishlatilgan joy topiladi (AST bo'yicha).
+
+Ataylab qilingan istisnoga izoh **majburiy**:
+
+```python
+# korinish-istisno: sanoqchini yangilash, kontent ko'rsatish emas.
+Complaint.all_objects.filter(pk=muammo.pk).update(...)
+```
+
+Istisno taqiqlanmaydi — u **ko'rinadigan va izohlangan** bo'lishi kerak.
+
 **D0-T10 qisman:** barcha fayllar tayyor va lokal repetitsiyada tekshirilgan;
 server hali olinmagan. Ketma-ketlik: [`DEPLOY.md`](DEPLOY.md).
 

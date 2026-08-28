@@ -187,6 +187,19 @@ class ModeratedQuerySet(models.QuerySet):
         shu metoddan o'tishi SHART. Bitta unutilgan so'rov (masalan
         `sitemap.xml`) yashirilgan kontentni Google'ga beradi va yashirish
         ma'nosini yo'qotadi.
+
+        ⚠️ BU QOIDA IKKI GUARD BILAN MAJBURLANADI (D2-T3):
+           `apps/common/tests/test_korinish_invarianti.py`
+
+           1. Ish vaqtida — URLconf'dagi BARCHA yo'llar avtomatik
+              aylanadi va yashirin marker javobda yo'qligi tekshiriladi.
+              Yangi ko'rinish avtomatik qamrab olinadi.
+           2. Manba kodida — `Complaint.objects` / `Solution.objects`
+              `visible()` siz ishlatilgan joy topiladi. Ataylab qilingan
+              istisnoga `# korinish-istisno: <sabab>` izohi qo'yiladi.
+
+           Ikkalasi ham HAQIQATAN ISHLASHI tekshirilgan: kod ataylab
+           buzilib, har biri xatoni topgani tasdiqlangan.
         """
         return self.filter(moderation_status=ModerationStatus.VISIBLE)
 

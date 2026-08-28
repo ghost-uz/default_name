@@ -171,6 +171,9 @@ def complaint_detail(
        BILISHI kerak, aks holda post "yo'qolgan" bo'lib ko'rinadi va
        ishonch yo'qoladi. Boshqalarga esa 404.
     """
+    # korinish-istisno: ATAYLAB `visible()` YO'Q — muallif va moderator
+    # o'z/yashirilgan postni ko'rishi kerak. Ko'rinish tekshiruvi
+    # DARHOL quyida, `Http404` bilan (yuqoridagi docstring'ga qarang).
     muammo = get_object_or_404(
         Complaint.objects.select_related("author", "category", "accepted_solution"),
         slug=slug,
@@ -184,6 +187,7 @@ def complaint_detail(
     #    uni bir necha marta ochib, sanoqni o'zi shishirib qo'yardi va
     #    "ko'rildi" ko'rsatkichi ma'nosini yo'qotardi.
     if not ozinikimi:
+        # korinish-istisno: sanoqchini yangilash, kontent ko'rsatish emas.
         Complaint.all_objects.filter(pk=muammo.pk).update(
             views_count=models.F("views_count") + 1
         )
@@ -269,6 +273,10 @@ def complaint_edit(request: HttpRequest, slug: str) -> HttpResponse:
        yechim kelmagan. Uchinchi shart eng muhimi — batafsil izoh
        o'sha metodda.
     """
+    # korinish-istisno: tahrirlash sahifasi. Ruxsat `tahrirlay_oladimi()`
+    # da (FAQAT muallif) — ya'ni begona odam bu yerga umuman kirmaydi.
+    # Yashirilgan postni muallif tahrirlashi mumkin: u baribir
+    # yashirinligicha qoladi va moderator qayta ko'rib chiqadi.
     muammo = get_object_or_404(Complaint.objects.all(), slug=slug)
 
     if not muammo.tahrirlay_oladimi(request.user):

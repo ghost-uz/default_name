@@ -258,6 +258,9 @@ def lenta_sahifasi(
         #    `all_objects`: uning saralash qiymatlari hamon to'g'ri chegara
         #    beradi. Umuman topilmasa kursor e'tiborsiz qoldiriladi
         #    (birinchi sahifa) — 404 dan ko'ra tushunarli xulq.
+        # korinish-istisno: kursor posti KO'RSATILMAYDI, undan faqat
+        # saralash qiymatlari olinadi. Yashirilgan post ham to'g'ri
+        # chegara beradi; usiz sahifalash o'sha nuqtada uzilardi.
         oxirgi = Complaint.all_objects.filter(pk=after_pk).first()
         if oxirgi is not None:
             qs = qs.filter(kursor_filtri(sort=filtr.sort, oxirgi=oxirgi))
