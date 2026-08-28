@@ -193,8 +193,12 @@ def complaint_detail(
         )
         muammo.views_count += 1  # shu render uchun
 
+    # korinish-istisno: muammo YUQORIDA allaqachon avtorizatsiya qilindi
+    # (muallif/staff o'z yashirilgan postini ko'radi). `visible()` bu yerda
+    # ota-postning ochiqligini ham talab qiladi — ya'ni muallif o'z
+    # yashirilgan postini ochganda yechimlar BUTUNLAY yo'qolardi.
     yechimlar = list(
-        Solution.objects.visible()
+        Solution.objects.ozi_korinadigan()
         .filter(complaint=muammo)
         .select_related("author")
         # ⚠️ Qabul qilingan yechim DOIM birinchi (maket ham shunday).

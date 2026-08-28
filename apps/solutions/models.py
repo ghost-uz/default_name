@@ -6,10 +6,76 @@ Match (kontakt almashinuvi) — M6, D6-T5.
 
 from __future__ import annotations
 
+from typing import Self
+
 from django.conf import settings
 from django.db import models
 
-from apps.common.models import ContentModel, VotableModel, VoteModel
+from apps.common.models import (
+    ContentModel,
+    ContentQuerySet,
+    ModerationStatus,
+    VotableModel,
+    VoteModel,
+)
+
+
+class SolutionQuerySet(ContentQuerySet):  # type: ignore[override]
+    """⚠️ `visible()` YECHIMNING O'ZINI EMAS, OTA-POSTNI HAM TEKSHIRADI.
+
+    ⚠️⚠️ BU XATO D2-T1 DA, D2-T3 GUARD'I ORQALI TOPILDI (D1-T5 dan beri
+       bor edi). Sabab-oqibati yozib qo'yiladi, chunki xato turi
+       takrorlanuvchan:
+
+       `ModeratedQuerySet.visible()` yozuvning O'Z `moderation_status`
+       ini tekshiradi. Yechim uchun bu YETARLI EMAS: muammo yashirilsa
+       (yoki yumshoq o'chirilsa), undagi yechimlarning o'z holati
+       `VISIBLE` bo'lib qolaveradi — ya'ni `Solution.objects.visible()`
+       ularni HAMON qaytaradi.
+
+       Nega uzoq vaqt ko'rinmadi: yechimlar faqat muammo sahifasi orqali
+       olinardi, muammo esa avtorizatsiyadan o'tardi. D2-T1 birinchi
+       marta yechimni TO'G'RIDAN-TO'G'RI `pk` bo'yicha oladigan ommaviy
+       manzil qo'shdi (`/shikoyat/yechim/<pk>/`) va invariant darhol
+       yiqildi. Ya'ni xato kodda emas, KIRISH YO'LIDA yashiringan edi.
+
+       Tuzatish shu yerda — bitta joyda. Chaqiruv joylariga
+       `complaint__moderation_status=...` tarqatish keyingi safar
+       yangi ko'rinishda yana unutilardi.
+    """
+
+    def visible(self) -> Self:
+        """Ommaviy ko'rinadigan yechimlar: o'zi ham, ota-posti ham ochiq."""
+        return (
+            super()
+            .visible()
+            .filter(
+                complaint__moderation_status=ModerationStatus.VISIBLE,
+                complaint__deleted_at__isnull=True,
+            )
+        )
+
+    def ozi_korinadigan(self) -> Self:
+        """Faqat yechimning O'Z holati bo'yicha filtr.
+
+        ⚠️ FAQAT ota-post ALLAQACHON avtorizatsiya qilingan joyda
+           ishlatiladi (`complaint_detail`: muallif va moderator o'z
+           yashirilgan postini ko'radi — u yerda `visible()` yechimlarni
+           butunlay yo'qotib yuborardi va muallif "javoblarim qayoqqa
+           ketdi?" degan holatda qolardi).
+
+           Boshqa hamma joyda `visible()`.
+        """
+        return super().visible()
+
+
+class SolutionAliveManager(models.Manager.from_queryset(SolutionQuerySet)):  # type: ignore[misc]
+    def get_queryset(self) -> SolutionQuerySet:
+        return super().get_queryset().filter(deleted_at__isnull=True)
+
+
+class SolutionAllManager(models.Manager.from_queryset(SolutionQuerySet)):  # type: ignore[misc]
+    """O'chirilganlar bilan birga — audit uchun."""
 
 
 class Solution(ContentModel, VotableModel):
@@ -63,6 +129,11 @@ class Solution(ContentModel, VotableModel):
         help_text="Muammo muallifi tanlaydi. Bitta muammoda faqat bitta.",
     )
     accepted_at = models.DateTimeField("qabul qilingan vaqt", null=True, blank=True)
+
+    # ⚠️ `ContentModel` dagi menejerlar qayta belgilanadi — `visible()`
+    #    ota-postni ham tekshirishi uchun (yuqoridagi `SolutionQuerySet`).
+    objects = SolutionAliveManager()  # type: ignore[misc]
+    all_objects = SolutionAllManager()  # type: ignore[misc]
 
     class Meta:
         verbose_name = "yechim"

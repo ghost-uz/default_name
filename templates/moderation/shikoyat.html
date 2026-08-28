@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+
+{% block title %}Shikoyat yuborish — Dard.uz{% endblock %}
+{% block description %}Qoidabuzarlik haqida moderatorlarga xabar bering.{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-[560px] px-4 py-8 lg:px-6">
+  <main id="main">
+    <a href="{{ next }}" class="btn-ghost mb-6 !px-2">
+      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+      Orqaga
+    </a>
+
+    <h1 class="text-2xl font-extrabold">Shikoyat yuborish</h1>
+    <p class="mt-1.5 text-[15px] leading-relaxed text-fg-muted">
+      Moderatorlar 24 soat ichida ko'rib chiqadi. Shikoyatingiz
+      <strong class="text-fg">anonim</strong> — muallif kim shikoyat qilganini bilmaydi.
+    </p>
+
+    <div class="card mt-4 border-line-strong bg-surface-2 p-3.5 text-[13px] leading-relaxed text-fg-muted">
+      <span class="font-semibold text-fg">Nima haqida:</span>
+      «{{ sarlavha|truncatechars:110 }}»
+    </div>
+
+    <form method="post" class="mt-6 space-y-5" data-validate novalidate>
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ next }}" />
+
+      {% if form.non_field_errors %}
+        <div class="card border-danger/40 bg-danger-bg p-4 text-[15px] text-danger" role="alert">
+          {{ form.non_field_errors|join:" " }}
+        </div>
+      {% endif %}
+
+      <fieldset data-field>
+        <legend class="label">
+          Sabab
+          <span class="text-danger" aria-hidden="true">*</span>
+          <span class="sr-only">(majburiy)</span>
+        </legend>
+        <div class="mt-2 space-y-2">
+          {% for radio in form.reason %}
+            {% comment %}
+              ⚠️ `XAVF` sababi ATAYLAB ajratib ko'rsatiladi: u odam hayoti
+                 haqidagi signal va uni spam bilan bir xil ko'rinishda
+                 qo'yish — navbatda ham bir xil vaznga tushirish degani
+                 (D2-T6 bu signalga ulanadi).
+            {% endcomment %}
+            <label class="flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-colors hover:bg-surface-2
+              {% if radio.data.value == xavf_sababi %}border-danger/40 bg-danger-bg/40{% else %}border-line{% endif %}">
+              {{ radio.tag }}
+              <span class="text-sm font-medium {% if radio.data.value == xavf_sababi %}text-danger{% endif %}">
+                {{ radio.choice_label }}
+              </span>
+            </label>
+          {% endfor %}
+        </div>
+        <p class="field-error" data-field-error {% if not form.reason.errors %}hidden{% endif %}>
+          {{ form.reason.errors|join:" " }}
+        </p>
+      </fieldset>
+
+      {% include "components/_field.html" with field=form.comment helper="Moderator vaziyatni tezroq tushunadi." %}
+
+      <div class="flex flex-col-reverse gap-2 border-t border-line pt-5 sm:flex-row">
+        <a href="{{ next }}" class="btn-outline sm:flex-1">Bekor qilish</a>
+        <button type="submit" class="btn bg-danger text-white hover:opacity-90 sm:flex-1">
+          Shikoyat yuborish
+        </button>
+      </div>
+    </form>
+
+    <p class="mt-6 text-[13px] leading-relaxed text-fg-muted">
+      ⚠️ Shikoyat — kelishmovchilik uchun emas. Post shunchaki yoqmagani
+      uchun shikoyat qilish moderatorlar vaqtini oladi va haqiqiy
+      qoidabuzarliklarni sekinlashtiradi.
+    </p>
+  </main>
+</div>
+{% endblock %}

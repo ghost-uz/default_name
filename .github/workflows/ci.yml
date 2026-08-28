@@ -165,6 +165,22 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements/dev.txt
 
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: npm
+
+      # ⚠️ CSS QURILISHI TESTDAN OLDIN — D2-T1 da qo'shildi.
+      #    `static/css/app.css` .gitignore da (qurilish artefakti), ya'ni
+      #    toza checkout'da u YO'Q. Usiz `TailwindBuildTests` tekshiradigan
+      #    fayl mavjud bo'lmasdi va guard CI'da jimgina ishlamay qolardi.
+      #    Bu ayni paytda "shablon o'zgardi, CSS qurilmadi" holatini ham
+      #    CI darajasida ushlaydi.
+      - name: Tailwind CSS
+        run: |
+          npm ci
+          npm run build
+
       # ⚠️ `--create-db`: CI'da baza har safar toza, lekin buyruq lokal
       #    ko'rsatma bilan bir xil bo'lsin — hujjat va amaliyot ajralmasin.
       - name: pytest

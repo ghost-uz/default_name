@@ -414,6 +414,83 @@ Faqat **`CI holati`** tekshiruvini tanlang, alohida job'larni emas.
 | Task | Nima |
 |---|---|
 | D2-T3 | Ko'rinish invarianti — ikki qatlamli guard (`visible()` majburlanadi) |
+| D2-T1 | Shikoyat (`Report`) modeli va oqimi — eskalatsiya navbatni o'zgartiradi, ko'rinishni emas |
+
+### ⚠️ Shikoyat eskalatsiyasi kontentni YASHIRMAYDI (D2-T1)
+
+Uchta shikoyat postni **navbat boshiga** ko'taradi, lekin uni
+ko'rinmas qilmaydi. Bu ataylab.
+
+Dard.uz'da odamlar eng og'ir shaxsiy holatlarini yozadi. Agar kelishib
+olgan uch kishi istalgan postni o'chirib tashlay olsa, mexanizm qurolga
+aylanadi — va zarba aynan eng himoyasiz foydalanuvchiga tegadi.
+Shoshilinch olib tashlash moderator qo'lida qoladi (D2-T2).
+
+Foydalanuvchiga chegara soni ham **aytilmaydi**: «yana 2 ta shikoyat
+kerak» degan xabar odamlarni kelishib shikoyat qilishga undardi.
+
+---
+
+### ⚠️ Flash xabarlar (`messages`)
+
+`base.html` `components/_messages.html` ni include qiladi. **Buni olib
+tashlamang** — u qo'shilgunicha (D2-T1) kodda 6 ta `messages.success()`
+chaqiruvi bor edi va **hammasi jimgina yo'qolardi**: foydalanuvchi
+«Dardingiz e'lon qilindi» tasdig'ini hech qachon ko'rmagan.
+
+Xatoni topish qiyin bo'lgani bejiz emas: `INSTALLED_APPS`, middleware va
+`messages` kontekst-protsessori boshidanoq to'g'ri sozlangan edi,
+`response.context["messages"]` ham to'lardi. Uzilgan yagona halqa — HTML.
+
+Shu sababli guard **render qilingan HTML** ni tekshiradi, sozlamani emas:
+`apps/common/tests/test_templates.py::XabarlarTests`.
+
+Xabar **toast emas, statik blok** (`role="status"`) — yuborilgandan
+keyingi tasdiq oqimning bir qismi va JavaScript yuklanmasa ham
+ko'rinishi kerak.
+
+---
+
+### ⚠️ Yechim ko'rinishi ota-postga bog'liq (D2-T1)
+
+`Solution.objects.visible()` yechimning **o'z** holatini ham, **ota-post**
+ochiqligini ham tekshiradi (`apps/solutions/models.py::SolutionQuerySet`).
+
+Usiz: muammo yashirilsa, undagi yechimlarning `moderation_status` i
+`VISIBLE` bo'lib qolaveradi va yechim `pk` bo'yicha to'g'ridan-to'g'ri
+ochiladi. Bu D1-T5 dan beri mavjud edi va faqat D2-T1 birinchi ommaviy
+`/shikoyat/yechim/<pk>/` manzilini qo'shganda D2-T3 guard'i ushladi.
+
+**Istisno:** `complaint_detail` `ozi_korinadigan()` ishlatadi — muallif
+o'z yashirilgan postini ko'radi, va u yerda `visible()` javoblarni
+butunlay yo'qotib yuborardi.
+
+---
+
+### ⚠️ Tailwind build'i shablonlardan orqada qolmasin (D2-T1)
+
+Tailwind sinflarni **shablonlarni skaner qilib** yaratadi. Yangi sinf
+yozilib `npm run build` ishlatilmasa, u CSS'ga umuman tushmaydi va
+**hech qanday xato bermaydi** — sahifa ochiladi, HTML'da sinf turadi,
+testlar yashil, faqat uslub yo'q.
+
+Buni `apps/common/tests/test_statik.py::TailwindBuildTests` tekshiradi:
+shablonlardagi har bir sinf qurilgan CSS'da borligi shart.
+
+CSS endi **uch joyda** quriladi va uchalasi ham shu commitdagi
+shablonlarga mos bo'ladi:
+
+| Joy | Qadam |
+|---|---|
+| Lokal | `npm run build` |
+| CI | `Tailwind CSS` qadami (`npm ci && npm run build`) |
+| Docker | `css` bosqichi (`node:22`), natija `runtime` ga ko'chiriladi |
+
+⚠️ Docker'da `COPY --from=css ...` **`COPY . .` dan keyin** turishi shart,
+aks holda kontekstdagi eski (yoki mavjud bo'lmagan) fayl qurilgan CSS ni
+qayta yozib yuboradi.
+
+---
 
 ### ⚠️ Ko'rinish invarianti (D2-T3)
 

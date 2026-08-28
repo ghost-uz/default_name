@@ -63,6 +63,19 @@
         {% include "components/_vote.html" with obj=solution layout="row" vote_url=vote_url user_vote=solution.user_vote vote_target="closest [data-solution]" %}
 
         {% comment %}
+          Yechimga shikoyat (D2-T1). O'z yechimiga shikoyat qilib
+          bo'lmaydi — xizmat ham buni rad etadi (`PermissionDenied`),
+          bu yerdagi shart faqat ko'rinish qulayligi.
+        {% endcomment %}
+        {% if request.user.is_authenticated and solution.author_id != request.user.pk %}
+          <a href="{% url 'yechim_shikoyat' solution.pk %}?next={{ request.path|urlencode }}"
+             class="btn-ghost btn-sm !text-fg-muted hover:!text-danger"
+             aria-label="Yechimga shikoyat qilish">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 9v4m0 4h.01M10.3 3.9 2.4 17.5A2 2 0 0 0 4.1 20.5h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0"/></svg>
+          </a>
+        {% endif %}
+
+        {% comment %}
           Qabul qilish — FAQAT muammo muallifiga ko'rinadi. Bu ko'rinish
           darajasidagi qulaylik; haqiqiy himoya `accept_solution()`
           xizmatida (`PermissionDenied`), chunki tugmani yashirish

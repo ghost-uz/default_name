@@ -33,7 +33,42 @@ RUN pip install --upgrade pip && pip install -r requirements/${REQUIREMENTS}.txt
 
 
 # ---------------------------------------------------------------------------
-# 2-bosqich: runtime — build-essential YO'Q, ~400 MB kichikroq
+# 2-bosqich: css — Tailwind chiqishi
+#
+# ⚠️ BU BOSQICH D2-T1 DA QO'SHILDI, CHUNKI OBRAZ STILSIZ CHIQARDI.
+#
+#    `static/css/app.css` — qurilish artefakti va `.gitignore` da. Lokalda
+#    u mavjud bo'lgani uchun `COPY . .` uni olib kirardi va hamma narsa
+#    joyida ko'rinardi. CI esa toza checkout qiladi: u yerda fayl YO'Q,
+#    ya'ni GHCR ga ketayotgan obrazda BIRORTA HAM stil bo'lmasdi.
+#
+#    Xato hech qanday belgi bermasdi: obraz muvaffaqiyatli quriladi,
+#    CI yashil, chunki obraz hech qachon ISHGA TUSHIRILMAYDI.
+#
+#    Endi CSS obraz ichida qayta quriladi — ya'ni u DOIM shu commitdagi
+#    shablonlarga mos keladi.
+# ---------------------------------------------------------------------------
+FROM node:22-slim AS css
+
+WORKDIR /css
+
+# Lock-fayl bilan aynan qayta tiklanadigan o'rnatish. `--omit=dev` ISHLATILMAYDI:
+# tailwindcss aynan devDependencies ichida.
+COPY package.json package-lock.json ./
+RUN npm ci
+
+# `@source` ko'rsatgan kataloglar (tailwind/input.css ga qarang) — sinf
+# nomlari shulardan skaner qilinadi.
+COPY tailwind/ tailwind/
+COPY templates/ templates/
+COPY apps/ apps/
+COPY static/ static/
+
+RUN npm run build
+
+
+# ---------------------------------------------------------------------------
+# 3-bosqich: runtime — build-essential YO'Q, ~400 MB kichikroq
 # ---------------------------------------------------------------------------
 FROM python:3.12-slim AS runtime
 
@@ -60,6 +95,10 @@ COPY --chown=dard:dard docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 COPY --chown=dard:dard . .
+
+# ⚠️ `COPY . .` DAN KEYIN: aks holda kontekstdagi eski (yoki yo'q) fayl
+#    qurilgan CSS ni qayta yozib yuborardi.
+COPY --from=css --chown=dard:dard /css/static/css/app.css /app/static/css/app.css
 
 # Statik va media uchun kataloglar (volume ulanmasa ham mavjud bo'lsin)
 RUN mkdir -p /app/staticfiles /app/media && chown -R dard:dard /app

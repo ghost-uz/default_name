@@ -96,11 +96,22 @@
                 {% include "components/_save_button.html" with complaint=complaint korsatilsin=True %}
 
                 {% comment %}
-                  ⚠️ Maketdagi "Shikoyat" tugmasi hamon OLIB TASHLANGAN:
-                     `Report` modeli D2-T1 da qo'shiladi. Bosilganda hech
-                     nima bo'lmaydigan tugma "sayt buzuq" taassurotini
-                     qoldiradi — yo'qligi yaxshiroq.
+                  ⚠️ Maketda bu yerda SOXTA tugma turgan edi: modal ochib,
+                     `data-toast="Shikoyat yuborildi"` deb yozardi va
+                     serverga hech nima yubormasdi. Endi haqiqiy oqim
+                     (D2-T1); modal o'rniga alohida sahifa — sabab
+                     `apps/moderation/views.py` da.
+
+                  ⚠️ Xavfli/qaytarilmas harakat ATAYLAB o'ngga ajratilgan
+                     (`ml-auto`) va so'nuq rangda: u tasodifan bosilmasin.
                 {% endcomment %}
+                {% if request.user.is_authenticated and not muallifmi %}
+                  <a href="{% url 'dard_shikoyat' complaint.pk %}?next={{ request.path|urlencode }}"
+                     class="btn-ghost btn-sm ml-auto !text-fg-muted hover:!text-danger">
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 9v4m0 4h.01M10.3 3.9 2.4 17.5A2 2 0 0 0 4.1 20.5h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0"/></svg>
+                    Shikoyat
+                  </a>
+                {% endif %}
               </div>
             </div>
           </div>

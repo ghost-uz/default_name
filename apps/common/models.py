@@ -9,6 +9,8 @@
 
 from __future__ import annotations
 
+from typing import Self
+
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
@@ -180,7 +182,7 @@ class ModerationStatus(models.TextChoices):
 
 
 class ModeratedQuerySet(models.QuerySet):
-    def visible(self) -> ModeratedQuerySet:
+    def visible(self) -> Self:
         """⚠️ OMMAVIY KO'RINISHLAR UCHUN YAGONA KIRISH NUQTASI (D2-T3).
 
         Lenta, qidiruv, profil, sitemap, RSS, Telegram avto-post — hammasi
@@ -203,7 +205,7 @@ class ModeratedQuerySet(models.QuerySet):
         """
         return self.filter(moderation_status=ModerationStatus.VISIBLE)
 
-    def under_review(self) -> ModeratedQuerySet:
+    def under_review(self) -> Self:
         return self.filter(moderation_status=ModerationStatus.PENDING)
 
 

@@ -54,6 +54,14 @@
     {% block header %}{% include "components/_header.html" %}{% endblock %}
     {% block drawer %}{% include "components/_drawer.html" %}{% endblock %}
 
+    {% comment %}
+      ⚠️ D2-T1 da qo'shildi. Undan oldin `messages.success(...)` chaqiruvlari
+         (D1-T9 dan beri 6 ta) HECH QAYERDA ko'rsatilmasdi — foydalanuvchi
+         "Dardingiz e'lon qilindi" degan tasdiqni hech qachon ko'rmagan.
+         Guard: `apps/common/tests/test_templates.py::XabarlarTests`.
+    {% endcomment %}
+    {% include "components/_messages.html" %}
+
     {% block content %}{% endblock %}
 
     {% block bottom_nav %}{% include "components/_bottom_nav.html" %}{% endblock %}

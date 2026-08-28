@@ -104,3 +104,82 @@ class BaseShablonidaTests(TestCase):
             [],
             f"`{{% static %}}` `{{% static_v %}}` ga almashtirilmagan: {versiyasiz}",
         )
+
+
+# ===========================================================================
+# Tailwind build'i shablonlardan ORQADA QOLMASIN (D2-T1 da topilgan)
+# ===========================================================================
+class TailwindBuildTests(SimpleTestCase):
+    """⚠️ D2-T1 DA TOPILGAN XATO: yangi shablondagi sinf CSS'DA YO'Q EDI.
+
+    Shikoyat formasi `space-y-5` bilan yozildi, lekin `npm run build`
+    ishlatilmadi. Tailwind sinflarni SHABLONLARNI SKANER QILIB yaratadi
+    — ya'ni qurilmagan sinf CSS'ga umuman tushmaydi.
+
+    ⚠️ NEGA XAVFLI: hech narsa xato bermaydi. Sahifa ochiladi, HTML'da
+       `class="space-y-5"` turadi, hamma test yashil — faqat oradagi
+       bo'shliq yo'q. Brauzerda ham "biroz siqiq" bo'lib ko'rinadi,
+       ya'ni ko'z bilan ham osongina o'tkazib yuboriladi. Bu yerda u
+       `getBoundingClientRect()` bilan o'lchagandagina topildi.
+
+    ⚠️ CHEKLOV (bilib qo'yilgan): bu test SHABLONDAGI sinflarni
+       tekshiradi. `tailwind/input.css` tahrirlanib qurilmasa, eski
+       `app.css` da komponent sinflari BOR bo'lgani uchun test o'tadi.
+       U holat kamroq xavfli: stil yozayotgan odam natijani darhol
+       ko'radi. To'liq kafolat — CI'da qayta qurib `git diff` qilish.
+    """
+
+    # `{% ... %}` / `{{ ... }}` olib tashlanadi: aks holda shablon
+    # sintaksisi sinf nomi bo'lib ko'rinadi.
+    SHABLON_SINTAKSISI = re.compile(r"\{%.*?%\}|\{\{.*?\}\}", re.DOTALL)
+    CLASS_ATRIBUTI = re.compile(r'class="([^"]*)"')
+
+    # Stil emas, HOOK bo'lgan sinflar — CSS'da bo'lishi SHART EMAS.
+    HOOK_SINFLARI = {
+        # HTMX nishoni: `hx-target="closest .yana-yuklash"`.
+        "yana-yuklash",
+    }
+
+    def sinflar(self) -> set[str]:
+        from pathlib import Path
+
+        from django.conf import settings
+
+        topilgan: set[str] = set()
+        for yol in (Path(settings.BASE_DIR) / "templates").rglob("*.html"):
+            matn = self.SHABLON_SINTAKSISI.sub(" ", yol.read_text(encoding="utf-8"))
+            for m in self.CLASS_ATRIBUTI.finditer(matn):
+                topilgan.update(m.group(1).split())
+        return topilgan - self.HOOK_SINFLARI
+
+    @staticmethod
+    def eskeyp(sinf: str) -> str:
+        r"""Tailwind CSS selektorida maxsus belgilarni `\` bilan yozadi.
+
+        `lg:grid-cols-[minmax(0,1fr)_300px]`
+            -> `.lg\:grid-cols-\[minmax\(0\,1fr\)_300px\]`
+        """
+        return "".join(b if (b.isalnum() or b in "-_") else "\\" + b for b in sinf)
+
+    def test_shablondagi_HAR_BIR_sinf_qurilgan_CSS_da_BOR(self):
+        from pathlib import Path
+
+        from django.conf import settings
+
+        yol = Path(settings.BASE_DIR) / "static/css/app.css"
+        self.assertTrue(
+            yol.exists(),
+            f"{yol} yo'q — `npm run build` ishlatilmagan. "
+            "(CI'da bu qadam 'Tailwind CSS' nomi bilan turadi.)",
+        )
+        css = yol.read_text(encoding="utf-8")
+
+        yoq = sorted(s for s in self.sinflar() if f".{self.eskeyp(s)}" not in css)
+
+        self.assertEqual(
+            yoq,
+            [],
+            "Bu sinflar shablonda ishlatilgan, lekin qurilgan CSS'da YO'Q — "
+            "ya'ni ular HECH QANDAY ta'sir qilmaydi.\n"
+            "`npm run build` ishlating.\n  " + "\n  ".join(yoq),
+        )

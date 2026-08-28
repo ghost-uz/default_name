@@ -39,6 +39,7 @@ from apps.common.models import ModerationStatus
 from apps.complaints.factories import ComplaintFactory
 from apps.complaints.models import SavedComplaint
 from apps.solutions.factories import SolutionFactory
+from apps.solutions.models import Solution
 
 pytestmark = pytest.mark.django_db
 
@@ -215,6 +216,75 @@ def test_ochiq_postdagi_YASHIRIN_YECHIM_korinmaydi(yashirin_kontent):
 
     assert "Ochiq muammo" in matn
     assert YASHIRIN_YECHIM not in matn
+
+
+# ---------------------------------------------------------------------------
+# ⚠️ OTA-POST ORQALI SIZIB CHIQISH (D2-T1 da shu guard topgan haqiqiy xato)
+#
+#   `ModeratedQuerySet.visible()` yozuvning O'Z holatini tekshiradi.
+#   Yechim uchun bu yetarli emas: muammo yashirilsa ham yechimning o'z
+#   holati `VISIBLE` bo'lib qolaveradi.
+#
+#   D1-T5 dan beri shunday edi va sezilmadi, chunki yechimlar faqat
+#   muammo sahifasi orqali olinardi. D2-T1 birinchi marta yechimni
+#   to'g'ridan-to'g'ri `pk` bo'yicha oladigan ommaviy manzil qo'shdi.
+#
+#   Tuzatish: `SolutionQuerySet.visible()` (apps/solutions/models.py).
+# ---------------------------------------------------------------------------
+def test_YASHIRIN_postdagi_yechim_PK_boyicha_ham_olinmaydi(yashirin_kontent):
+    """So'rov darajasida: ota-post yashirin bo'lsa yechim ham chiqmaydi."""
+    yechim = Solution.all_objects.get(  # type: ignore[attr-defined]
+        complaint=yashirin_kontent["yashirin"]
+    )
+
+    assert Solution.objects.filter(pk=yechim.pk).exists()  # o'zi tirik
+    assert not Solution.objects.visible().filter(pk=yechim.pk).exists()
+
+
+def test_OCHIRILGAN_postdagi_yechim_ham_olinmaydi(yashirin_kontent):
+    """Yumshoq o'chirilgan ota-post ham yechimni yopadi.
+
+    ⚠️ Alohida holat: `moderation_status` teginilmagan, faqat
+       `deleted_at` qo'yilgan — ya'ni moderatsiya filtri buni O'ZI
+       ushlamaydi.
+    """
+    yechim = SolutionFactory(complaint=yashirin_kontent["ochirilgan"])
+
+    assert yechim.moderation_status == ModerationStatus.VISIBLE
+    assert not Solution.objects.visible().filter(pk=yechim.pk).exists()
+
+
+def test_yashirin_postdagi_yechimga_SHIKOYAT_sahifasi_404(yashirin_kontent, user):
+    """Ko'rinish darajasida — guard aynan shu manzilda yiqilgandi."""
+    yechim = Solution.all_objects.get(  # type: ignore[attr-defined]
+        complaint=yashirin_kontent["yashirin"]
+    )
+    c = Client()
+    c.force_login(user)
+
+    javob = c.get(reverse("yechim_shikoyat", args=[yechim.pk]))
+
+    assert javob.status_code == 404
+
+
+def test_MUALLIF_ozining_yashirin_postida_YECHIMLARNI_KORADI(yashirin_kontent):
+    """⚠️ Tuzatishning TESKARI tomoni — ortiqcha tuzatib yubormaslik.
+
+    `visible()` ga ota-post sharti qo'shilgach, muallif o'z yashirilgan
+    postini ochganda yechimlar BUTUNLAY yo'qolib qolishi mumkin edi:
+    post ko'rinadi, javoblar esa yo'q — sababsiz.
+
+    Shuning uchun `complaint_detail` `ozi_korinadigan()` ishlatadi.
+    """
+    c = Client()
+    c.force_login(yashirin_kontent["egasi"])
+
+    matn = c.get(yashirin_kontent["yashirin"].get_absolute_url()).content.decode()
+
+    assert YASHIRIN_YECHIM in matn, (
+        "Muallif o'z postidagi javoblarni ko'rmayapti — "
+        "`ozi_korinadigan()` o'rniga `visible()` ishlatilganmi?"
+    )
 
 
 def test_saqlanganlar_royxatida_ham_korinmaydi(yashirin_kontent, user):

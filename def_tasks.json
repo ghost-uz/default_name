@@ -1160,11 +1160,73 @@
       "bogliq": [
         "D0-T5"
       ],
-      "holat": "todo",
+      "holat": "done",
       "qabul_mezoni": [
         "bir foydalanuvchi bitta obyektga bir marta shikoyat qiladi",
         "N ta shikoyat avtomatik navbatga ko'taradi"
-      ]
+      ],
+      "tugatilgan": "2026-08-28",
+      "eslatma": "Bu task 3 ta ESKI, JIM xatoni fosh qildi (uchalasi ham D2-T1 doirasidan tashqarida edi, lekin tuzatilmasa taskning ma'nosi qolmasdi): flash xabarlar hech qachon ko'rsatilmagan; Solution.visible() ota-postni tekshirmagan; Tailwind CSS hech qayerda (CI/Docker) qurilmagan.",
+      "natija": {
+        "yaratilgan": [
+          "apps/moderation/models.py — Report, ReportReason, ReportStatus, ESKALATSIYA_CHEGARASI=3",
+          "apps/moderation/services.py — shikoyat_yuborish / eskalatsiya_qilinganmi / shikoyatni_yopish",
+          "apps/moderation/forms.py — ReportForm",
+          "apps/moderation/views.py — dard_shikoyat, yechim_shikoyat (modal emas, alohida sahifa)",
+          "apps/moderation/admin.py — vaqtinchalik navbat (D2-T2 gacha)",
+          "apps/moderation/migrations/0001_initial.py",
+          "templates/moderation/shikoyat.html",
+          "templates/components/_messages.html — flash xabarlar (YANGI; 'topilgan_xatolar' ga qarang)",
+          "apps/moderation/tests.py — 31 test"
+        ],
+        "tekshirilgan": [
+          "qabul mezoni: bir foydalanuvchi bitta obyektga bir marta — BAZA cheklovi bilan, kodda emas",
+          "qabul mezoni: N=3 shikoyat avtomatik navbatga ko'taradi",
+          "ESKALATSIYA KONTENTNI YASHIRMAYDI — mahsulot qarori ('qarorlar' ga qarang)",
+          "maqsadsiz / ikki maqsadli shikoyat BAZADA yozilmaydi (CheckConstraint)",
+          "o'z kontentiga shikoyat qilib bo'lmaydi (PermissionDenied)",
+          "takroriy shikoyat 500 emas, ma'noli xabar beradi",
+          "shikoyatchi hisobi o'chsa shikoyat QOLADI (SET_NULL — audit uchun)",
+          "XAVF sababi shoshilinch deb belgilanadi (D2-T6 ga tayyorgarlik)",
+          "yopilgan shikoyatlar eskalatsiya sanog'iga qo'shilmaydi",
+          "foydalanuvchiga eskalatsiya chegarasi AYTILMAYDI (kelishib shikoyat qilishga undamaslik uchun)",
+          "JONLI BRAUZER: yuborish -> yo'naltirish -> yashil tasdiq (yorug' va qorong'i rejim)",
+          "JONLI BRAUZER: takroriy shikoyat -> inline role=alert xato, forma saqlanadi",
+          "JONLI BRAUZER: konsolda 0 xato"
+        ],
+        "qarorlar": [
+          "ESKALATSIYA KONTENTNI YASHIRMAYDI. Dard.uz'da odamlar eng og'ir shaxsiy holatlarini yozadi. Kelishib olgan 3 kishi istalgan postni o'chira olsa, bu qurolga aylanadi — va zarba aynan eng himoyasiz foydalanuvchiga tegadi. Shuning uchun shikoyat NAVBATDAGI o'rinni o'zgartiradi, KO'RINISHNI emas. Shoshilinch olib tashlash moderator qo'lida (D2-T2).",
+          "Modal EMAS, alohida sahifa: batafsil sahifada 15 ta yechim bo'lishi mumkin — har biriga modal = 15 marta takrorlangan markup va 15 ta yashirin dialog. Alohida sahifa JS'siz ishlaydi va qoidalar matniga joy beradi. Keyinchalik hx-get bilan dialogga yuklash mumkin, manzil o'zgarmaydi.",
+          "Shikoyat mazmuni adminda READ-ONLY: u foydalanuvchi yuborgan dalil; moderator faqat QAROR maydonlarini to'ldiradi.",
+          "Shikoyat O'CHIRILMAYDI (has_delete_permission=False) — u audit zanjirining bir qismi (D2-T7). Noto'g'ri shikoyat 'rad etildi' deb yopiladi.",
+          "Adminda ochiq shikoyatlar DOIM tepada: standart -created_at bilan yopilganlar aralashadi va ochiq shikoyat 2-sahifaga tushib ko'rinmay qolishi mumkin.",
+          "Flash xabar TOAST EMAS, statik role=status blok: yuborilgandan keyingi tasdiq oqimning bir qismi va JavaScript yuklanmasa ham ko'rinishi kerak."
+        ],
+        "topilgan_xatolar": [
+          "FLASH XABARLAR HECH QACHON KO'RSATILMAGAN. D1-T9 dan beri kodda 6 ta messages.success() bor edi (\"Dardingiz e'lon qilindi\", \"Yechim qabul qilindi\", \"Qabul bekor qilindi\", \"Yechimingiz qo'shildi\", \"O'zgarishlar saqlandi\"), lekin base.html da ularni chiqaradigan blok YO'Q edi — hammasi jimgina yo'qolardi. NEGA KO'RINMADI: INSTALLED_APPS, middleware va messages kontekst-protsessori BOSHIDANOQ to'g'ri sozlangan; messages.success() xatosiz ishlaydi va response.context['messages'] ham to'ladi. Yagona uzilgan halqa — HTML. Ya'ni 'sozlama to'g'ri' degani 'xususiyat ishlaydi' degani emas. Tuzatildi: templates/components/_messages.html + base.html. Guard: test_templates.py::XabarlarTests (4 test, RENDER QILINGAN HTML ni tekshiradi).",
+          "Solution.objects.visible() OTA-POSTNI TEKSHIRMAGAN. ModeratedQuerySet.visible() yozuvning O'Z moderation_status ini ko'radi; muammo yashirilsa (yoki yumshoq o'chirilsa) undagi yechimlarning holati VISIBLE bo'lib qolaveradi — ya'ni ular hamon 'ko'rinadigan' edi. D1-T5 dan beri shunday. NEGA SEZILMADI: yechimlar faqat muammo sahifasi orqali olinardi, muammo esa avtorizatsiyadan o'tardi. D2-T1 birinchi marta yechimni TO'G'RIDAN-TO'G'RI pk bo'yicha oladigan ommaviy GET-manzil qo'shdi (/shikoyat/yechim/<pk>/) va D2-T3 guard'i darhol yiqildi — ya'ni xato kodda emas, KIRISH YO'LIDA yashiringan edi. Xuddi shu xato 3 ta eski POST-ko'rinishda ham bor edi (ovoz/qabul/bekor) — guard faqat GET aylangani uchun ular jim qolgan. Tuzatildi: SolutionQuerySet.visible() — bitta joyda, chaqiruv joylariga complaint__moderation_status tarqatilmagan; + ozi_korinadigan() muallif o'z yashirilgan postini ko'rgan holat uchun (aks holda muallifga javoblar butunlay yo'qolardi). 4 ta regressiya testi.",
+          "TAILWIND CSS HECH QAYERDA QURILMAGAN. static/css/app.css .gitignore da (qurilish artefakti). CI'da Node qadami YO'Q edi, Dockerfile'da CSS bosqichi YO'Q edi — ya'ni toza checkout'dan qurilgan va GHCR ga ketayotgan obrazda BIRORTA HAM stil bo'lmasdi. Hech qanday belgi bermasdi: obraz muvaffaqiyatli quriladi va CI yashil, chunki obraz hech qachon ISHGA TUSHIRILMAYDI. Lokalda esa fayl mavjud bo'lgani uchun COPY . . uni olib kirardi va hammasi joyida ko'rinardi. Tuzatildi: Dockerfile'ga node:22 'css' bosqichi (npm ci -> npm run build -> COPY --from=css, COPY . . DAN KEYIN) + CI pytest ishiga 'Tailwind CSS' qadami. Docker bosqichi alohida qurib tekshirildi.",
+          "space-y-5 va space-y-2.5 qurilgan CSS'da YO'Q edi (shablon yozilgan, npm run build ishlatilmagan) — forma maydonlari orasida bo'shliq UMUMAN yo'q edi (margin 0). Ko'z bilan 'biroz siqiq' bo'lib ko'rinardi; faqat getBoundingClientRect() bilan o'lchaganda topildi. Guard: test_statik.py::TailwindBuildTests — shablondagi HAR BIR sinf qurilgan CSS'da borligini tekshiradi (447 token, 1 ta hook istisnosi: yana-yuklash).",
+          "Admin sinfida IKKITA get_queryset bor edi — Python ikkinchisi bilan birinchisini JIMGINA almashtiradi va hech qanday test yiqilmaydi (select_related('resolved_by') yo'qolib ketardi). mypy [no-redef] ushladi — ya'ni darvozalar test to'plamidan alohida qiymatga ega.",
+          "Testda apostrof: Django shablonda ' ni &#x27; ga aylantiradi — yorliqni xom holda qidirish yolg'on xato beradi. django.utils.html.escape() bilan tuzatildi.",
+          "Testda \"chegara soni javobda yo'q\" tekshiruvi CSS sinf nomlaridagi raqamlarga (gap-3, mb-3) urilardi — endi xabarning O'Z MATNI tekshiriladi."
+        ],
+        "guardlar_isbotlangan": "Har bir yangi guard ATAYLAB buzib tekshirildi: SolutionQuerySet.visible() dan ota-post sharti olib tashlanganda 4 test yiqildi (guard'ning o'zi + 3 regressiya); base.html dan _messages.html include'i olib tashlanganda 4 test yiqildi; eskirgan CSS qaytarilganda TailwindBuildTests yiqildi.",
+        "olchangan_holat": {
+          "testlar": 432,
+          "qamrov_foiz": 95.66,
+          "moderation_testlari": 31,
+          "yangi_guard_testlar": 9,
+          "pre_commit_hooklar": 17
+        },
+        "keyingi_uchun_eslatma": [
+          "D2-T2: admin ATAYLAB vaqtinchalik — to'liq navbat interfeysi kerak. ReportQuerySet.ochiq() va .eskalatsiya_qilinganlar() tayyor.",
+          "D2-T6: ReportReason.XAVF va Report.shoshilinchmi allaqachon bor — inqiroz oqimi shularga ulanadi.",
+          "D2-T7: Report o'chirilmaydi, resolved_by/resolved_at to'ldiriladi — audit jurnaliga tayyor.",
+          "D2-T2/D2-T11 uchun ochiq savol: complaint_edit muallifga YASHIRILGAN postini tahrirlashga ruxsat beradi. Ko'rinish sizishi emas, lekin moderatsiya siyosati savoli.",
+          "TO'LIQ EMAS (bilib qo'yilgan): tailwind/input.css tahrirlanib qurilmasa TailwindBuildTests buni ushlamaydi — eskirgan app.css da komponent sinflari baribir bor. To'liq kafolat: CI'da qayta qurib `git diff --exit-code` qilish."
+        ]
+      }
     },
     {
       "id": "D2-T2",

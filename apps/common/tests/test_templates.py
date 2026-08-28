@@ -8,7 +8,16 @@ import re
 from pathlib import Path
 
 from django.conf import settings
-from django.test import Client, SimpleTestCase, TestCase, override_settings
+from django.contrib.messages import constants as message_constants
+from django.contrib.messages.storage.base import Message
+from django.template.loader import render_to_string
+from django.test import (
+    Client,
+    RequestFactory,
+    SimpleTestCase,
+    TestCase,
+    override_settings,
+)
 
 TEMPLATES_DIR = Path(settings.BASE_DIR) / "templates"
 HTML_IZOH = re.compile(r"<!--(.*?)-->", re.DOTALL)
@@ -174,3 +183,68 @@ class SahifaRenderTests(TestCase):
             c = self.yol_mijozi(yol)
             with self.subTest(yol=yol):
                 self.assertIn('class="skip-link"', c.get(yol).content.decode())
+
+
+class XabarlarTests(TestCase):
+    """⚠️ D2-T1 DA TOPILGAN XATO — `messages` HECH QACHON KO'RSATILMAGAN.
+
+    D1-T9 dan beri kodda 6 ta `messages.success(...)` chaqiruvi bor edi
+    ("Dardingiz e'lon qilindi", "Yechim qabul qilindi", ...), lekin
+    `base.html` da ularni chiqaradigan blok YO'Q edi. Hammasi jimgina
+    yo'qolardi: foydalanuvchi hech qanday tasdiq ko'rmasdi.
+
+    ⚠️ NEGA UZOQ VAQT KO'RINMADI — sabab takrorlanuvchan:
+       `INSTALLED_APPS`, middleware va `messages` kontekst-protsessori
+       BOSHIDANOQ to'g'ri sozlangan edi. `messages.success()` xatosiz
+       ishlaydi, `response.context["messages"]` ham to'ladi. Yagona
+       uzilgan halqa — HTML. Ya'ni "sozlama to'g'ri" degani "xususiyat
+       ishlaydi" degani emas.
+
+    Shuning uchun bu yerdagi testlar RENDER QILINGAN HTML ni tekshiradi.
+    """
+
+    def test_flash_xabar_HTML_ga_chiqadi(self):
+        so_rov = RequestFactory().get("/")
+        matn = render_to_string(
+            "base.html",
+            {"messages": [Message(message_constants.SUCCESS, "SINOVXABARIMATNI")]},
+            request=so_rov,
+        )
+
+        self.assertIn(
+            "SINOVXABARIMATNI",
+            matn,
+            "base.html `messages` ni ko'rsatmayapti — "
+            "`components/_messages.html` include qilinganmi?",
+        )
+
+    def test_xabar_darajasi_MARKUPDA_ajratiladi(self):
+        """Muvaffaqiyat va xato bir xil ko'rinmasin (rang + `data-message`)."""
+        so_rov = RequestFactory().get("/")
+        chiqishlar = {}
+        for daraja, nom in (
+            (message_constants.SUCCESS, "success"),
+            (message_constants.ERROR, "error"),
+        ):
+            chiqishlar[nom] = render_to_string(
+                "base.html",
+                {"messages": [Message(daraja, "XABAR")]},
+                request=so_rov,
+            )
+            self.assertIn(f'data-message="{nom}"', chiqishlar[nom])
+
+        self.assertNotEqual(chiqishlar["success"], chiqishlar["error"])
+
+    def test_xabar_ekran_oquvchiga_ELON_qilinadi(self):
+        """`role="status"` — fokusni o'g'irlamasdan e'lon qiladi."""
+        matn = render_to_string(
+            "base.html",
+            {"messages": [Message(message_constants.INFO, "XABAR")]},
+            request=RequestFactory().get("/"),
+        )
+        self.assertIn('role="status"', matn)
+
+    def test_xabarsiz_sahifada_BOSH_blok_qolmaydi(self):
+        """Xabar yo'q bo'lsa markup ham bo'lmasin (bo'sh joy qoldirmasin)."""
+        matn = render_to_string("base.html", {}, request=RequestFactory().get("/"))
+        self.assertNotIn('role="status"', matn)

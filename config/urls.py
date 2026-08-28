@@ -28,6 +28,7 @@ urlpatterns += [
     path("", include("apps.accounts.urls")),
     path("", include("apps.complaints.urls")),
     path("", include("apps.solutions.urls")),
+    path("", include("apps.moderation.urls")),
 ]
 
 # ⚠️ VAQTINCHALIK (D0-T6): hali yozilmagan sahifalarning maketi.
