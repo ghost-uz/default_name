@@ -222,7 +222,22 @@ JURNALGA_YOZADIGAN_XIZMATLAR = {
     # ro'yxatga qo'shishga majbur qildi (testlari `tests_bloklash.py` da).
     "foydalanuvchini_cheklash",
     "cheklovni_yechish",
+    # D3-T5 — `apps/accounts/services.py` da (testlari `tests_ekspert.py`).
+    "ekspertni_tasdiqlash",
+    "ekspert_arizasini_rad_etish",
+    "ekspert_maqomini_bekor_qilish",
 }
+
+# ⚠️⚠️ GUARD BUTUN LOYIHANI SKANERLAYDI, faqat `moderation` NI EMAS.
+#
+#    Birinchi versiyada u faqat `apps/moderation/services.py` ni o'qirdi
+#    va bu uning O'Z MAQSADIDAGI TESHIK edi: D3-T5 da staff xizmatlari
+#    `apps/accounts/services.py` da paydo bo'ldi va guard ularni
+#    KO'RMASDI — ya'ni "yangi staff xizmati jurnalsiz qolmasin" degan
+#    va'da bajarilmasdi.
+#
+#    Endi har ilovaning `services.py` fayli tekshiriladi.
+XIZMAT_FAYLLARI = sorted(pathlib.Path("apps").glob("*/services.py"))
 
 
 def test_HAR_BIR_staff_xizmati_test_bilan_QOPLANGAN():
@@ -233,28 +248,39 @@ def test_HAR_BIR_staff_xizmati_test_bilan_QOPLANGAN():
     Guard `services.py` dagi staff-himoyali funksiyalarni AST bilan
     topadi va har biri yuqoridagi ro'yxatda borligini talab qiladi.
     """
-    manba = pathlib.Path("apps/moderation/services.py").read_text(encoding="utf-8")
-    daraxt = ast.parse(manba)
 
     def staff_tekshiruvi_bormi(tugun: ast.FunctionDef) -> bool:
+        """⚠️ Ikki naqsh: ochiq `is_staff` satri yoki umumiy yordamchi.
+
+        Yordamchining NOMI ilovadan ilovaga farq qiladi
+        (`_moderatorni_tekshirish`, `_staffni_tekshirish`), shuning uchun
+        nom bo'yicha emas, NAQSH bo'yicha qidiriladi: `_...tekshirish`
+        ko'rinishidagi ichki chaqiruv.
+        """
         for ichki in ast.walk(tugun):
             if (
                 isinstance(ichki, ast.Call)
                 and isinstance(ichki.func, ast.Name)
-                and ichki.func.id == "_moderatorni_tekshirish"
+                and ichki.func.id.startswith("_")
+                and ichki.func.id.endswith("tekshirish")
             ):
                 return True
             if isinstance(ichki, ast.Constant) and ichki.value == "is_staff":
                 return True
         return False
 
-    topilgan = {
-        t.name
-        for t in daraxt.body
-        if isinstance(t, ast.FunctionDef)
-        and not t.name.startswith("_")
-        and staff_tekshiruvi_bormi(t)
-    }
+    assert XIZMAT_FAYLLARI, "Hech qanday services.py topilmadi — glob buzilganmi?"
+
+    topilgan: set[str] = set()
+    for yol in XIZMAT_FAYLLARI:
+        daraxt = ast.parse(yol.read_text(encoding="utf-8"))
+        topilgan |= {
+            t.name
+            for t in daraxt.body
+            if isinstance(t, ast.FunctionDef)
+            and not t.name.startswith("_")
+            and staff_tekshiruvi_bormi(t)
+        }
 
     assert topilgan == JURNALGA_YOZADIGAN_XIZMATLAR, (
         "Staff xizmatlari ro'yxati o'zgardi.\n"

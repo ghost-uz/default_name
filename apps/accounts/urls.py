@@ -13,6 +13,28 @@ urlpatterns = [
     path("chiqish/", views.logout_view, name="logout"),
     # Shartlarga rozilik (D2-T10)
     path("rozilik/", views.rozilik, name="rozilik"),
+    # Ekspert tasdiqlash oqimi (D3-T5)
+    path("ekspert/ariza/", views.ekspert_ariza, name="ekspert_ariza"),
+    # ⚠️ Staff yo'llari `moderatsiya/` prefiksida — moderator ularni
+    #    bitta joyda kutadi, garchi kod `accounts` ilovasida bo'lsa ham.
+    path(
+        "moderatsiya/ekspertlar/",
+        views.ekspert_navbati,
+        name="ekspert_navbati",
+    ),
+    # ⚠️⚠️ MAXFIY HUJJAT — bu manzil yagona kirish yo'li va u staff'ga
+    #    cheklangan. Fayl `MAXFIY_ROOT` da, ya'ni veb-server uni
+    #    to'g'ridan-to'g'ri uzata olmaydi.
+    path(
+        "moderatsiya/ekspert/<int:pk>/hujjat/",
+        views.ekspert_hujjati,
+        name="ekspert_hujjati",
+    ),
+    path(
+        "moderatsiya/ekspert/<int:pk>/qaror/",
+        views.ekspert_qarori,
+        name="ekspert_qarori",
+    ),
     # ⚠️ Profil ENG OXIRIDA turishi kerak (`@<username>/` juda keng
     #    naqsh) — lekin bu faylda u boshqa yo'llardan keyin keladi va
     #    hammasi `/@` prefiksi bilan farqlanadi, ya'ni to'qnashuv yo'q.

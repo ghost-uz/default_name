@@ -434,6 +434,9 @@ class AuditAction(models.TextChoices):
     HISOB_OCHIRILDI = "hisob_ochirildi", "Hisob o'chirildi"
     FOYDALANUVCHI_CHEKLANDI = "foydalanuvchi_cheklandi", "Foydalanuvchi cheklandi"
     CHEKLOV_YECHILDI = "cheklov_yechildi", "Cheklov yechildi"
+    EKSPERT_TASDIQLANDI = "ekspert_tasdiqlandi", "Ekspert tasdiqlandi"
+    EKSPERT_RAD_ETILDI = "ekspert_rad_etildi", "Ekspert arizasi rad etildi"
+    EKSPERT_BEKOR_QILINDI = "ekspert_bekor_qilindi", "Ekspert maqomi bekor qilindi"
 
 
 class AuditQuerySet(models.QuerySet):

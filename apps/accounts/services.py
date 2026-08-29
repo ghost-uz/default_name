@@ -10,12 +10,15 @@ import logging
 import re
 import secrets
 
-from django.core.exceptions import ValidationError
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import IntegrityError, models, transaction
 from django.utils import timezone
 from django.utils.text import slugify
 
-from .models import User
+from apps.moderation.audit import audit
+from apps.moderation.models import AuditAction
+
+from .models import ExpertProfile, TasdiqHolati, User
 from .validators import RESERVED_USERNAMES, USERNAME_RE, validate_username
 
 log = logging.getLogger(__name__)
@@ -413,3 +416,205 @@ def blokni_yechish(*, user, kim) -> None:
     from .models import UserBlock
 
     UserBlock.objects.filter(user=user, blocked=kim).delete()
+
+
+# ===========================================================================
+# Ekspert tasdiqlash oqimi (D3-T5)
+# ===========================================================================
+def _staffni_tekshirish(moderator) -> None:
+    if not getattr(moderator, "is_staff", False):
+        raise PermissionDenied("Faqat staff ekspert arizasini ko'ra oladi.")
+
+
+def _hujjatni_ochirish(profil) -> bool:
+    """⚠️⚠️ HUJJAT QAROR BILAN BIRGA O'CHIRILADI (foydalanuvchi qarori).
+
+    Saqlanmagan ma'lumot sizib chiqa olmaydi. Jurnalda "hujjat
+    tekshirildi, kim, qachon, qanday qaror" qoladi (D2-T7) — bu
+    "tasdiqlash jarayoni bor edi" degan da'voni isbotlash uchun
+    yetarli, faylning o'zi esa buning uchun kerak emas.
+
+    ⚠️ `save=False`: chaqiruvchi profilni baribir saqlaydi va ikki
+       marta yozish ortiqcha so'rov bo'lardi.
+    """
+    if not profil.hujjat:
+        return False
+    profil.hujjat.delete(save=False)
+    return True
+
+
+@transaction.atomic
+def ekspert_arizasi_topshirish(*, profil) -> ExpertProfile:
+    """Foydalanuvchi arizani ko'rikka topshiradi.
+
+    ⚠️ HUJJATSIZ TOPSHIRIB BO'LMAYDI — qabul mezoni "hujjat yuklash va
+       staff ko'rigi bor" deydi. Hujjatsiz ariza staff uchun tekshirib
+       bo'lmaydigan narsa: u faqat "ishonaman/ishonmayman" degan
+       taxminni qoldirardi va tasdiq yana yolg'onga aylanardi.
+
+    ⚠️ Allaqachon TASDIQLANGAN profil qayta topshirilmaydi: bu
+       tasdiqni jimgina "ko'rib chiqilmoqda" holatiga tushirardi va
+       odam nishonini sababsiz yo'qotardi.
+    """
+    if profil.verification_status == TasdiqHolati.TASDIQLANGAN:
+        raise ValidationError("Profilingiz allaqachon tasdiqlangan.")
+    if not profil.hujjat:
+        raise ValidationError("Tasdiqlovchi hujjat yuklang.")
+
+    profil.verification_status = TasdiqHolati.KUTILMOQDA
+    profil.topshirilgan_at = timezone.now()
+    profil.rad_sababi = ""
+    profil.save(
+        update_fields=[
+            "verification_status",
+            "topshirilgan_at",
+            "rad_sababi",
+            "updated_at",
+        ]
+    )
+    log.info("Ekspert arizasi topshirildi: user=%s", profil.user_id)
+    return profil
+
+
+@transaction.atomic
+def ekspertni_tasdiqlash(*, moderator, profil, izoh: str = "") -> ExpertProfile:
+    """Staff arizani tasdiqlaydi.
+
+    ⚠️⚠️ `User.is_expert` FAQAT SHU YERDA `True` bo'ladi. Bayroq
+       keshlangan (D0-T2) va uning haqiqiy manbai — shu profil.
+       Boshqa yo'l bo'lsa, task `nega` bo'limidagi "tasdiqlash
+       jarayonisiz yolg'on nishon" muammosi qaytardi.
+    """
+    _staffni_tekshirish(moderator)
+
+    hujjat_bormi = _hujjatni_ochirish(profil)
+
+    profil.verification_status = TasdiqHolati.TASDIQLANGAN
+    profil.verified_by = moderator
+    profil.verified_at = timezone.now()
+    profil.rad_sababi = ""
+    profil.save(
+        update_fields=[
+            "verification_status",
+            "verified_by",
+            "verified_at",
+            "rad_sababi",
+            "hujjat",
+            "updated_at",
+        ]
+    )
+    _bayroqni_moslash(profil)
+
+    audit(
+        action=AuditAction.EKSPERT_TASDIQLANDI,
+        obyekt=f"ekspert #{profil.user_id}",
+        actor=moderator,
+        izoh=izoh,
+        soha=profil.specialty_id,
+        hujjat_tekshirildi=hujjat_bormi,
+    )
+    log.info("Ekspert tasdiqlandi: user=%s moderator=%s", profil.user_id, moderator.pk)
+    return profil
+
+
+@transaction.atomic
+def ekspert_arizasini_rad_etish(*, moderator, profil, sabab: str) -> ExpertProfile:
+    """Staff arizani rad etadi.
+
+    ⚠️ SABAB MAJBURIY va u FOYDALANUVCHIGA KO'RSATILADI. Sababsiz rad
+       etish odamni "nima noto'g'ri edi?" degan javobsiz savol bilan
+       qoldiradi — u qayta urinolmaydi va bu D2-T11 dagi "sababsiz
+       cheklov" xatosining aynan o'zi.
+    """
+    _staffni_tekshirish(moderator)
+
+    sabab = sabab.strip()
+    if not sabab:
+        raise ValidationError(
+            "Rad etish sababini yozing — u foydalanuvchiga ko'rinadi."
+        )
+
+    hujjat_bormi = _hujjatni_ochirish(profil)
+
+    profil.verification_status = TasdiqHolati.RAD_ETILGAN
+    profil.verified_by = moderator
+    profil.verified_at = timezone.now()
+    profil.rad_sababi = sabab[:300]
+    profil.save(
+        update_fields=[
+            "verification_status",
+            "verified_by",
+            "verified_at",
+            "rad_sababi",
+            "hujjat",
+            "updated_at",
+        ]
+    )
+    _bayroqni_moslash(profil)
+
+    audit(
+        action=AuditAction.EKSPERT_RAD_ETILDI,
+        obyekt=f"ekspert #{profil.user_id}",
+        actor=moderator,
+        izoh=sabab,
+        hujjat_tekshirildi=hujjat_bormi,
+    )
+    return profil
+
+
+@transaction.atomic
+def ekspert_maqomini_bekor_qilish(*, moderator, profil, sabab: str) -> ExpertProfile:
+    """Tasdiqlangan maqomni bekor qiladi (xato tasdiq yoki suiisteʼmol).
+
+    ⚠️ MODERATOR CHEKLOVI BILAN ARALASHTIRMANG (D2-T11).
+       Cheklov — XULQ haqida ("bu odam qoidani buzdi"), bu esa MALAKA
+       haqida ("bu odam aslida yurist emas ekan"). Foydalanuvchi
+       qarori: cheklangan ekspert nishonini YO'QOTMAYDI, chunki uning
+       eski javoblari haqiqatan malakali bo'lishi mumkin. Maqomni
+       faqat MALAKA yolg'on bo'lsa bekor qilamiz — va bu alohida,
+       ongli harakat.
+    """
+    _staffni_tekshirish(moderator)
+
+    sabab = sabab.strip()
+    if not sabab:
+        raise ValidationError("Bekor qilish sababini yozing.")
+
+    profil.verification_status = TasdiqHolati.RAD_ETILGAN
+    profil.verified_by = moderator
+    profil.verified_at = timezone.now()
+    profil.rad_sababi = sabab[:300]
+    profil.save(
+        update_fields=[
+            "verification_status",
+            "verified_by",
+            "verified_at",
+            "rad_sababi",
+            "updated_at",
+        ]
+    )
+    _bayroqni_moslash(profil)
+
+    audit(
+        action=AuditAction.EKSPERT_BEKOR_QILINDI,
+        obyekt=f"ekspert #{profil.user_id}",
+        actor=moderator,
+        izoh=sabab,
+    )
+    log.warning("Ekspert maqomi bekor qilindi: user=%s", profil.user_id)
+    return profil
+
+
+def _bayroqni_moslash(profil) -> None:
+    """`User.is_expert` ni profil holatiga moslaydi.
+
+    ⚠️ BITTA JOY. Bayroqni har xizmatda qo'lda qo'ysak, bir kuni
+       bittasi unutilardi va odam tasdiqsiz "Ekspert" bo'lib qolardi
+       (yoki aksincha, tasdiqlangan odam nishonsiz).
+
+    ⚠️ `update()` bilan — `profil.user` obyektini saqlash boshqa
+       maydonlarni ham yozib yuborishi mumkin (poyga holati).
+    """
+    kerakli = profil.verification_status == TasdiqHolati.TASDIQLANGAN
+    User.objects.filter(pk=profil.user_id).update(is_expert=kerakli)
+    profil.user.is_expert = kerakli

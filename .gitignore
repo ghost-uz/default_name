@@ -22,6 +22,12 @@ htmlcov/
 *.log
 db.sqlite3
 /media/
+
+# ⚠️⚠️ MAXFIY FAYLLAR (D3-T5) — ekspert tasdiqlash hujjatlari.
+#    Repo OMMAVIY. Bu qator bo'lmasa `git add -A` birovning diplomini
+#    GitHub'ga chiqarardi va tarixdan o'chirish deyarli imkonsiz.
+#    Guard: apps/common/tests/test_maxfiy.py
+/maxfiy/
 /staticfiles/
 # Tailwind chiqishi — qurilgan fayl, manba tailwind/input.css
 /static/css/app.css

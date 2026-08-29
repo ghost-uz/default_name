@@ -507,10 +507,41 @@ STATICFILES_DIRS = [BASE_DIR / "static"]  # manba (Tailwind chiqishi shu yerda)
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
+# --------------------------------------------------------------------------
+# ⚠️⚠️ MAXFIY FAYLLAR — `MEDIA_ROOT` DAN TASHQARIDA (D3-T5)
+# --------------------------------------------------------------------------
+# `/media/` nginx tomonidan AVTORIZATSIYASIZ va `Cache-Control: public`
+# bilan uzatiladi (`docker/nginx.conf`), DEBUG rejimida esa Django uni
+# `static()` bilan ochadi. Ya'ni `MEDIA_ROOT` ga tushgan HAR QANDAY fayl —
+# havolani bilgan har kimga ochiq.
+#
+# Ekspert tasdiqlash hujjati (diplom, litsenziya) bunday joyda TURA
+# OLMAYDI: fayl nomi sizsa yoki taxmin qilinsa, odamning hujjati ochiq
+# internetda bo'lardi.
+#
+# Shuning uchun alohida ildiz + uni faqat `apps/accounts/views.py::
+# ekspert_hujjati` ko'rinishi (staff-only) o'qiydi. Veb-server bu
+# katalogni UMUMAN bilmaydi.
+#
+# ⚠️ DEPLOY'DA: bu katalog konteyner ichida bo'lsa, qayta joylashda
+#    yo'qoladi — u `docker-compose` da alohida volume bo'lishi kerak.
+#    Lekin hujjatlar qaror bilan birga O'CHIRILADI (D3-T5 qarori), ya'ni
+#    u yerda uzoq turadigan narsa yo'q.
+MAXFIY_ROOT = BASE_DIR / "maxfiy"
+
 STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
     "staticfiles": {
         "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+    # ⚠️⚠️ MAXSUS SINF, oddiy `FileSystemStorage` EMAS — o'lchangan sabab.
+    #    `base_url` berilmasa Django uni `MEDIA_URL` ga QAYTARADI
+    #    (`_value_or_setting`), ya'ni `.url` ochiq ko'rinishdagi
+    #    `/media/ekspert/...` havolasini berardi. `MaxfiyStorage.url()`
+    #    esa ochiq rad etadi — batafsil: `apps/common/storage.py`.
+    "maxfiy": {
+        "BACKEND": "apps.common.storage.MaxfiyStorage",
+        "OPTIONS": {"location": MAXFIY_ROOT},
     },
 }
 

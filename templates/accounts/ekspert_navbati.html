@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+
+{% block title %}Ekspert arizalari — Dard.uz{% endblock %}
+{% block description %}Tasdiqlash kutayotgan ekspert arizalari.{% endblock %}
+
+{% comment %}
+  Ekspert arizalari navbati (D3-T5) — staff uchun.
+
+  ⚠️ Moderatsiya navbati (D2-T2) bilan BIR XIL naqsh: kontent va
+     tugmalar BITTA kartada, ya'ni moderator qaror uchun boshqa sahifa
+     ochmaydi. Farqi — bu yerda kontent o'rniga MALAKA da'vosi va uni
+     tasdiqlaydigan hujjat turadi.
+{% endcomment %}
+
+{% block content %}
+<div class="mx-auto max-w-[900px] px-4 py-6 lg:px-6">
+  <main id="main">
+    <div class="mb-5 flex flex-wrap items-end justify-between gap-3">
+      <div>
+        <h1 class="text-2xl font-extrabold">Ekspert arizalari</h1>
+        <p class="mt-1 text-[15px] text-fg-muted">
+          {% if arizalar %}{{ arizalar|length }} ta ariza kutmoqda{% else %}Kutayotgan ariza yo'q.{% endif %}
+        </p>
+      </div>
+      <a href="{% url 'moderatsiya_navbat' %}" class="btn-outline btn-sm">Moderatsiya navbati</a>
+    </div>
+
+    <div class="flex flex-col gap-3">
+      {% for ariza in arizalar %}
+        <article class="card overflow-hidden">
+          <div class="border-b border-line px-4 py-3">
+            <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px]">
+              <a href="{% url 'profile' ariza.user.username %}" class="font-semibold hover:text-primary">
+                @{{ ariza.user.username }}
+              </a>
+              <span class="tnum text-fg-muted">{{ ariza.user.karma_cached }} karma</span>
+              <span class="text-fg-muted" aria-hidden="true">·</span>
+              <span class="chip !py-0.5">{{ ariza.specialty.name }}</span>
+              <span class="tnum text-fg-muted">{{ ariza.experience_years }} yil tajriba</span>
+              <span class="text-fg-muted" aria-hidden="true">·</span>
+              <time class="text-fg-muted" datetime="{{ ariza.topshirilgan_at|date:'c' }}">
+                {{ ariza.topshirilgan_at|timesince }} oldin topshirilgan
+              </time>
+            </div>
+          </div>
+
+          {% if ariza.kasbiy_tavsif %}
+            <div class="prose-body max-h-48 overflow-y-auto px-4 py-3 text-[15px]">{{ ariza.kasbiy_tavsif|linebreaks }}</div>
+          {% endif %}
+
+          <div class="border-t border-line bg-surface-2 px-4 py-3">
+            {% comment %}
+              ⚠️⚠️ HUJJAT HAVOLASI — YAGONA KIRISH YO'LI va u staff'ga
+                 cheklangan. Fayl `MAXFIY_ROOT` da yotadi: nginx u haqda
+                 bilmaydi va `fayl.url` chaqirilsa Django xato beradi
+                 (`base_url` ataylab berilmagan).
+            {% endcomment %}
+            {% if ariza.hujjat %}
+              <a href="{% url 'ekspert_hujjati' ariza.pk %}" target="_blank" rel="noopener"
+                 class="btn-outline btn-sm">
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+                Hujjatni ochish
+              </a>
+              <p class="mt-1.5 text-[12px] text-fg-muted">
+                Qaror qabul qilinganda fayl o'chiriladi — jurnalda faqat
+                «hujjat tekshirildi» yozuvi qoladi.
+              </p>
+            {% else %}
+              <p class="text-[14px] text-danger">⚠ Hujjat yo'q — bu holat bo'lmasligi kerak edi.</p>
+            {% endif %}
+          </div>
+
+          <form method="post" action="{% url 'ekspert_qarori' ariza.pk %}" class="border-t border-line px-4 py-3">
+            {% csrf_token %}
+            <label class="sr-only" for="izoh-{{ ariza.pk }}">Izoh yoki rad etish sababi</label>
+            <input class="input mb-2.5 !py-2 text-sm" type="text" id="izoh-{{ ariza.pk }}" name="izoh"
+                   maxlength="300"
+                   placeholder="Rad etish uchun SABAB majburiy — u foydalanuvchiga ko'rsatiladi" />
+            <div class="flex flex-wrap gap-2">
+              <button type="submit" name="qaror" value="tasdiqlash" class="btn btn-sm bg-solved text-white hover:opacity-90">
+                Tasdiqlash
+              </button>
+              <button type="submit" name="qaror" value="rad_etish" class="btn-outline btn-sm !border-danger/50 !text-danger">
+                Rad etish
+              </button>
+            </div>
+          </form>
+        </article>
+      {% empty %}
+        {% include "components/_empty_state.html" with title="Ariza yo'q" text="Hozircha tasdiqlash kutayotgan ekspert arizasi yo'q." %}
+      {% endfor %}
+    </div>
+  </main>
+</div>
+{% endblock %}

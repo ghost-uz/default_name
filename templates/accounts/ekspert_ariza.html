@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+
+{% block title %}Ekspert bo'lish — Dard.uz{% endblock %}
+{% block description %}Malakangizni tasdiqlang va ekspert nishonini oling.{% endblock %}
+
+{% comment %}
+  Ekspert arizasi (D3-T5).
+
+  ⚠️ Holat KO'RSATILADI, yashirilmaydi: odam arizasi qaysi bosqichda
+     ekanini bilishi kerak. Rad etilgan bo'lsa SABAB ham ko'rinadi —
+     usiz u nima tuzatishni bilmaydi va qayta urinolmaydi.
+{% endcomment %}
+
+{% block content %}
+<main id="main" class="mx-auto max-w-[760px] px-4 py-6 lg:px-6">
+  <h1 class="text-2xl font-extrabold">Ekspert bo'lish</h1>
+  <p class="mt-1.5 text-[15px] leading-relaxed text-fg-muted">
+    Malakangizni tasdiqlang — javoblaringiz yonida «Ekspert» nishoni chiqadi
+    va odamlar kimning maslahatini o'qiyotganini biladi.
+  </p>
+
+  {% if profil %}
+    {# ---------------- Joriy holat ---------------- #}
+    {% if profil.verification_status == "kutilmoqda" %}
+      <div class="card mt-5 border-boom/40 bg-boom-bg p-4 text-[15px] text-boom" role="status">
+        <strong class="font-bold">Arizangiz ko'rib chiqilmoqda.</strong>
+        Moderatorlar hujjatingizni tekshiradi. Bu vaqtda arizani tahrirlab bo'lmaydi —
+        aks holda moderator boshqa matnni ko'rib turib qaror qabul qilardi.
+      </div>
+    {% elif profil.verification_status == "tasdiqlangan" %}
+      <div class="card mt-5 border-solved-icon/50 bg-solved-bg/30 p-4 text-[15px] text-solved" role="status">
+        <strong class="font-bold">Tasdiqlangan.</strong>
+        Javoblaringiz yonida «Ekspert» nishoni chiqadi.
+        {% if profil.verified_at %}
+          <span class="text-fg-muted">({{ profil.verified_at|date:"j-F Y" }})</span>
+        {% endif %}
+      </div>
+    {% elif profil.verification_status == "rad_etilgan" %}
+      {% comment %}
+        ⚠️ SABAB KO'RSATILADI. Sababsiz rad etish odamni "nima noto'g'ri
+           edi?" degan javobsiz savol bilan qoldiradi — D2-T11 dagi
+           "sababsiz cheklov" xatosining aynan o'zi.
+      {% endcomment %}
+      <div class="card mt-5 border-danger/40 bg-danger-bg p-4 text-[15px] text-danger" role="status">
+        <strong class="font-bold">Ariza rad etildi.</strong>
+        {% if profil.rad_sababi %}<p class="mt-1">{{ profil.rad_sababi }}</p>{% endif %}
+        <p class="mt-1.5 text-fg-muted">Tuzatib, qaytadan topshirishingiz mumkin.</p>
+      </div>
+    {% endif %}
+  {% endif %}
+
+  {% if profil and not profil.tahrirlash_mumkinmi %}
+    <section class="card mt-4 p-5">
+      <dl class="grid gap-3 text-[15px] sm:grid-cols-2">
+        <div>
+          <dt class="text-[13px] text-fg-muted">Soha</dt>
+          <dd class="font-semibold">{{ profil.specialty.name }}</dd>
+        </div>
+        <div>
+          <dt class="text-[13px] text-fg-muted">Tajriba</dt>
+          <dd class="font-semibold">{{ profil.experience_years }} yil</dd>
+        </div>
+      </dl>
+      {% if profil.kasbiy_tavsif %}
+        <p class="mt-3 text-[15px] leading-relaxed">{{ profil.kasbiy_tavsif }}</p>
+      {% endif %}
+    </section>
+  {% else %}
+    <form method="post" enctype="multipart/form-data" class="card mt-5 p-5 sm:p-6" novalidate>
+      {% csrf_token %}
+      {{ form.non_field_errors }}
+
+      {% include "components/_field.html" with field=form.specialty %}
+      {% include "components/_field.html" with field=form.experience_years %}
+      {% include "components/_field.html" with field=form.kasbiy_tavsif %}
+      {% include "components/_field.html" with field=form.hujjat %}
+
+      {% comment %}
+        ⚠️⚠️ HUJJAT NIMA BO'LISHINI OLDINDAN AYTAMIZ.
+           Odam shaxsiy hujjatini yuklayapti — u qayerga borishini va
+           qachon o'chishini bilishga HAQLI. Bu D2-T10 (maxfiylik
+           siyosati) ning shu sahifadagi ko'rinishi.
+      {% endcomment %}
+      <div class="mt-4 rounded-[var(--radius-card)] border border-line bg-surface-2 p-4 text-[14px] leading-relaxed text-fg-muted">
+        <p class="font-semibold text-fg">Hujjatingiz bilan nima bo'ladi</p>
+        <ul class="mt-1.5 list-disc space-y-1 pl-5">
+          <li>Uni faqat moderator ko'radi — u ochiq havolada turmaydi.</li>
+          <li>Qaror qabul qilingan zahoti fayl <strong>o'chiriladi</strong>.</li>
+          <li>Jurnalda faqat «hujjat tekshirildi, kim, qachon» yozuvi qoladi.</li>
+        </ul>
+      </div>
+
+      <div class="mt-4 flex items-start gap-2.5">
+        <input type="checkbox" name="{{ form.contact_visible.html_name }}" id="{{ form.contact_visible.id_for_label }}"
+               class="mt-0.5 h-4 w-4" {% if form.contact_visible.value %}checked{% endif %} />
+        <label for="{{ form.contact_visible.id_for_label }}" class="text-[14px] leading-relaxed">
+          {{ form.contact_visible.label }}
+          <span class="block text-fg-muted">{{ form.contact_visible.help_text }}</span>
+        </label>
+      </div>
+
+      <button type="submit" class="btn-primary btn-sm mt-5">Arizani topshirish</button>
+    </form>
+  {% endif %}
+</main>
+{% endblock %}

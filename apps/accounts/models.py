@@ -5,13 +5,32 @@
    noldan qurishni talab qiladi.
 """
 
+import secrets
+from pathlib import Path
+
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
+from django.core.files.storage import storages
+from django.core.validators import FileExtensionValidator, MaxValueValidator
 from django.db import models
 from django.db.models.functions import Lower
 from django.utils import timezone
 
+from apps.common.models import TimeStampedModel
+
 from .validators import USERNAME_HELP, validate_username
+
+
+# ⚠️ Kechiktirilgan chaqiruv: `storages["maxfiy"]` modul yuklanayotganda
+#    emas, KERAK BO'LGANDA hisoblanadi. Aks holda sozlamalar hali
+#    tayyor bo'lmagan paytda import qilinsa yiqilardi.
+def maxfiy_saqlash():
+    """Maxfiy fayl ombori (`MAXFIY_ROOT`) — `MEDIA_ROOT` DAN TASHQARIDA.
+
+    Batafsil: `config/settings/base.py` dagi MAXFIY_ROOT izohi.
+    """
+    return storages["maxfiy"]
+
 
 # ⚠️ Qabul mezonidagi AYNAN shu matn (D2-T8).
 OCHIRILGAN_NOM = "O'chirilgan foydalanuvchi"
@@ -371,3 +390,187 @@ class UserBlock(models.Model):
 
     def __str__(self) -> str:
         return f"{self.user_id} -> {self.blocked_id}"
+
+
+# ===========================================================================
+# Ekspert profili va tasdiqlash oqimi (D3-T5)
+# ===========================================================================
+def ekspert_hujjati_yoli(instance, filename: str) -> str:
+    """Hujjat yo'li — nom TAXMIN QILIB BO'LMAYDIGAN bo'lsin.
+
+    ⚠️ Fayl maxfiy ildizda (`MAXFIY_ROOT`) va veb-server uni umuman
+       ko'rmaydi. Tasodifiy nom — IKKINCHI qatlam: agar bir kuni
+       kimdir katalogni statik qilib qo'ysa ham, `diplom.pdf` ni
+       taxmin qilib bo'lmaydi.
+
+    ⚠️ Asl nom SAQLANMAYDI: u odamning ismini o'z ichiga olishi mumkin
+       ("aliyev_diplom.pdf"), kengaytma esa turini bilish uchun yetarli.
+    """
+    kengaytma = Path(filename).suffix.lower()[:10]
+    return f"ekspert/{instance.user_id}/{secrets.token_hex(16)}{kengaytma}"
+
+
+class TasdiqHolati(models.TextChoices):
+    """⚠️ Kalitlar bazaga yoziladi — o'zgartirilmaydi, yangisi qo'shiladi."""
+
+    QORALAMA = "qoralama", "Qoralama — hali topshirilmagan"
+    KUTILMOQDA = "kutilmoqda", "Ko'rib chiqilmoqda"
+    TASDIQLANGAN = "tasdiqlangan", "Tasdiqlangan"
+    RAD_ETILGAN = "rad_etilgan", "Rad etilgan"
+
+
+class ExpertProfile(TimeStampedModel):
+    """Ekspert profili va uning tasdiqlash holati (D3-T5).
+
+    ⚠️⚠️ `User.is_expert` — KESHLANGAN BAYROQ, HAQIQIY MANBA SHU YERDA.
+       Task tavsifi buni ochiq aytadi: "'Tasdiqlangan' nishoni tasdiqlash
+       jarayonisiz yolg'on". Bayroqni FAQAT
+       `services.ekspertni_tasdiqlash()` va uning juftlari qo'yadi;
+       foydalanuvchi unga tegib bo'lmaydi va admin'da u `readonly`.
+
+    ⚠️ `specialty` — `Category` ga FK, yangi taksonomiya EMAS.
+       Ikkinchi ro'yxat ("Huquq" bu yerda, "huquq" u yerda) bir kuni
+       ajralib ketardi. Bundan tashqari FK "shu kategoriyadagi
+       ekspertlar" so'rovini bepul beradi — D5-T5 (javobsiz savollar
+       dayjesti) aynan shunga tayanadi.
+
+    ⚠️ `kasbiy_tavsif` — `User.bio` DAN BOSHQA narsa. `User.bio` —
+       odamning o'zi haqida ("toshkentlik loyiha menejeri"), bu esa
+       MALAKA bayoni ("10 yil mehnat huquqi bo'yicha advokat"). Ularni
+       birlashtirsak, ekspert bo'lmoqchi odam shaxsiy tavsifini
+       ariza matniga aylantirishga majbur bo'lardi.
+
+    ⚠️⚠️ HUJJAT QAROR BILAN BIRGA O'CHIRILADI (foydalanuvchi qarori).
+       Jurnalda "hujjat tekshirildi, kim, qachon, qanday qaror" qoladi
+       (D2-T7), faylning o'zi esa qolmaydi. Saqlanmagan ma'lumot sizib
+       chiqa olmaydi — D2-T8 (hisobni o'chirish) dagi bir xil mantiq.
+       Apellyatsiya bo'lsa odam hujjatni qaytadan yuklaydi.
+    """
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        verbose_name="foydalanuvchi",
+        on_delete=models.CASCADE,
+        related_name="ekspert_profili",
+    )
+    specialty = models.ForeignKey(
+        "complaints.Category",
+        verbose_name="soha",
+        on_delete=models.PROTECT,
+        related_name="ekspertlar",
+    )
+    experience_years = models.PositiveSmallIntegerField(
+        "tajriba (yil)",
+        default=0,
+        validators=[MaxValueValidator(70)],
+        help_text="Nechchi yildan beri shu sohada ishlaysiz.",
+    )
+    kasbiy_tavsif = models.TextField(
+        "kasbiy tavsif",
+        max_length=1000,
+        blank=True,
+        help_text="Malakangiz haqida: qayerda ishlaysiz, nimaga ixtisoslashgansiz.",
+    )
+
+    verification_status = models.CharField(
+        "tasdiqlash holati",
+        max_length=16,
+        choices=TasdiqHolati.choices,
+        default=TasdiqHolati.QORALAMA,
+        db_index=True,
+    )
+    # ⚠️ `SET_NULL`: tekshirgan moderatorning hisobi o'chirilsa ham
+    #    tasdiq KUCHDA QOLADI. "Kim tasdiqladi?" javobi audit jurnalida
+    #    (D2-T7) `actor_nomi` sifatida nusxalangan.
+    verified_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        verbose_name="kim tasdiqladi",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="tasdiqlagan_ekspertlari",
+    )
+    verified_at = models.DateTimeField("tasdiqlangan vaqt", null=True, blank=True)
+    topshirilgan_at = models.DateTimeField("topshirilgan vaqt", null=True, blank=True)
+    rad_sababi = models.CharField(
+        "rad etish sababi",
+        max_length=300,
+        blank=True,
+        help_text="Foydalanuvchiga KO'RSATILADI — u nima tuzatishni bilishi kerak.",
+    )
+
+    hujjat = models.FileField(
+        "tasdiqlovchi hujjat",
+        upload_to=ekspert_hujjati_yoli,
+        storage=maxfiy_saqlash,
+        null=True,
+        blank=True,
+        validators=[FileExtensionValidator(["pdf", "jpg", "jpeg", "png"])],
+        help_text="Diplom, litsenziya yoki ish joyidan ma'lumotnoma.",
+    )
+
+    contact_visible = models.BooleanField(
+        "aloqa ma'lumotim ko'rinsin",
+        default=False,
+        help_text="PRO obunachilar siz bilan bog'lana olishi uchun.",
+    )
+    # ⚠️ To'lov D6-T1/T2/T3 da. Bu yerda faqat MUDDAT saqlanadi —
+    #    "PRO" holati hisoblanadigan narsa, alohida bayroq emas.
+    pro_until = models.DateTimeField("PRO muddati", null=True, blank=True)
+
+    class Meta:
+        verbose_name = "ekspert profili"
+        verbose_name_plural = "ekspert profillari"
+        ordering = ("-topshirilgan_at", "-created_at")
+        indexes = [
+            # Staff navbati: "ko'rib chiqilmoqda" holatidagilar, eskisidan.
+            models.Index(
+                fields=["verification_status", "topshirilgan_at"],
+                name="ekspert_navbat_idx",
+            ),
+        ]
+        constraints = [
+            # ⚠️ Tasdiqlangan profil KIM va QACHON tasdiqlaganini bilishi
+            #    SHART — aks holda "tasdiqlash jarayoni" yozuvsiz qoladi
+            #    va bu task NEGA bo'limidagi "yolg'on nishon" muammosi
+            #    boshqa shaklda qaytardi.
+            models.CheckConstraint(
+                condition=~models.Q(verification_status="tasdiqlangan")
+                | models.Q(verified_at__isnull=False),
+                name="ekspert_tasdiq_vaqtsiz_bolmaydi",
+                violation_error_message="Tasdiqlangan profilda tasdiq vaqti bo'lishi shart.",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.user_id}: {self.get_verification_status_display()}"
+
+    @property
+    def tasdiqlanganmi(self) -> bool:
+        return self.verification_status == TasdiqHolati.TASDIQLANGAN
+
+    @property
+    def pro_faolmi(self) -> bool:
+        """⭐⭐ QABUL MEZONI: "tasdiqlanmagan ekspert PRO nishonini ololmaydi".
+
+        PRO — IKKI shartning kesishmasi: tasdiqlangan MALAKA va amaldagi
+        MUDDAT. Faqat muddatga qarasak, to'lov qilgan (yoki `pro_until`
+        ni admin'da qo'lda qo'ygan) tasdiqlanmagan odam "Tasdiqlangan
+        PRO" nishonini olardi — ya'ni pul bilan ishonch sotib olinardi.
+        Task `nega` bo'limi aynan shundan ogohlantiradi.
+        """
+        return (
+            self.tasdiqlanganmi
+            and self.pro_until is not None
+            and self.pro_until > timezone.now()
+        )
+
+    @property
+    def tahrirlash_mumkinmi(self) -> bool:
+        """Ko'rib chiqilayotgan ariza tahrirlanmaydi.
+
+        ⚠️ Aks holda moderator BOSHQA matnni ko'rib turib qaror qabul
+           qilardi: u ochgan ariza bilan saqlangan ariza bir xil
+           bo'lmasdi.
+        """
+        return self.verification_status != TasdiqHolati.KUTILMOQDA

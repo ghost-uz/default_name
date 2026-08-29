@@ -31,11 +31,26 @@
       <div class="min-w-0 flex-1">
         <div class="flex flex-wrap items-center gap-2">
           <h1 class="text-xl font-extrabold sm:text-2xl">{{ profil.display_name }}</h1>
-          {% if profil.is_expert %}
+          {% comment %}
+            ⚠️⚠️ NISHON `is_expert` BAYROG'IDAN EMAS, TASDIQLANGAN
+               PROFILDAN keladi (D3-T5). Bayroq keshlangan va uni faqat
+               `services.ekspertni_tasdiqlash()` qo'yadi, lekin shablon
+               HAQIQIY manbaga qarashi kerak: aks holda bayroq bir kuni
+               haqiqatdan uzilsa, sahifa yolg'on gapirardi.
+
+            ⚠️ PRO — ALOHIDA nishon va u IKKI shartning kesishmasi
+               (`pro_faolmi`): tasdiqlangan malaka VA amaldagi muddat.
+               Faqat muddatga qarasak, pul bilan ishonch sotib olinardi.
+          {% endcomment %}
+          {% if profil.ekspert_profili.tasdiqlanganmi %}
             <span class="badge-pro">
               <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 2.6 6.6L22 9.3l-5 4.6 1.3 7.1L12 17.8 5.7 21l1.3-7.1-5-4.6 7.4-.7z"/></svg>
               Ekspert
             </span>
+            <span class="chip !py-0.5">{{ profil.ekspert_profili.specialty.name }}</span>
+            {% if profil.ekspert_profili.pro_faolmi %}
+              <span class="badge-pro">PRO</span>
+            {% endif %}
           {% endif %}
         </div>
         <p class="mt-1 text-[14px] text-fg-muted">
@@ -48,6 +63,9 @@
         <div class="mt-4 flex flex-wrap gap-2">
           {% if ozimi %}
             <a href="{% url 'hisob' %}" class="btn-outline btn-sm">Hisob sozlamalari</a>
+            <a href="{% url 'ekspert_ariza' %}" class="btn-outline btn-sm">
+              {% if profil.ekspert_profili.tasdiqlanganmi %}Ekspert profili{% else %}Ekspert bo'lish{% endif %}
+            </a>
           {% elif request.user.is_authenticated %}
             {% comment %}
               ⚠️ Bloklash BU YERDA HAM (D2-T11): odam profilga kelib

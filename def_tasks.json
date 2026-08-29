@@ -2158,11 +2158,73 @@
       "bogliq": [
         "D0-T2"
       ],
-      "holat": "todo",
+      "holat": "done",
       "qabul_mezoni": [
         "tasdiqlanmagan ekspert PRO nishonini ololmaydi",
         "hujjat yuklash va staff ko'rigi bor"
-      ]
+      ],
+      "tugatilgan": "2026-08-30",
+      "natija": {
+        "yaratilgan": [
+          "apps/accounts/models.py — ExpertProfile + TasdiqHolati + ekspert_hujjati_yoli()",
+          "apps/accounts/migrations/0006_expertprofile.py",
+          "apps/accounts/services.py — ekspert_arizasi_topshirish(), ekspertni_tasdiqlash(), ekspert_arizasini_rad_etish(), ekspert_maqomini_bekor_qilish(), _bayroqni_moslash()",
+          "apps/accounts/forms.py — EkspertArizaForm (holat va pro_until FORMADA YO'Q)",
+          "apps/accounts/views.py — ekspert_ariza, ekspert_navbati, ekspert_hujjati, ekspert_qarori",
+          "apps/common/storage.py — MaxfiyStorage (url() ochiq RAD ETADI)",
+          "config/settings/base.py — MAXFIY_ROOT + STORAGES['maxfiy']",
+          "apps/moderation/models.py — EKSPERT_TASDIQLANDI/RAD_ETILDI/BEKOR_QILINDI + 0007",
+          "templates/accounts/ekspert_ariza.html, ekspert_navbati.html",
+          "templates/accounts/profile.html — nishon TASDIQLANGAN profildan keladi",
+          ".gitignore — /maxfiy/",
+          "apps/common/tests/test_maxfiy.py — 4 ta maxfiylik guard'i",
+          "apps/accounts/tests_ekspert.py — 30 test"
+        ],
+        "qabul_mezonlari": {
+          "tasdiqlanmagan_PRO_nishonini_ololmaydi": "✅ `pro_faolmi` = tasdiqlangan MALAKA **va** amaldagi muddat. Faqat muddatga qarasak, to'lov qilgan tasdiqlanmagan odam 'Tasdiqlangan PRO' nishonini olardi — ya'ni pul bilan ishonch sotib olinardi. `verification_status`/`pro_until` formada YO'Q.",
+          "hujjat_yuklash_va_staff_korigi": "✅ Hujjatsiz topshirib bo'lmaydi; `/moderatsiya/ekspertlar/` navbati; hujjat faqat staff'ga cheklangan ko'rinish orqali uzatiladi va QAROR BILAN BIRGA O'CHIRILADI."
+        },
+        "tekshirilgan": [
+          "⭐⭐ hujjat MEDIA_ROOT dan TASHQARIDA (nginx /media/ ni avtorizatsiyasiz uzatadi)",
+          "⭐⭐ `fayl.url` ValueError beradi — ommaviy havola chizib qo'yish IMKONSIZ",
+          "⭐⭐ /maxfiy/ .gitignore da — `git check-ignore` bilan tekshiriladi (repo OMMAVIY)",
+          "hujjat nomi tasodifiy — asl nom (ismni o'z ichiga olishi mumkin) saqlanmaydi",
+          "hujjat ko'rinishi: mehmon 404, arizachining O'ZI ham 404, staff 200 + no-store",
+          "qaror qabul qilinganda fayl diskdan O'CHADI, jurnalda `hujjat_tekshirildi` qoladi",
+          "rad etish SABABSIZ bo'lmaydi va sabab foydalanuvchiga KO'RSATILADI",
+          "rad etilgan ariza qayta topshiriladi; eski sabab tozalanadi",
+          "ko'rib chiqilayotgan ariza TAHRIRLANMAYDI (403)",
+          "tasdiqlangan profil qayta topshirilmaydi",
+          "oddiy foydalanuvchi tasdiqlay olmaydi (PermissionDenied); navbat staff'ga 404",
+          "uchala qaror ham AUDIT JURNALIGA tushadi (guard endi butun loyihani skanerlaydi)",
+          "⭐ CHEKLANGAN ekspert nishonini YO'QOTMAYDI (foydalanuvchi qarori)",
+          "🌐 JONLI: /media/ orqali hujjat 404; staff 200 + application/pdf + no-store; navbatdan tasdiqlash -> fayl diskdan yo'qoldi, jurnalda dalil qoldi, profilda '★ EKSPERT' + soha nishoni chiqdi, PRO chiqmadi (pro_until yo'q)"
+        ],
+        "qarorlar": [
+          "⭐⭐ HUJJAT QAROR BILAN BIRGA O'CHIRILADI (foydalanuvchi qarori). Saqlanmagan ma'lumot sizib chiqa olmaydi — D2-T8 dagi bir xil mantiq. Apellyatsiyada odam hujjatni qaytadan yuklaydi.",
+          "⭐ CHEKLANGAN EKSPERT NISHONINI YO'QOTMAYDI (foydalanuvchi qarori). Tasdiq — MALAKA haqida, cheklov esa XULQ haqida. Maqom faqat MALAKA yolg'on bo'lsa bekor qilinadi va bu alohida, ongli harakat (`ekspert_maqomini_bekor_qilish`).",
+          "⚠️⚠️ MAXFIY OMBOR `MEDIA_ROOT` DAN TASHQARIDA: `/media/` nginx tomonidan avtorizatsiyasiz va `Cache-Control: public` bilan uzatiladi (`docker/nginx.conf`). Diplom u yerga tushsa, havolani bilgan har kim o'qiy olardi.",
+          "⚠️⚠️ `MaxfiyStorage` MAXSUS SINF, oddiy `FileSystemStorage` EMAS — O'LCHANGAN sabab: `base_url` berilmasa Django uni `MEDIA_URL` ga QAYTARADI (`_value_or_setting`) va `.url` ochiq ko'rinishdagi havola berardi. Dastlabki izoh 'xato beradi' degan edi va bu NOTO'G'RI edi — test fosh qildi.",
+          "`specialty` — `Category` ga FK, yangi taksonomiya EMAS: ikkinchi ro'yxat bir kuni ajralib ketardi, FK esa 'shu kategoriyadagi ekspertlar' so'rovini bepul beradi (D5-T5).",
+          "`kasbiy_tavsif` — `User.bio` dan BOSHQA maydon: biri shaxs haqida, ikkinchisi MALAKA bayoni. Birlashtirsak odam shaxsiy tavsifini ariza matniga aylantirishga majbur bo'lardi.",
+          "`User.is_expert` — KESHLANGAN bayroq; uni faqat `_bayroqni_moslash()` qo'yadi. Shablon esa HAQIQIY manbaga (`ekspert_profili.tasdiqlanganmi`) qaraydi: bayroq bir kuni haqiqatdan uzilsa, sahifa yolg'on gapirmasin.",
+          "AUDIT GUARD'I BUTUN LOYIHAGA KENGAYTIRILDI — u faqat `moderation/services.py` ni o'qirdi va bu uning O'Z MAQSADIDAGI teshik edi: D3-T5 staff xizmatlari `accounts` da paydo bo'ldi va guard ularni ko'rmasdi."
+        ],
+        "olchangan_holat": {
+          "testlar": 842,
+          "qamrov_foiz": 95.24,
+          "d3_t5_testlari": 30,
+          "maxfiylik_guardlari": 4
+        },
+        "keyingi_uchun_eslatma": [
+          "⚠️⚠️ DEPLOY: `MAXFIY_ROOT` konteyner ichida — u `docker-compose` da alohida volume BO'LMASA qayta joylashda yo'qoladi. Lekin hujjatlar qaror bilan o'chirilgani uchun u yerda uzoq turadigan narsa yo'q (kutilayotgan arizalar bundan mustasno).",
+          "⚠️ Yangi maxfiy fayl turi qo'shsangiz `storages['maxfiy']` ni ishlating va `test_maxfiy.py` guard'larini kengaytiring — `MEDIA_ROOT` ga tushirmang.",
+          "⚠️ Yangi staff xizmati yozsangiz (istalgan ilovada) audit guard'i uni AVTOMATIK topadi va `JURNALGA_YOZADIGAN_XIZMATLAR` ro'yxatiga qo'shishga majbur qiladi.",
+          "D6-T1 (obuna) `pro_until` ni to'ldiradi — `pro_faolmi` allaqachon tayyor.",
+          "D6-T5 (Match) `contact_visible` ni ishlatadi — maydon bor, mantiq hali yo'q.",
+          "Ommaviy `/ekspertlar/` sahifasi HALI MAKET — u haqiqiy ma'lumotga o'tkazilishi kerak (tasdiqlangan profillar bo'yicha ro'yxat)."
+        ]
+      }
     },
     {
       "id": "D4-T1",

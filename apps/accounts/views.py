@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import functools
 import logging
 import secrets
 from typing import cast
@@ -14,8 +15,11 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.http import (
+    FileResponse,
+    Http404,
     HttpRequest,
     HttpResponse,
+    HttpResponseBadRequest,
     HttpResponseForbidden,
     JsonResponse,
 )
@@ -29,7 +33,8 @@ from apps.common.voting import user_votes_for
 from apps.complaints.models import ComplaintVote
 from apps.complaints.selectors import saqlangan_idlari
 
-from .models import MalumotEksporti, User
+from .forms import EkspertArizaForm
+from .models import ExpertProfile, MalumotEksporti, TasdiqHolati, User
 from .selectors import (
     SAHIFA_HAJMI,
     korinadigan_tablar,
@@ -41,6 +46,10 @@ from .services import (
     bloklangan_idlar,
     bloklash,
     blokni_yechish,
+    ekspert_arizasi_topshirish,
+    ekspert_arizasini_rad_etish,
+    ekspert_maqomini_bekor_qilish,
+    ekspertni_tasdiqlash,
     eksport_soralgan,
     hisobni_ochirish,
     rozilikni_yozish,
@@ -375,7 +384,14 @@ def profile(request: HttpRequest, username: str) -> HttpResponse:
     ⚠️ MEHMON HAM KO'RA OLADI. Profil — ommaviy sahifa (SEO, D4-T4).
        Shaxsiy tablar esa `tabni_oqish()` da to'siladi.
     """
-    profil = get_object_or_404(User, username=username, ochirilgan_at__isnull=True)
+    # ⚠️ `select_related` — teskari OneToOne ham qo'llab-quvvatlanadi.
+    #    Usiz shablon "Ekspert"/"PRO" nishonlarini chizishda QO'SHIMCHA
+    #    so'rov qilardi va bu N+1 emas, lekin baribir bekorga.
+    profil = get_object_or_404(
+        User.objects.select_related("ekspert_profili"),
+        username=username,
+        ochirilgan_at__isnull=True,
+    )
     ozimi = request.user.is_authenticated and request.user.pk == profil.pk
 
     tab = tabni_oqish(request.GET, ozimi=ozimi)
@@ -415,3 +431,152 @@ def profile(request: HttpRequest, username: str) -> HttpResponse:
             "bloklangan": profil.pk in set(bloklangan_idlar(user=request.user)),
         },
     )
+
+
+# ===========================================================================
+# Ekspert arizasi (D3-T5)
+# ===========================================================================
+@login_required
+def ekspert_ariza(request: HttpRequest) -> HttpResponse:
+    """Ekspert bo'lish arizasi — yaratish, tahrirlash va topshirish.
+
+    ⚠️ Ko'rib chiqilayotgan ariza TAHRIRLANMAYDI (`tahrirlash_mumkinmi`):
+       aks holda moderator ochgan matn bilan saqlangan matn boshqa
+       bo'lardi va u boshqa narsani ko'rib turib qaror qabul qilardi.
+
+    ⚠️ Rad etilgan ariza QAYTA topshiriladi — sabab ko'rsatilgan
+       (`rad_sababi`), ya'ni odam nima tuzatishni biladi. Yopiq eshik
+       "nega?" degan javobsiz savol bo'lardi.
+    """
+    # `@login_required` autentifikatsiyani kafolatlaydi; tip tekshiruvchi
+    # buni bilmaydi (`AnonymousUser` ham mumkin deb hisoblaydi).
+    profil = ExpertProfile.objects.filter(user=cast("User", request.user)).first()
+
+    if request.method == "POST":
+        if profil is not None and not profil.tahrirlash_mumkinmi:
+            return HttpResponseForbidden(
+                "Ariza ko'rib chiqilmoqda — tahrirlab bo'lmaydi."
+            )
+
+        form = EkspertArizaForm(request.POST, request.FILES, instance=profil)
+        if form.is_valid():
+            profil = form.save(commit=False)
+            profil.user = request.user
+            profil.save()
+            try:
+                ekspert_arizasi_topshirish(profil=profil)
+            except ValidationError as exc:
+                form.add_error(None, exc.messages[0])
+            else:
+                messages.success(
+                    request,
+                    "Arizangiz topshirildi. Moderatorlar ko'rib chiqadi.",
+                )
+                return redirect("ekspert_ariza")
+    else:
+        form = EkspertArizaForm(instance=profil)
+
+    return render(
+        request,
+        "accounts/ekspert_ariza.html",
+        {"form": form, "profil": profil, "active_nav": "profile"},
+    )
+
+
+# ===========================================================================
+# Staff: ekspert arizalarini ko'rib chiqish (D3-T5)
+# ===========================================================================
+def _staff_kerak(fn):
+    """Staff bo'lmaganga 404 — moderatsiya navbati bilan bir xil qaror.
+
+    ⚠️ 403 "bu manzil bor, lekin sizga ruxsat yo'q" degani, ya'ni
+       interfeys manzilini tasdiqlab beradi (`moderation/views.py`
+       dagi `moderator_kerak` izohiga qarang).
+    """
+
+    @functools.wraps(fn)
+    def orash(request: HttpRequest, *args, **kwargs):
+        if not (request.user.is_authenticated and request.user.is_staff):
+            raise Http404()
+        return fn(request, *args, **kwargs)
+
+    return orash
+
+
+@_staff_kerak
+def ekspert_navbati(request: HttpRequest) -> HttpResponse:
+    """Ko'rib chiqilishi kutilayotgan arizalar — eskisidan yangisiga."""
+    arizalar = (
+        ExpertProfile.objects.filter(verification_status=TasdiqHolati.KUTILMOQDA)
+        .select_related("user", "specialty")
+        .order_by("topshirilgan_at")
+    )
+    return render(
+        request,
+        "accounts/ekspert_navbati.html",
+        {"arizalar": arizalar, "active_nav": ""},
+    )
+
+
+@_staff_kerak
+def ekspert_hujjati(request: HttpRequest, pk: int) -> FileResponse:
+    """⚠️⚠️ MAXFIY HUJJATNI UZATADIGAN YAGONA YO'L.
+
+    Fayl `MAXFIY_ROOT` da yotadi — nginx u haqda bilmaydi va Django
+    uni `static()` bilan ochmaydi (`config/settings/base.py` izohiga
+    qarang). Ya'ni bu ko'rinishsiz hujjatga umuman yetib bo'lmaydi.
+
+    ⚠️ `Content-Disposition: inline` va `X-Content-Type-Options: nosniff`
+       (oxirgisi global middleware'da): yuklangan HTML/SVG brauzerda
+       skript sifatida bajarilmasin. Kengaytmalar formada ham
+       cheklangan, lekin bu ikkinchi qatlam.
+
+    ⚠️ Kesh sarlavhasi ATAYLAB `no-store`: hujjat proksida yoki
+       brauzer keshida qolib ketmasligi kerak.
+    """
+    profil = get_object_or_404(ExpertProfile, pk=pk)
+    if not profil.hujjat:
+        raise Http404("Hujjat yo'q yoki qaror bilan birga o'chirilgan.")
+
+    javob = FileResponse(profil.hujjat.open("rb"), as_attachment=False)
+    javob["Cache-Control"] = "no-store, private"
+    return javob
+
+
+@_staff_kerak
+@require_POST
+def ekspert_qarori(request: HttpRequest, pk: int) -> HttpResponse:
+    """Tasdiqlash yoki rad etish — bitta forma, ikkita tugma.
+
+    ⚠️ `moderation/_holat.html` dagi bir xil naqsh: tugmalar
+       `name="qaror"` bilan farqlanadi, ya'ni izoh maydoni bir marta
+       yoziladi.
+    """
+    profil = get_object_or_404(ExpertProfile.objects.select_related("user"), pk=pk)
+    qaror = request.POST.get("qaror", "")
+    izoh = request.POST.get("izoh", "")
+
+    try:
+        if qaror == "tasdiqlash":
+            ekspertni_tasdiqlash(moderator=request.user, profil=profil, izoh=izoh)
+            messages.success(
+                request, f"@{profil.user.username} ekspert sifatida tasdiqlandi."
+            )
+        elif qaror == "rad_etish":
+            ekspert_arizasini_rad_etish(
+                moderator=request.user, profil=profil, sabab=izoh
+            )
+            messages.info(request, f"@{profil.user.username} arizasi rad etildi.")
+        elif qaror == "bekor_qilish":
+            ekspert_maqomini_bekor_qilish(
+                moderator=request.user, profil=profil, sabab=izoh
+            )
+            messages.info(
+                request, f"@{profil.user.username} ekspert maqomi bekor qilindi."
+            )
+        else:
+            return HttpResponseBadRequest("Noma'lum qaror.")
+    except ValidationError as exc:
+        messages.error(request, exc.messages[0])
+
+    return redirect("ekspert_navbati")
