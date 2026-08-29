@@ -35,7 +35,7 @@ urlpatterns += [
 
 # ⚠️ VAQTINCHALIK (D0-T6): hali yozilmagan sahifalarning maketi.
 #    M1 oxirida butunlay o'chiriladi.
-#    Qolgani: category_list, expert_list, profile, landing.
+#    Qolgani: category_list, expert_list, landing.
 urlpatterns += [path("", include("apps.common.maket"))]
 
 if settings.DEBUG:

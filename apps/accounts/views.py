@@ -12,6 +12,7 @@ from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
+from django.core.paginator import Paginator
 from django.http import (
     HttpRequest,
     HttpResponse,
@@ -24,8 +25,20 @@ from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
+from apps.common.voting import user_votes_for
+from apps.complaints.models import ComplaintVote
+from apps.complaints.selectors import saqlangan_idlari
+
 from .models import MalumotEksporti, User
+from .selectors import (
+    SAHIFA_HAJMI,
+    korinadigan_tablar,
+    profil_statistikasi,
+    tab_royxati,
+    tabni_oqish,
+)
 from .services import (
+    bloklangan_idlar,
     bloklash,
     blokni_yechish,
     eksport_soralgan,
@@ -338,3 +351,67 @@ def blokni_bekor_qilish(request: HttpRequest, username: str) -> HttpResponse:
     blokni_yechish(user=cast("User", request.user), kim=kim)
     messages.info(request, f"{kim.display_name} blokdan chiqarildi.")
     return redirect(_xavfsiz_next(request, request.POST.get("next", "")))
+
+
+# ===========================================================================
+# Profil sahifasi (D3-T4)
+# ===========================================================================
+def profile(request: HttpRequest, username: str) -> HttpResponse:
+    """Foydalanuvchi profili — dardlar / yechimlar / saqlanganlar / karma.
+
+    ⚠️⚠️ TABLAR MANZILDA (`?tab=yechimlar`), JavaScript'da EMAS.
+       Maketda tablar `data-tab` + yashirin panellar bilan edi va bu
+       uchta narsani buzardi:
+         1. JavaScript'siz brauzerda faqat birinchi tab ochilardi;
+         2. tabga havola ULASHIB bo'lmasdi ("yechimlarimga qara");
+         3. BARCHA panellarning ma'lumoti har yuklashda tayyorlanardi —
+            ya'ni "Saqlanganlar" ni hech kim ochmasa ham so'rov ketardi.
+       Bu D1-T7 dagi "filtr URL'da" qoidasining o'zi.
+
+    ⚠️ O'CHIRILGAN HISOB — 404. Anonimlashtirilgan hisobning (D2-T8)
+       profili "bo'sh odam" bo'lib turishi kerak emas: kontent qoladi,
+       lekin shaxs qolmaydi.
+
+    ⚠️ MEHMON HAM KO'RA OLADI. Profil — ommaviy sahifa (SEO, D4-T4).
+       Shaxsiy tablar esa `tabni_oqish()` da to'siladi.
+    """
+    profil = get_object_or_404(User, username=username, ochirilgan_at__isnull=True)
+    ozimi = request.user.is_authenticated and request.user.pk == profil.pk
+
+    tab = tabni_oqish(request.GET, ozimi=ozimi)
+    sahifalovchi = Paginator(
+        tab_royxati(tab=tab, profil=profil, ozimi=ozimi), SAHIFA_HAJMI
+    )
+    sahifa = sahifalovchi.get_page(request.GET.get("sahifa"))
+
+    # ⚠️ Ovoz holati LENTADAGIDEK bitta so'rovda olinadi va obyektlarga
+    #    yopishtiriladi — `_complaint_card.html` uni kutadi (D1-T14).
+    if tab in ("dardlar", "saqlanganlar"):
+        muammolar = list(sahifa.object_list)
+        ovozlar = user_votes_for(
+            vote_model=ComplaintVote,
+            target_field="complaint",
+            user=request.user,
+            targets=muammolar,
+        )
+        saqlanganlar = saqlangan_idlari(user=request.user, targets=muammolar)
+        for muammo in muammolar:
+            muammo.user_vote = ovozlar.get(muammo.pk)
+            muammo.saqlangan = muammo.pk in saqlanganlar
+
+    return render(
+        request,
+        "accounts/profile.html",
+        {
+            "active_nav": "profile",
+            "profil": profil,
+            "ozimi": ozimi,
+            "tab": tab,
+            "tablar": korinadigan_tablar(ozimi=ozimi),
+            "sahifa": sahifa,
+            "stat": profil_statistikasi(profil=profil, ozimi=ozimi),
+            # ⚠️ Bloklash tugmasi uchun: profil egasi bloklanganmi.
+            #    Ro'yxat bir marta olinadi (D2-T11 bilan bir xil qoida).
+            "bloklangan": profil.pk in set(bloklangan_idlar(user=request.user)),
+        },
+    )

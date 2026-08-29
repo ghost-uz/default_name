@@ -2003,7 +2003,7 @@
       "bogliq": [
         "D1-T10"
       ],
-      "holat": "qisman",
+      "holat": "done",
       "qabul_mezoni": [
         "karma_cached = SUM(KarmaEvent.points) — test buni tasdiqlaydi",
         "kontent o'chirilsa teskari hodisa yoziladi",
@@ -2018,12 +2018,13 @@
           "apps/solutions/services.py — yechimga_ovoz() (ovoz + karma, yagona kirish nuqtasi)",
           "apps/solutions/views.py — cast_vote() o'rniga yechimga_ovoz()",
           "apps/moderation/services.py — _karmani_moslash() + qaror va bekor qilishga ulanish",
-          "apps/gamification/tests_karma_ledger.py — 22 test"
+          "apps/gamification/tests_karma_ledger.py — 22 test",
+          "templates/accounts/profile.html — karma tarixi jadvali (D3-T4 bilan birga)"
         ],
         "qabul_mezonlari": {
           "kesh_jurnalga_teng": "✅ MURAKKAB oqimdan keyin ham tekshiriladi (ovoz/almashtirish/qabul/chora/bekor qilish ketma-ketligi) — aynan shunday holatda kesh uziladi.",
           "kontent_ochirilsa_teskari_hodisa": "✅ Moderatsiya YASHIRISH/OLIB TASHLASH da karma qaytariladi, chora bekor qilinsa qaytarib beriladi. Ikkalasi ham IDEMPOTENT (bayroq emas, hisob). Muallif uchun o'chirish ko'rinishi hali YO'Q — u yozilganda `_karmani_moslash()` ni chaqirishi kerak.",
-          "profilda_karma_tarixi": "❌ OCHIQ — D3-T4 (profil sahifasi) ga bog'liq."
+          "profilda_karma_tarixi": "✅ D3-T4 da yopildi: `/@<username>/?tab=karma`. FAQAT EGASIGA — tarix anonim yechimlarni egasiga bog'lab qo'yardi. Har qatorda sabab, qaysi yechim va ball."
         },
         "qarorlar": [
           "OVOZ KARMASI +2, QABUL +15 — qabul yetti barobar qimmat: ovoz 'foydali ko'rindi', qabul esa 'menga HAQIQATAN yordam berdi' degani.",
@@ -2036,9 +2037,9 @@
           "SIGNAL EMAS, OCHIQ CHAQIRUV — `bulk_create` va `QuerySet.update()` da signal ishlamaydi (D1-T10 dagi bir xil qaror)."
         ],
         "olchangan_holat": {
-          "testlar": 786,
-          "qamrov_foiz": 95.82,
-          "d3_t1_testlari": 22
+          "testlar": 808,
+          "qamrov_foiz": 95.94,
+          "d3_t1_testlari": 24
         },
         "keyingi_uchun_eslatma": [
           "⚠️ Muallif uchun kontent o'chirish ko'rinishi yozilganda `moderation.services._karmani_moslash()` ni (yoki to'g'ridan-to'g'ri `kontent_karmasini_qaytarish()` ni) CHAQIRISH SHART — signal qo'yilmagan.",
@@ -2046,7 +2047,7 @@
           "D3-T3 (oylik reyting) shu jurnaldan `created_at` bo'yicha yig'adi — qo'shimcha model kerak emas."
         ]
       },
-      "eslatma": "Ledger MEXANIZMI TO'LIQ (ovoz karmasi + kompensatsiya). Uchinchi qabul mezoni ('profilda karma tarixi ko'rinadi') D3-T4 ga bog'liq: profil sahifasi hali maket (`apps/common/maket.py`). D3-T4 tugagach bu task `done` bo'ladi."
+      "tugatilgan": "2026-08-29"
     },
     {
       "id": "D3-T2",
@@ -2092,10 +2093,59 @@
         "D1-T6",
         "D3-T1"
       ],
-      "holat": "todo",
+      "holat": "done",
       "qabul_mezoni": [
         "boshqa odam profilida anonim postlar YO'Q — test bilan qoplangan"
-      ]
+      ],
+      "tugatilgan": "2026-08-29",
+      "natija": {
+        "yaratilgan": [
+          "apps/accounts/selectors.py — TABLAR/SHAXSIY_TABLAR, tabni_oqish(), _anonimsiz(), profil_statistikasi(), profil_dardlari/yechimlari/saqlanganlari/karma_tarixi(), korinadigan_tablar(), tab_royxati()",
+          "apps/accounts/views.py — profile() ko'rinishi",
+          "apps/accounts/urls.py — `@<username>/` (maketdan ko'chirildi)",
+          "apps/common/maket.py — profil marshruti OLIB TASHLANDI",
+          "templates/accounts/profile.html — maket o'rniga haqiqiy sahifa",
+          "apps/accounts/tests_profil.py — 22 test"
+        ],
+        "qabul_mezonlari": {
+          "begona_profilida_anonim_yoq": "✅ Ikki qatlam: `visible()` (D2-T3) + `is_anonymous=False`. Dard ham, yechim ham test bilan qoplangan."
+        },
+        "tekshirilgan": [
+          "begona profilda anonim DARD ham, anonim YECHIM ham yo'q",
+          "egasi o'z anonim postlarini KO'RADI va ular 'anonim' nishoni bilan belgilanadi",
+          "⭐ SANOQLAR ham anonimni oshkor qilmaydi: begonaga ko'rsatilgan raqam ko'rsatilgan ro'yxatga TENG",
+          "karma tarixi FAQAT egasiga (anonim yechimlarni fosh qilardi)",
+          "saqlanganlar FAQAT egasiga; shaxsiy tab begonaga UMUMAN ko'rsatilmaydi",
+          "ruxsatsiz tab 403 EMAS — jimgina birinchisiga tushadi",
+          "yashirilgan (moderatsiya) post profilda ham yo'q",
+          "o'chirilgan hisob profili 404",
+          "mehmon profilni ko'ra oladi (SEO uchun ochiq)",
+          "profilda bloklash tugmasi (D2-T11), o'z profilida yo'q",
+          "so'rov soni element soniga bog'liq emas (N+1 test topdi va tuzatildi)",
+          "🌐 JONLI: mehmon/egasi ikki xil ko'rinish, karma jadvali, tab almashish, mehmonning ?tab=karma so'rovi jimgina dardlarga tushadi"
+        ],
+        "qarorlar": [
+          "TABLAR MANZILDA (`?tab=...`), JavaScript'da EMAS. Maketda ular `data-tab` + yashirin panellar edi va bu uchta narsani buzardi: (1) JS'siz faqat birinchi tab ochilardi; (2) tabga havola ulashib bo'lmasdi; (3) BARCHA panellar ma'lumoti har yuklashda tayyorlanardi. Bu D1-T7 dagi 'filtr URL'da' qoidasining o'zi.",
+          "⭐⭐ SANOQLAR HAM ANONIMLIKNI OSHKOR QILADI: agar ommaviy profil '18 dard' desa-yu ro'yxatda 12 tasi ko'rinsa, kuzatuvchi 6 ta anonim post borligini hisoblab chiqaradi. Shuning uchun raqamlar KO'RSATILGAN RO'YXAT bo'yicha hisoblanadi.",
+          "KARMA TARIXI OMMAVIY EMAS — maxfiylik emas, ANONIMLIK sababli: `KarmaEvent` yechimga FK bilan bog'langan va tarix 'shu anonim yechim shu odamniki' xaritasini berardi.",
+          "SHAXSIY TAB BEGONAGA 'QULFLANGAN' HOLDA HAM KO'RSATILMAYDI — qulf 'bu yerda nimadir bor' degan signalning o'zi.",
+          "RUXSATSIZ TAB XATO BERMAYDI, jimgina birinchisiga tushadi: 403 'bu yerda yashiradigan narsa bor' degan signal bo'lardi.",
+          "`_anonimsiz()` `visible()` ni CHAQIRMAYDI — ko'rinish invarianti guard'i (D2-T3) uni MANBA KODIDA ko'rishi kerak. Yashirsak, guard chaqiruv joylarini buzuq deb belgilardi va yagona chiqish yo'li `# korinish-istisno:` bo'lardi — ya'ni haqiqiy istisno bo'lmagan joyga istisno belgisi qo'yilardi va belgi ma'nosini yo'qotardi.",
+          "SAQLANGANLAR uchun mavjud `saqlanganlar_queryset()` QAYTA ISHLATILDI — `complaints/views.py` buni oldindan aytgan edi.",
+          "MAKETDAGI SOXTA 'YUTUQLAR' BLOKI OLIB TASHLANDI — nishonlar D3-T2 da haqiqiy bo'ladi; soxta ro'yxat qolsa u hech qachon almashtirilmasdi."
+        ],
+        "olchangan_holat": {
+          "testlar": 808,
+          "qamrov_foiz": 95.94,
+          "d3_t4_testlari": 22
+        },
+        "keyingi_uchun_eslatma": [
+          "⚠️ Yangi tab qo'shsangiz: `TABLAR` ga (bu MANZIL API'si), `TAB_YORLIQLARI` ga va `tab_royxati()` ga qo'shing; shaxsiy bo'lsa `SHAXSIY_TABLAR` ga ham.",
+          "⚠️ Profil ro'yxatiga yangi maydon chiqarsangiz `select_related` ni tekshiring — `_complaint_card.html` `public_author` ni o'qiydi va N+1 JIM sodir bo'ladi (shu taskda 12 -> 20 so'rov bo'lib ushlandi).",
+          "D3-T2 (nishonlar) profil sarlavhasi ostiga tushadi — maketdagi 'Yutuqlar' bloki olib tashlangan, uni haqiqiy ma'lumot bilan qaytarish kerak.",
+          "D3-T5 (ExpertProfile) sarlavhadagi 'Ekspert' nishonini tasdiqlash holatiga bog'laydi."
+        ]
+      }
     },
     {
       "id": "D3-T5",

@@ -105,7 +105,12 @@ class SahifaRenderTests(TestCase):
             "/ekspertlar/",
             "/kirish/",
             f"/dard/{self.muammo.slug}/",
-            "/@sardor92/",
+            # ⚠️ D3-T4 dan oldin bu qator `/@sardor92/` edi — maketda
+            #    profil soxta sahifa bo'lgani uchun ISTALGAN nom 200
+            #    qaytarardi. Endi u haqiqiy ko'rinish va mavjud
+            #    bo'lmagan foydalanuvchiga 404 beradi (to'g'ri xulq),
+            #    shuning uchun HAQIQIY foydalanuvchi kerak.
+            f"/@{self.chetdan.username}/",
         ]
 
     def yol_mijozi(self, yol: str) -> Client:

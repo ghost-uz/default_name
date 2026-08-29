@@ -13,6 +13,11 @@ urlpatterns = [
     path("chiqish/", views.logout_view, name="logout"),
     # Shartlarga rozilik (D2-T10)
     path("rozilik/", views.rozilik, name="rozilik"),
+    # ⚠️ Profil ENG OXIRIDA turishi kerak (`@<username>/` juda keng
+    #    naqsh) — lekin bu faylda u boshqa yo'llardan keyin keladi va
+    #    hammasi `/@` prefiksi bilan farqlanadi, ya'ni to'qnashuv yo'q.
+    #    Profil sahifasi (D3-T4)
+    path("@<str:username>/", views.profile, name="profile"),
     # Foydalanuvchilar o'zaro bloklashi (D2-T11)
     path(
         "bloklash/@<str:username>/",

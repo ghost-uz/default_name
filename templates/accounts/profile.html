@@ -1,245 +1,241 @@
 {% extends 'base.html' %}
 
-{% block title %}{{ profil.username }} — Dard.uz{% endblock %}
-{% block description %}Foydalanuvchi profili: karma, dardlar, yechimlar va yutuqlar.{% endblock %}
+{% block title %}{{ profil.display_name }} — Dard.uz{% endblock %}
+{% block description %}{{ profil.display_name }} profili: karma, dardlar va yechimlar.{% endblock %}
 
-{# active_nav: profile — ko'rinishdan kontekstda beriladi #}
+{% comment %}
+  Profil sahifasi (D3-T4).
+
+  ⚠️⚠️ TABLAR HAVOLA, TUGMA EMAS.
+     Maketda ular `data-tab` + yashirin panellar edi. Bu yerda har tab —
+     `?tab=...` havolasi va serverda FAQAT tanlangani render bo'ladi:
+       · JavaScript'siz ishlaydi;
+       · tabga havola ulashish mumkin;
+       · ochilmagan tabning so'rovi umuman ketmaydi.
+     Sabab `views.py::profile` da batafsil.
+
+  ⚠️ ANONIMLIK: bu sahifada muallif faqat `public_author` orqali chiqadi
+     (kartalar shuni ishlatadi). Ro'yxatning O'ZI esa
+     `selectors._korinadigan()` da filtrlanadi — begona odam anonim
+     postni umuman ko'rmaydi.
+{% endcomment %}
 
 {% block content %}
 <main id="main" class="mx-auto max-w-[1000px] px-4 py-6 lg:px-6">
-      <!-- ============ PROFIL SARLAVHASI ============ -->
-      <section class="card p-5 sm:p-6">
-        <div class="flex flex-col gap-5 sm:flex-row sm:items-start">
-          <span class="grid h-20 w-20 shrink-0 place-items-center rounded-full bg-primary text-2xl font-extrabold text-on-primary" aria-hidden="true">S</span>
 
-          <div class="min-w-0 flex-1">
-            <div class="flex flex-wrap items-center gap-2">
-              <h1 class="text-xl font-extrabold sm:text-2xl">Sardor_92</h1>
-              <span class="badge-mil">Millennial</span>
-            </div>
-            <p class="mt-1 text-[14px] text-fg-muted">
-              @sardor92 · 2026-yil mart oyidan beri
-            </p>
-            <p class="mt-3 max-w-prose text-[15px] leading-relaxed">
-              Toshkentlik loyiha menejeri. Ish va moliya mavzularida savol beraman, huquq bo'yicha
-              o'zim ham yordam bermoqchiman.
-            </p>
+  {# ============ PROFIL SARLAVHASI ============ #}
+  <section class="card p-5 sm:p-6">
+    <div class="flex flex-col gap-5 sm:flex-row sm:items-start">
+      <span class="grid h-20 w-20 shrink-0 place-items-center rounded-full bg-primary text-2xl font-extrabold text-on-primary" aria-hidden="true">{{ profil.initial }}</span>
 
-            <div class="mt-4 flex flex-wrap gap-2">
-              <button type="button" class="btn-primary btn-sm" data-toast="Profil tahrirlash beta versiyada">
-                Profilni tahrirlash
-              </button>
-              <a href="#" class="btn-outline btn-sm">Sozlamalar</a>
-            </div>
-          </div>
-
-          <!-- Karma — asosiy gamifikatsiya ko'rsatkichi -->
-          <div class="shrink-0 rounded-[var(--radius-card)] border border-karma-icon/40 bg-karma-bg px-5 py-4 text-center">
-            <p class="inline-flex items-center gap-1.5">
-              <svg class="h-5 w-5 text-karma-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m13 2-9 12h7l-1 8 9-12h-7z"/></svg>
-              <span class="tnum text-2xl font-extrabold text-karma">1 340</span>
-            </p>
-            <p class="mt-0.5 text-[12px] font-semibold uppercase tracking-wider text-karma">Karma</p>
-          </div>
-        </div>
-
-        <!-- Statistika -->
-        <dl class="tnum mt-6 grid grid-cols-2 gap-2 border-t border-line pt-5 sm:grid-cols-4">
-          <div class="rounded-lg bg-surface-2 py-3 text-center">
-            <dd class="text-lg font-extrabold">18</dd>
-            <dt class="text-[12px] text-fg-muted">Dard</dt>
-          </div>
-          <div class="rounded-lg bg-surface-2 py-3 text-center">
-            <dd class="text-lg font-extrabold">64</dd>
-            <dt class="text-[12px] text-fg-muted">Yechim</dt>
-          </div>
-          <div class="rounded-lg bg-surface-2 py-3 text-center">
-            <dd class="text-lg font-extrabold text-solved">11</dd>
-            <dt class="text-[12px] text-fg-muted">Qabul qilingan</dt>
-          </div>
-          <div class="rounded-lg bg-surface-2 py-3 text-center">
-            <dd class="text-lg font-extrabold">2 890</dd>
-            <dt class="text-[12px] text-fg-muted">Olingan ovoz</dt>
-          </div>
-        </dl>
-      </section>
-
-      <!-- ============ YUTUQLAR (gamifikatsiya) ============ -->
-      <section class="card mt-3 p-5" aria-labelledby="ach-h">
-        <h2 id="ach-h" class="text-[11px] font-bold uppercase tracking-wider text-fg-muted">Yutuqlar</h2>
-        <ul class="mt-3 flex flex-wrap gap-2">
-          <li class="chip !border-solved-icon/40 !bg-solved-bg !text-solved">
-            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m20 6-11 11-5-5"/></svg>
-            Birinchi yechim
-          </li>
-          <li class="chip !border-karma-icon/40 !bg-karma-bg !text-karma">
-            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m13 2-9 12h7l-1 8 9-12h-7z"/></svg>
-            1000+ karma
-          </li>
-          <li class="chip !border-primary/40 !bg-primary/10 !text-primary">
-            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-            50 yechim
-          </li>
-          <!-- Qulflangan yutuq: nima uchun mavjud emasligi TUSHUNTIRILADI -->
-          <li class="chip opacity-50" title="10 ta yechimingiz qabul qilinsa ochiladi">
-            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
-            Ishonchli maslahatchi
-          </li>
-        </ul>
-      </section>
-
-      <!-- ============ TABLAR ============ -->
-      <div class="mt-6">
-        <div class="flex items-center gap-1 overflow-x-auto border-b border-line pb-px" role="tablist" aria-label="Profil bo'limlari">
-          <button
-            type="button"
-            role="tab"
-            id="tab-dardlar"
-            aria-controls="panel-dardlar"
-            aria-selected="true"
-            data-tab="panel-dardlar"
-            class="relative shrink-0 px-3.5 py-2.5 text-sm font-semibold text-fg after:absolute after:inset-x-2 after:-bottom-px after:h-0.5 after:bg-primary"
-          >
-            Dardlari <span class="tnum text-fg-muted">18</span>
-          </button>
-          <button
-            type="button"
-            role="tab"
-            id="tab-yechimlar"
-            aria-controls="panel-yechimlar"
-            aria-selected="false"
-            data-tab="panel-yechimlar"
-            class="shrink-0 px-3.5 py-2.5 text-sm font-medium text-fg-muted transition-colors hover:text-fg"
-          >
-            Yechimlari <span class="tnum">64</span>
-          </button>
-          <button
-            type="button"
-            role="tab"
-            id="tab-saqlangan"
-            aria-controls="panel-saqlangan"
-            aria-selected="false"
-            data-tab="panel-saqlangan"
-            class="shrink-0 px-3.5 py-2.5 text-sm font-medium text-fg-muted transition-colors hover:text-fg"
-          >
-            Saqlanganlar
-          </button>
-        </div>
-
-        <!-- Panel: Dardlar -->
-        <div id="panel-dardlar" role="tabpanel" aria-labelledby="tab-dardlar" class="mt-4 flex flex-col gap-3">
-          <article class="card card-hover p-4">
-            <div class="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-[13px] text-fg-muted">
-              <span class="chip !py-0.5">Huquq</span>
-              <span class="badge-mil">Millennial</span>
-              <span aria-hidden="true">·</span>
-              <time datetime="2026-08-24T11:40">1 soat oldin</time>
-            </div>
-            <h3 class="font-bold leading-snug">
-              <a href="{% url 'complaint_detail' 'namuna' %}" class="hover:text-primary">
-                Ish beruvchi 3 oydan beri maosh bermayapti, shartnoma qo'lda yozilgan. Nima qilay?
-              </a>
-            </h3>
-            <div class="tnum mt-3 flex items-center gap-4 text-[13px] text-fg-muted">
-              <span class="inline-flex items-center gap-1.5">
-                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 15 7-7 7 7"/></svg>
-                318
-              </span>
-              <span class="inline-flex items-center gap-1.5">
-                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                12
-              </span>
-              <span class="badge-pro ml-auto">
-                <svg class="h-3 w-3" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m13 2-9 12h7l-1 8 9-12h-7z"/></svg>
-                Ko'tarilgan
-              </span>
-            </div>
-          </article>
-
-          <article class="card card-hover p-4">
-            <div class="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-[13px] text-fg-muted">
-              <span class="chip !py-0.5">Moliya</span>
-              <span aria-hidden="true">·</span>
-              <time datetime="2026-08-12T14:00">2 hafta oldin</time>
-            </div>
-            <h3 class="font-bold leading-snug">
-              <a href="{% url 'complaint_detail' 'namuna' %}" class="hover:text-primary">
-                Avtokredit yoki naqd pulga eski mashina — qaysi biri to'g'ri?
-              </a>
-            </h3>
-            <div class="tnum mt-3 flex items-center gap-4 text-[13px] text-fg-muted">
-              <span class="inline-flex items-center gap-1.5">
-                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 15 7-7 7 7"/></svg>
-                204
-              </span>
-              <span class="inline-flex items-center gap-1.5">
-                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                31
-              </span>
-              <span class="badge-solved ml-auto">
-                <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m20 6-11 11-5-5"/></svg>
-                Yechilgan
-              </span>
-            </div>
-          </article>
-        </div>
-
-        <!-- Panel: Yechimlar -->
-        <div id="panel-yechimlar" role="tabpanel" aria-labelledby="tab-yechimlar" class="mt-4 flex flex-col gap-3" hidden>
-          <article class="card border-solved-icon/50 bg-solved-bg/20 p-4">
-            <div class="mb-2 flex items-center gap-2 text-[13px]">
-              <span class="badge-solved">
-                <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m20 6-11 11-5-5"/></svg>
-                Qabul qilingan
-              </span>
-              <time class="text-fg-muted" datetime="2026-08-20T10:00">4 kun oldin</time>
-            </div>
-            <p class="text-[13px] text-fg-muted">
-              Javob berilgan:
-              <a href="{% url 'complaint_detail' 'namuna' %}" class="link font-semibold">«Ijara shartnomasini qanday to'g'ri tuzish kerak?»</a>
-            </p>
-            <p class="clamp-3 mt-2 text-[15px] leading-relaxed">
-              Shartnomada 3 ta band bo'lishi shart: aniq summa va to'lov sanasi, ta'mir uchun javobgarlik,
-              va bekor qilish sharti (necha kun oldin ogohlantirish). Qolgani ikkalangizning kelishuvingiz.
-            </p>
-            <p class="tnum mt-3 inline-flex items-center gap-1.5 text-[13px] font-semibold text-upvote">
-              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 15 7-7 7 7"/></svg>
-              412 ovoz
-            </p>
-          </article>
-
-          <article class="card card-hover p-4">
-            <div class="mb-2 flex items-center gap-2 text-[13px]">
-              <time class="text-fg-muted" datetime="2026-08-15T09:00">9 kun oldin</time>
-            </div>
-            <p class="text-[13px] text-fg-muted">
-              Javob berilgan:
-              <a href="{% url 'complaint_detail' 'namuna' %}" class="link font-semibold">«Ish joyida ortiqcha vazifa yuklashyapti»</a>
-            </p>
-            <p class="clamp-3 mt-2 text-[15px] leading-relaxed">
-              Men bu holatda rahbarga og'zaki emas, yozma murojaat qildim — vazifalar ro'yxatini
-              yozib, «qaysi birini birinchi bajaray?» deb so'radim. Shundan keyin yuklama o'zi kamaydi.
-            </p>
-            <p class="tnum mt-3 inline-flex items-center gap-1.5 text-[13px] font-semibold text-fg-muted">
-              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 15 7-7 7 7"/></svg>
-              87 ovoz
-            </p>
-          </article>
-        </div>
-
-        <!-- Panel: Saqlanganlar — BO'SH HOLAT -->
-        <div id="panel-saqlangan" role="tabpanel" aria-labelledby="tab-saqlangan" class="mt-4" hidden>
-          <div class="card flex flex-col items-center justify-center px-6 py-14 text-center">
-            <span class="grid h-14 w-14 place-items-center rounded-full bg-surface-2 text-fg-muted">
-              <svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21 12 16 5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+      <div class="min-w-0 flex-1">
+        <div class="flex flex-wrap items-center gap-2">
+          <h1 class="text-xl font-extrabold sm:text-2xl">{{ profil.display_name }}</h1>
+          {% if profil.is_expert %}
+            <span class="badge-pro">
+              <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 2.6 6.6L22 9.3l-5 4.6 1.3 7.1L12 17.8 5.7 21l1.3-7.1-5-4.6 7.4-.7z"/></svg>
+              Ekspert
             </span>
-            <h3 class="mt-4 text-lg font-bold">Hali hech narsa saqlanmagan</h3>
-            <p class="mt-2 max-w-sm text-[15px] leading-relaxed text-fg-muted">
-              Keyinroq qaytib o'qimoqchi bo'lgan muammoni saqlang — kartadagi xatcho'p belgisini bosing.
-            </p>
-            <a href="{% url 'feed' %}" class="btn-primary btn-sm mt-5">Lentani ko'rish</a>
-          </div>
+          {% endif %}
+        </div>
+        <p class="mt-1 text-[14px] text-fg-muted">
+          @{{ profil.username }} · <time datetime="{{ profil.date_joined|date:'c' }}">{{ profil.date_joined|date:"F Y" }}</time> dan beri
+        </p>
+        {% if profil.bio %}
+          <p class="mt-3 max-w-prose text-[15px] leading-relaxed">{{ profil.bio }}</p>
+        {% endif %}
+
+        <div class="mt-4 flex flex-wrap gap-2">
+          {% if ozimi %}
+            <a href="{% url 'hisob' %}" class="btn-outline btn-sm">Hisob sozlamalari</a>
+          {% elif request.user.is_authenticated %}
+            {% comment %}
+              ⚠️ Bloklash BU YERDA HAM (D2-T11): odam profilga kelib
+                 "bu kim ekan?" deb qaraydi va aynan o'sha payt qaror
+                 qabul qiladi. Tugma faqat shikoyat sahifasida bo'lsa,
+                 yo'l topilmasdi.
+            {% endcomment %}
+            <form method="post" action="{% if bloklangan %}{% url 'blokni_bekor_qilish' profil.username %}{% else %}{% url 'foydalanuvchini_bloklash' profil.username %}{% endif %}">
+              {% csrf_token %}
+              <input type="hidden" name="next" value="{{ request.path }}" />
+              <button type="submit" class="btn-outline btn-sm !text-fg-muted">
+                {% if bloklangan %}Blokdan chiqarish{% else %}Bloklash{% endif %}
+              </button>
+            </form>
+          {% endif %}
         </div>
       </div>
-    </main>
+
+      {# Karma — asosiy gamifikatsiya ko'rsatkichi (D3-T1) #}
+      <div class="shrink-0 rounded-[var(--radius-card)] border border-karma-icon/40 bg-karma-bg px-5 py-4 text-center">
+        <p class="inline-flex items-center gap-1.5">
+          <svg class="h-5 w-5 text-karma-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m13 2-9 12h7l-1 8 9-12h-7z"/></svg>
+          <span class="tnum text-2xl font-extrabold text-karma">{{ profil.karma_cached }}</span>
+        </p>
+        <p class="mt-0.5 text-[12px] font-semibold uppercase tracking-wider text-karma">Karma</p>
+      </div>
+    </div>
+
+    {# Statistika #}
+    <dl class="tnum mt-6 grid grid-cols-2 gap-2 border-t border-line pt-5 sm:grid-cols-4">
+      <div class="rounded-lg bg-surface-2 py-3 text-center">
+        <dd class="text-lg font-extrabold">{{ stat.dardlar }}</dd>
+        <dt class="text-[12px] text-fg-muted">Dard</dt>
+      </div>
+      <div class="rounded-lg bg-surface-2 py-3 text-center">
+        <dd class="text-lg font-extrabold">{{ stat.yechimlar }}</dd>
+        <dt class="text-[12px] text-fg-muted">Yechim</dt>
+      </div>
+      <div class="rounded-lg bg-surface-2 py-3 text-center">
+        <dd class="text-lg font-extrabold text-solved">{{ stat.qabul_qilingan }}</dd>
+        <dt class="text-[12px] text-fg-muted">Qabul qilingan</dt>
+      </div>
+      <div class="rounded-lg bg-surface-2 py-3 text-center">
+        <dd class="text-lg font-extrabold">{{ stat.olingan_ovoz }}</dd>
+        <dt class="text-[12px] text-fg-muted">Olingan ovoz</dt>
+      </div>
+    </dl>
+
+    {% if ozimi and stat.anonim_dardlar or ozimi and stat.anonim_yechimlar %}
+      {% comment %}
+        ⚠️ FAQAT EGASIGA. Odam boshqalar nimani KO'RMASLIGINI bilishi
+           kerak — aks holda "nega mening postlarim profilimda kam
+           ko'rinadi?" degan savol javobsiz qolardi.
+      {% endcomment %}
+      <p class="mt-3 text-[13px] text-fg-muted">
+        Shundan {{ stat.anonim_dardlar }} ta dard va {{ stat.anonim_yechimlar }} ta yechim
+        <strong>anonim</strong> — ular faqat sizga ko'rinadi, boshqalarning
+        profilingizda umuman chiqmaydi.
+      </p>
+    {% endif %}
+  </section>
+
+  {# ============ TABLAR ============ #}
+  <div class="mt-6">
+    <nav class="flex items-center gap-1 overflow-x-auto border-b border-line pb-px" aria-label="Profil bo'limlari">
+      {% for kalit, yorliq in tablar %}
+        <a href="?tab={{ kalit }}"
+           {% if kalit == tab %}aria-current="page"{% endif %}
+           class="shrink-0 px-3.5 py-2.5 text-sm {% if kalit == tab %}relative font-semibold text-fg after:absolute after:inset-x-2 after:-bottom-px after:h-0.5 after:bg-primary{% else %}font-medium text-fg-muted transition-colors hover:text-fg{% endif %}">
+          {{ yorliq }}
+        </a>
+      {% endfor %}
+    </nav>
+
+    <div class="mt-4 flex flex-col gap-3">
+      {% if tab == "dardlar" or tab == "saqlanganlar" %}
+        {% for complaint in sahifa %}
+          {% include "components/_complaint_card.html" with complaint=complaint index=forloop.counter0 %}
+        {% empty %}
+          {% if tab == "saqlanganlar" %}
+            {% include "components/_empty_state.html" with title="Hali hech narsa saqlanmagan" text="Keyinroq qaytib o'qimoqchi bo'lgan muammoni saqlang — kartadagi xatcho'p belgisini bosing." %}
+          {% elif ozimi %}
+            {% include "components/_empty_state.html" with title="Hali dard yozmagansiz" text="Muammoni yozing — jamoa javob beradi." %}
+          {% else %}
+            {% include "components/_empty_state.html" with title="Dard yo'q" text="Bu foydalanuvchi hali ochiq dard yozmagan." %}
+          {% endif %}
+        {% endfor %}
+
+      {% elif tab == "yechimlar" %}
+        {% for yechim in sahifa %}
+          <article class="card p-4 {% if yechim.is_accepted %}border-solved-icon/50 bg-solved-bg/20{% else %}card-hover{% endif %}">
+            <div class="mb-2 flex flex-wrap items-center gap-2 text-[13px]">
+              {% if yechim.is_accepted %}
+                <span class="badge-solved">
+                  <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m20 6-11 11-5-5"/></svg>
+                  Qabul qilingan
+                </span>
+              {% endif %}
+              {% if yechim.is_anonymous %}
+                {# ⚠️ Faqat egasining ro'yxatida uchraydi — begonada bunday yechim YO'Q. #}
+                <span class="badge">anonim</span>
+              {% endif %}
+              <time class="text-fg-muted" datetime="{{ yechim.created_at|date:'c' }}">{{ yechim.created_at|timesince }} oldin</time>
+            </div>
+            <p class="text-[13px] text-fg-muted">
+              Javob berilgan:
+              <a href="{{ yechim.complaint.get_absolute_url }}" class="link font-semibold">«{{ yechim.complaint.title|truncatechars:70 }}»</a>
+            </p>
+            <p class="clamp-3 mt-2 text-[15px] leading-relaxed">{{ yechim.content }}</p>
+            <p class="tnum mt-3 inline-flex items-center gap-1.5 text-[13px] font-semibold {% if yechim.upvotes_cached %}text-upvote{% else %}text-fg-muted{% endif %}">
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 15 7-7 7 7"/></svg>
+              {{ yechim.upvotes_cached }} ovoz
+            </p>
+          </article>
+        {% empty %}
+          {% include "components/_empty_state.html" with title="Hali yechim yo'q" text="Birovning muammosiga javob bering — tajribangiz kimgadir juda kerak." %}
+        {% endfor %}
+
+      {% elif tab == "karma" %}
+        {% comment %}
+          ⚠️⚠️ FAQAT EGASIGA (D3-T4 `selectors.profil_karma_tarixi()`):
+             tarix anonim yechimlarni egasiga bog'lab qo'yardi.
+
+          ⚠️ D3-T1 `nega` bo'limi: "nima uchun 1340 ball?" savoliga javob
+             bo'lishi kerak. Shuning uchun har qatorda SABAB, BALL va
+             QAYSI yechim ekani turadi.
+        {% endcomment %}
+        <div class="card overflow-x-auto">
+          <table class="w-full min-w-[480px] text-left text-[14px]">
+            <caption class="sr-only">Karma tarixi</caption>
+            <thead class="border-b border-line text-[12px] uppercase tracking-wider text-fg-muted">
+              <tr>
+                <th scope="col" class="px-4 py-2.5 font-semibold">Sabab</th>
+                <th scope="col" class="px-4 py-2.5 font-semibold">Nima uchun</th>
+                <th scope="col" class="px-4 py-2.5 text-right font-semibold">Ball</th>
+                <th scope="col" class="px-4 py-2.5 text-right font-semibold">Sana</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-line">
+              {% for hodisa in sahifa %}
+                <tr>
+                  <td class="px-4 py-2.5">{{ hodisa.get_reason_display }}</td>
+                  <td class="px-4 py-2.5 text-fg-muted">
+                    {% if hodisa.solution %}
+                      <a href="{{ hodisa.solution.complaint.get_absolute_url }}" class="link">«{{ hodisa.solution.complaint.title|truncatechars:48 }}»</a>
+                    {% else %}
+                      —
+                    {% endif %}
+                  </td>
+                  <td class="tnum px-4 py-2.5 text-right font-bold {% if hodisa.points > 0 %}text-upvote{% else %}text-downvote{% endif %}">
+                    {{ hodisa.points|stringformat:"+d" }}
+                  </td>
+                  <td class="px-4 py-2.5 text-right text-fg-muted">
+                    <time datetime="{{ hodisa.created_at|date:'c' }}">{{ hodisa.created_at|date:"j-M, H:i" }}</time>
+                  </td>
+                </tr>
+              {% empty %}
+                <tr>
+                  <td colspan="4" class="px-4 py-8 text-center text-fg-muted">
+                    Hali karma hodisasi yo'q. Yechim yozing — foydali javob ball keltiradi.
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% endif %}
+    </div>
+
+    {% comment %}
+      ⚠️ Sahifalash RAQAMLI (`Paginator`), lentadagidek kursor emas —
+         audit jurnali bilan bir xil sabab: profilda "orqaga qaytish"
+         va aniq sahifaga o'tish real ehtiyoj.
+
+      ⚠️ Havolada `tab` SAQLANADI: usiz ikkinchi sahifaga o'tgan odam
+         birinchi tabga tushib qolardi.
+    {% endcomment %}
+    {% if sahifa.has_other_pages %}
+      <nav class="mt-5 flex items-center justify-center gap-2 text-[14px]" aria-label="Sahifalar">
+        {% if sahifa.has_previous %}
+          <a href="?tab={{ tab }}&amp;sahifa={{ sahifa.previous_page_number }}" class="btn-outline btn-sm">Oldingi</a>
+        {% endif %}
+        <span class="tnum text-fg-muted">{{ sahifa.number }} / {{ sahifa.paginator.num_pages }}</span>
+        {% if sahifa.has_next %}
+          <a href="?tab={{ tab }}&amp;sahifa={{ sahifa.next_page_number }}" class="btn-outline btn-sm">Keyingi</a>
+        {% endif %}
+      </nav>
+    {% endif %}
+  </div>
+</main>
 {% endblock %}
