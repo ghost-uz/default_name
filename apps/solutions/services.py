@@ -1,4 +1,4 @@
-"""Yechim oqimi — xizmat funksiyalari (D1-T4, D1-T10).
+"""Yechim oqimi — xizmat funksiyalari (D1-T4, D1-T10, D3-T1).
 
 Ko'rinishlar shu funksiyalarni chaqiradi. Mantiq bu yerda, `views.py` da
 emas: qabul qilish uchta jadvalga tegadi va uni bir necha joyda
@@ -11,13 +11,15 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import models, transaction
 from django.utils import timezone
 
+from apps.common.voting import VoteResult, cast_vote
 from apps.complaints.models import Complaint, ComplaintStatus
 from apps.gamification.services import (
+    ovoz_karmasi,
     yechim_qabul_karmasi,
     yechim_qabuli_bekor_karmasi,
 )
 
-from .models import Solution
+from .models import Solution, SolutionVote
 
 
 @transaction.atomic
@@ -157,3 +159,27 @@ def unaccept_solution(*, solution: Solution, by_user) -> Solution:
 
     yechim_qabuli_bekor_karmasi(solution=solution)
     return solution
+
+
+def yechimga_ovoz(*, solution: Solution, user, qiymat: int) -> VoteResult:
+    """Yechimga ovoz beradi VA muallif karmasini yangilaydi (D3-T1).
+
+    ⚠️ YAGONA KIRISH NUQTASI — ko'rinish `cast_vote()` ni to'g'ridan-to'g'ri
+       chaqirmasligi kerak. Aks holda karma "ovoz ko'rinishida" turardi va
+       kelajakda qo'shiladigan ikkinchi yo'l (masalan API yoki ommaviy
+       import) uni jimgina o'tkazib yuborardi — bu D1-T10 dagi
+       "signal emas, bitta ochiq kirish nuqtasi" qarorining o'zi.
+
+    ⚠️ DARDGA OVOZDA bunday o'ram YO'Q va bo'lmasligi ham kerak: dard
+       karma bermaydi (`KARMA_QIYMATLARI` izohi). `complaints` ko'rinishi
+       `cast_vote()` ni to'g'ridan-to'g'ri chaqiraveradi.
+    """
+    natija = cast_vote(
+        target=solution,
+        vote_model=SolutionVote,
+        target_field="solution",
+        user=user,
+        value=qiymat,
+    )
+    ovoz_karmasi(solution=solution, natija=natija, qiymat=qiymat, ovoz_beruvchi=user)
+    return natija

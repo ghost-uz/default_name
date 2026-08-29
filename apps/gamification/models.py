@@ -24,16 +24,59 @@ class KarmaReason(models.TextChoices):
     # ⚠️ Bu "o'chirish" emas, TESKARI YOZUV. Pastdagi izohga qarang.
     SOLUTION_UNACCEPTED = "solution_unaccepted", "Yechim qabuli bekor qilindi"
 
+    # --- Ovoz karmasi (D3-T1) ------------------------------------------
+    SOLUTION_UPVOTED = "solution_upvoted", "Yechimga ovoz berildi"
+    SOLUTION_UPVOTE_OLINDI = "solution_upvote_olindi", "Yechimdagi ovoz olindi"
+
+    # --- Kompensatsiya: kontent ko'rinmay qolganda (D3-T1) --------------
+    # ⚠️ Bu ikkisining BALLI HISOBLANADI, `KARMA_QIYMATLARI` da YO'Q —
+    #    pastdagi izohga qarang.
+    KONTENT_OLIB_TASHLANDI = (
+        "kontent_olib_tashlandi",
+        "Kontent olib tashlandi — karma qaytarildi",
+    )
+    KONTENT_TIKLANDI = "kontent_tiklandi", "Kontent tiklandi — karma qaytarib berildi"
+
 
 # ⚠️ QIYMATLAR MAHSULOT QARORI, rejada berilmagan.
-#    +15 — StackOverflow'dagi "qabul qilingan javob" bilan bir xil daraja.
-#    Sabab: qabul qilish platformaning YAKUNIY qiymati (reja 8-bo'lim), ya'ni
-#    u ovoz berishdan sezilarli darajada qimmatroq bo'lishi kerak. Ovoz
-#    karmasi keyinroq qo'shiladi (D3-T1) va u kichikroq bo'ladi.
+#
+#    +15 (qabul) — StackOverflow'dagi "qabul qilingan javob" bilan bir xil
+#    daraja. Qabul qilish platformaning YAKUNIY qiymati (reja 8-bo'lim),
+#    ya'ni u ovozdan sezilarli darajada qimmatroq bo'lishi kerak.
+#
+#    +2 (ovoz) — qabuldan yetti barobar arzon: ovoz "foydali ko'rindi",
+#    qabul esa "menga HAQIQATAN yordam berdi" degani.
+#
+# ⚠️⚠️ DARD (MUAMMO) KARMA BERMAYDI — foydalanuvchi qarori.
+#    Platformaning qiymati YORDAM BERISHDA. Dard yozish bepul bo'lsa,
+#    og'ir ahvoldagi odam "ball yig'ish" haqida o'ylamaydi — shunchaki
+#    so'raydi. Qarama-qarshi qaror (dardga ham ball) dard yozib ball
+#    yig'ish yo'lini ochardi va og'ir mavzuni rag'batlantirardi.
+#
+# ⚠️⚠️ MINUS OVOZ KARMA AYIRMAYDI — foydalanuvchi qarori.
+#    `↓` lentadagi tartibga ta'sir qiladi (`score_cached`), lekin karmaga
+#    tegmaydi. Bu og'ir mavzular platformasi: minus karma odamni, ayniqsa
+#    birinchi marta yozganini, butunlay jimitib qo'yardi. Sifatsiz javob
+#    ko'rinmay qoladi — bu yetarli jazo; qoidabuzarlik esa moderatsiya
+#    ishi (D2-T11), karma emas.
 KARMA_QIYMATLARI: dict[str, int] = {
     KarmaReason.SOLUTION_ACCEPTED: 15,
     KarmaReason.SOLUTION_UNACCEPTED: -15,
+    KarmaReason.SOLUTION_UPVOTED: 2,
+    KarmaReason.SOLUTION_UPVOTE_OLINDI: -2,
 }
+
+# ⚠️ KOMPENSATSIYA SABABLARI — balli HISOBLANADI, konstanta EMAS.
+#
+#    Yechim olib tashlanganda qaytariladigan miqdor uning TARIXIGA bog'liq
+#    (nechta ovoz oldi, qabul qilinganmi) — ya'ni oldindan ma'lum emas.
+#    Shuning uchun bu ikkisi `KARMA_QIYMATLARI` da YO'Q va `karma_yoz()`
+#    ularni RAD ETADI: aks holda "ball chaqiruvchidan olinmaydi" qoidasidan
+#    qilingan ongli istisno jimgina umumiy teshikka aylanardi.
+KOMPENSATSIYA_SABABLARI: tuple[str, ...] = (
+    KarmaReason.KONTENT_OLIB_TASHLANDI,
+    KarmaReason.KONTENT_TIKLANDI,
+)
 
 
 class KarmaEvent(TimeStampedModel):

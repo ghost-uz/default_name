@@ -10,6 +10,11 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 
+from apps.gamification.services import (
+    kontent_karmasini_qaytarish,
+    kontent_karmasini_tiklash,
+)
+
 from .audit import audit
 from .models import (
     CHORA_HOLATI,
@@ -158,6 +163,37 @@ def _maqsad_kwargs(target) -> dict:
     )
 
 
+def _karmani_moslash(target) -> None:
+    """Kontent ko'rinishi o'zgargach yechim karmasini moslaydi (D3-T1).
+
+    ⚠️ QABUL MEZONI (D3-T1): "kontent o'chirilsa teskari hodisa yoziladi".
+       Bugungi kunda kontent ko'rinmay qolishining YAGONA yo'li —
+       moderatsiya chorasi (muallif uchun o'chirish ko'rinishi hali
+       yozilmagan). O'sha ko'rinish qo'shilganda U HAM shu funksiyani
+       chaqirishi kerak — signal qo'yilmagan, chunki `bulk_create` va
+       `QuerySet.update()` da signal ishlamaydi (D1-T10 dagi bir xil
+       qaror).
+
+    ⚠️ FAQAT YECHIM: dard karma bermaydi (`KARMA_QIYMATLARI` izohi),
+       ya'ni qaytariladigan narsa ham yo'q.
+
+    ⚠️ IKKALA YO'L HAM IDEMPOTENT, shuning uchun bu funksiyani HAR
+       qarordan keyin so'zsiz chaqirish mumkin: "ogohlantirish" yoki
+       "rad etish" ko'rinishni o'zgartirmaydi va tiklash hech nima
+       yozmaydi (kompensatsiya yig'indisi allaqachon nol).
+    """
+    from apps.solutions.models import Solution
+
+    if not isinstance(target, Solution):
+        return
+
+    korinadimi = target.is_publicly_visible and not target.is_deleted
+    if korinadimi:
+        kontent_karmasini_tiklash(solution=target)
+    else:
+        kontent_karmasini_qaytarish(solution=target)
+
+
 def _moderatorni_tekshirish(moderator) -> None:
     if not getattr(moderator, "is_staff", False):
         raise PermissionDenied("Faqat moderator chora ko'ra oladi.")
@@ -239,6 +275,12 @@ def qaror_qabul_qilish(
         yopildi,
     )
 
+    # ⚠️ KARMA (D3-T1): kontent ko'rinmay qolsa, u bergan ball
+    #    QAYTARILADI — aks holda olib tashlangan yechim muallifga ball
+    #    berib turaverardi va "suiisteʼmolni orqaga qaytarib bo'lmaydi"
+    #    muammosi saqlanib qolardi (D3-T1 `nega` bo'limi).
+    _karmani_moslash(target)
+
     # ⚠️ UCH OGOHLANTIRISH (D2-T11) — moderator sanab o'tirmasin.
     #    Chora yozilgandan KEYIN chaqiriladi: sanoq shu chorani ham
     #    hisobga olishi kerak.
@@ -297,6 +339,17 @@ def qarorni_bekor_qilish(*, moderator, chora: ModerationAction) -> ModerationAct
         resolution_note="",
         yopgan_chora=None,
     )
+
+    # ⚠️ KARMA QAYTARIB BERILADI (D3-T1). Moderatorning xatosi
+    #    foydalanuvchining ballida abadiy qolmasligi kerak — bu D2-T11
+    #    dagi "bekor qilingan chora qoidabuzarlik sanalmaydi"
+    #    qoidasining karmadagi ko'rinishi.
+    #
+    # ⚠️ Kontent `oldingi_holat` ga qaytadi va u KO'RINADIGAN bo'lmasligi
+    #    ham mumkin (masalan `PENDING`) — shuning uchun bu yerda
+    #    "so'zsiz tiklash" emas, `_karmani_moslash()` chaqiriladi:
+    #    u JORIY holatga qaraydi.
+    _karmani_moslash(target)
 
     log.info("Chora bekor qilindi: #%s %s", chora.pk, chora.target_nomi)
     return qaytarish

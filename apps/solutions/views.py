@@ -25,13 +25,17 @@ from apps.common.vote_views import (
     ovoz_ruxsati,
     ovozdan_keyingi_manzil,
 )
-from apps.common.voting import cast_vote
 from apps.complaints.models import Complaint
 from apps.moderation.services import avtomatik_belgilash, inqirozni_belgilash
 
 from .forms import SolutionForm
-from .models import Solution, SolutionVote
-from .services import accept_solution, unaccept_solution, yechim_yozish
+from .models import Solution
+from .services import (
+    accept_solution,
+    unaccept_solution,
+    yechim_yozish,
+    yechimga_ovoz,
+)
 
 
 @require_POST
@@ -55,13 +59,10 @@ def yechim_ovoz(request: HttpRequest, pk: int) -> HttpResponse:
 
     yechim = get_object_or_404(Solution.objects.visible(), pk=pk)
 
-    natija = cast_vote(
-        target=yechim,
-        vote_model=SolutionVote,
-        target_field="solution",
-        user=request.user,
-        value=qiymat,
-    )
+    # ⚠️ `cast_vote()` TO'G'RIDAN-TO'G'RI chaqirilmaydi (D3-T1):
+    #    `yechimga_ovoz()` ovoz bilan birga muallif karmasini ham
+    #    yozadi va u yagona kirish nuqtasi.
+    natija = yechimga_ovoz(solution=yechim, user=request.user, qiymat=qiymat)
 
     if not htmx_sorovimi(request):
         return redirect(ovozdan_keyingi_manzil(request, yechim.get_absolute_url()))

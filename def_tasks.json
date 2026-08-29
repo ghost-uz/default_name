@@ -2011,19 +2011,42 @@
       ],
       "yangilangan": "2026-08-28",
       "natija": {
-        "bajarilgan": [
-          "KarmaEvent jurnali (apps/gamification/models.py) — D1-T10 qabul mezoni talab qildi",
-          "karma_yoz() / karmani_qayta_hisoblash() xizmatlari",
-          "SOLUTION_ACCEPTED (+15) va SOLUTION_UNACCEPTED (-15) hodisalari",
-          "User.karma_cached F() bilan yangilanadi va jurnaldan qayta tiklanadi"
+        "yaratilgan": [
+          "apps/gamification/models.py — SOLUTION_UPVOTED/UPVOTE_OLINDI + KONTENT_OLIB_TASHLANDI/TIKLANDI + KOMPENSATSIYA_SABABLARI",
+          "apps/gamification/migrations/0002_alter_karmaevent_reason.py",
+          "apps/gamification/services.py — ovoz_karmasi(), kontent_karmasini_qaytarish(), kontent_karmasini_tiklash(), _yechim_hisobi(), _kompensatsiya_yozish()",
+          "apps/solutions/services.py — yechimga_ovoz() (ovoz + karma, yagona kirish nuqtasi)",
+          "apps/solutions/views.py — cast_vote() o'rniga yechimga_ovoz()",
+          "apps/moderation/services.py — _karmani_moslash() + qaror va bekor qilishga ulanish",
+          "apps/gamification/tests_karma_ledger.py — 22 test"
         ],
-        "qolgan": [
-          "ovoz uchun karma (upvote/downvote hodisalari)",
-          "post o'chirilganda karmani qaytarish",
-          "karma tarixi profil sahifasida (D3-T4 bilan birga)",
-          "admin interfeysi"
+        "qabul_mezonlari": {
+          "kesh_jurnalga_teng": "✅ MURAKKAB oqimdan keyin ham tekshiriladi (ovoz/almashtirish/qabul/chora/bekor qilish ketma-ketligi) — aynan shunday holatda kesh uziladi.",
+          "kontent_ochirilsa_teskari_hodisa": "✅ Moderatsiya YASHIRISH/OLIB TASHLASH da karma qaytariladi, chora bekor qilinsa qaytarib beriladi. Ikkalasi ham IDEMPOTENT (bayroq emas, hisob). Muallif uchun o'chirish ko'rinishi hali YO'Q — u yozilganda `_karmani_moslash()` ni chaqirishi kerak.",
+          "profilda_karma_tarixi": "❌ OCHIQ — D3-T4 (profil sahifasi) ga bog'liq."
+        },
+        "qarorlar": [
+          "OVOZ KARMASI +2, QABUL +15 — qabul yetti barobar qimmat: ovoz 'foydali ko'rindi', qabul esa 'menga HAQIQATAN yordam berdi' degani.",
+          "DARD (MUAMMO) KARMA BERMAYDI — foydalanuvchi qarori. Platformaning qiymati YORDAM BERISHDA; dard yozish bepul bo'lsa og'ir ahvoldagi odam 'ball yig'ish' haqida o'ylamaydi. Qarama-qarshi qaror dard yozib ball yig'ish yo'lini ochardi.",
+          "MINUS OVOZ KARMA AYIRMAYDI — foydalanuvchi qarori. `↓` `score_cached` ga ta'sir qiladi, karmaga tegmaydi: bu og'ir mavzular platformasi va minus karma birinchi marta yozgan odamni butunlay jimitib qo'yardi.",
+          "O'ZIGA BERILGAN OVOZ KARMA BERMAYDI — ochiq ferma bo'lardi (yechim yoz → o'zingga ovoz ber → +2, cheksiz). Ovoz berishning O'ZI to'silmagan (D1-T5 qarori), faqat karma qatlamida to'siq.",
+          "KOMPENSATSIYA BALLI HISOBLANADI, `KARMA_QIYMATLARI` da YO'Q — miqdor tarixga bog'liq. `karma_yoz()` bu sabablarni RAD ETADI, aks holda ongli istisno jimgina umumiy teshikka aylanardi.",
+          "IDEMPOTENTLIK BAYROQ BILAN EMAS, HISOB BILAN: qaytarish = `0 - jami`, tiklash = `-kompensatsiya_jami`. `is_karma_reversed` bayrog'i jurnaldan uzilib qolardi; hisob esa har doim jurnalning O'ZIDAN keladi.",
+          "OVOZ KARMASI `cast_vote()` ICHIDA EMAS: `apps/common` boshqa ilovalarni import qilmaydi, va karma faqat yechimga tegishli — umumiy funksiyada 'bu Complaint emasmi?' tekshiruvi paydo bo'lardi.",
+          "SIGNAL EMAS, OCHIQ CHAQIRUV — `bulk_create` va `QuerySet.update()` da signal ishlamaydi (D1-T10 dagi bir xil qaror)."
+        ],
+        "olchangan_holat": {
+          "testlar": 786,
+          "qamrov_foiz": 95.82,
+          "d3_t1_testlari": 22
+        },
+        "keyingi_uchun_eslatma": [
+          "⚠️ Muallif uchun kontent o'chirish ko'rinishi yozilganda `moderation.services._karmani_moslash()` ni (yoki to'g'ridan-to'g'ri `kontent_karmasini_qaytarish()` ni) CHAQIRISH SHART — signal qo'yilmagan.",
+          "⚠️ Yangi karma sababi qo'shsangiz `KARMA_QIYMATLARI` ga ham qo'shing, aks holda `KeyError`. Kompensatsiya sabablari esa ATAYLAB tashqarida.",
+          "D3-T3 (oylik reyting) shu jurnaldan `created_at` bo'yicha yig'adi — qo'shimcha model kerak emas."
         ]
-      }
+      },
+      "eslatma": "Ledger MEXANIZMI TO'LIQ (ovoz karmasi + kompensatsiya). Uchinchi qabul mezoni ('profilda karma tarixi ko'rinadi') D3-T4 ga bog'liq: profil sahifasi hali maket (`apps/common/maket.py`). D3-T4 tugagach bu task `done` bo'ladi."
     },
     {
       "id": "D3-T2",
