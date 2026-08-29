@@ -30,6 +30,9 @@
     <div class="flex items-center gap-1.5 bg-danger px-4 py-2 text-xs font-bold uppercase tracking-wider text-white">
       <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 9v4m0 4h.01M10.3 3.9 2.4 17.5A2 2 0 0 0 4.1 20.5h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0"/></svg>
       Zarar yetkazish xavfi — birinchi navbatda
+      <a href="{% url 'moderatsiya_qollanma' %}" class="ml-auto underline underline-offset-2 hover:no-underline">
+        Qo'llanma
+      </a>
     </div>
   {% elif holat.kechikkanmi %}
     <div class="flex items-center gap-1.5 bg-boom-bg px-4 py-2 text-xs font-bold uppercase tracking-wider text-boom">

@@ -1542,13 +1542,78 @@
       "bogliq": [
         "D2-T2"
       ],
-      "holat": "todo",
+      "holat": "qisman",
       "qabul_mezoni": [
         "O'zbekistondagi RASMIY ishonch telefoni raqami TASDIQLANGAN va joylashtirilgan",
         "aniqlangan post 15 daqiqa ichida moderatorga ko'rinadi",
         "moderator uchun yozma qo'llanma bor"
       ],
-      "eslatma": "Raqam ataylab to'ldirilmagan — noto'g'ri inqiroz raqami raqam yo'qligidan xavfliroq. Rasmiy manbadan tasdiqlang."
+      "eslatma": "MEXANIZM TO'LIQ, RAQAM YO'Q. 3 ta qabul mezonidan 2 tasi bajarildi. Birinchisi ('RASMIY ishonch telefoni TASDIQLANGAN va joylashtirilgan') OCHIQ: loyiha egasi bergan +998-99-503-63-62 raqami 2026-08-29 da aniqlashtirildi — u TASHKILOT liniyasi emas, loyiha egasining shaxsiy raqami. Inqirozdagi odamga tayyorgarliksiz odam javob berishi xavfli, shuning uchun u inqiroz bloki ga QO'YILMADI (ALOQA_TELEFONI sifatida alohida turadi). ISHONCH_TELEFONI sozlamada None va buni TEST qotiradi.",
+      "tugatilgan": "2026-08-29",
+      "natija": {
+        "yaratilgan": [
+          "apps/common/inqiroz.py — normallashtirish, KALIT_SOZLAR (46 ta), topilgan_belgilar(), inqiroz_konteksti()",
+          "apps/common/models.py — ContentModel.inqiroz_aniqlandi (Complaint + Solution migratsiyalari)",
+          "config/settings/base.py — ISHONCH_TELEFONI (None), SHOSHILINCH_RAQAMLAR (103/112), ALOQA_TELEFONI",
+          "apps/moderation/services.py — inqirozni_belgilash()",
+          "apps/moderation/models.py — AuditAction.INQIROZ_ANIQLANDI",
+          "templates/components/_inqiroz.html — yordam bloki (muallif + o'quvchi)",
+          "templates/moderation/qollanma.html + views.qollanma — moderator qo'llanmasi",
+          "apps/common/tests/test_inqiroz.py — 32 test"
+        ],
+        "qabul_mezonlari": {
+          "rasmiy_ishonch_telefoni": "❌ OCHIQ — rasmiy manbadan tasdiqlangan raqam yo'q. Mexanizm tayyor: sozlamaga bitta lug'at yozilsa blokda BIRINCHI bo'lib chiqadi (test bilan tekshirilgan). 103/112 esa hozircha ko'rsatiladi.",
+          "15_daqiqa_ichida_moderatorga": "✅ AMALDA DARHOL — aniqlash yozish paytida sinxron ishlaydi va XAVF sababli tizim shikoyati D2-T2 navbatining eng tepasiga chiqadi (3 kun kutgan holat bilan solishtirib tekshirilgan).",
+          "moderator_qollanmasi": "✅ /moderatsiya/qollanma/ — 5 bosqichli ketma-ketlik, 'yarasa/yaramaydi' ohang jadvali, chegara ('biz shifokor emasmiz'). Navbatdan VA shoshilinch holat kartasidan bir bosish narida."
+        },
+        "tekshirilgan": [
+          "⭐⭐ aniqlangan post KO'RINISHDA QOLADI: o'chirilmaydi, yashirilmaydi, VISIBLE",
+          "⭐ muallif HECH QANDAY ogohlantirish olmaydi ('belgilandi'/'shubhali'/'tekshiruvda' so'zlari sahifada yo'q)",
+          "apostrofning 4 varianti (' ʻ ‘ `) bir xil topiladi",
+          "katta harf, kirill, ruscha matnlar topiladi",
+          "yordam bloki O'QUVCHIGA ham ko'rinadi (do'stining postini ochgan odam)",
+          "yechimdagi belgi ham blokni chiqaradi",
+          "ISHONCH_TELEFONI bo'sh bo'lsa ham blok ishlaydi (103/112)",
+          "ISHONCH_TELEFONI sozlansa BIRINCHI chiqadi",
+          "⭐ ISHONCH_TELEFONI sozlamada None ekani TEST bilan qotirilgan",
+          "spam va inqiroz tizim shikoyatlari ARALASHMAYDI (reason bo'yicha ajratilgan)",
+          "takroriy belgilash ikkinchi shikoyat yaratmaydi",
+          "belgilash audit jurnaliga tizim nomidan tushadi",
+          "qo'llanma staff'dan boshqaga 404",
+          "🌐 JONLI: inqiroz matnli post yozildi -> ko'rinishda qoldi, yordam bloki chiqdi, muallifga ogohlantirish yo'q",
+          "🌐 JONLI: navbatda birinchi o'rinda, 'Zarar yetkazish xavfi' + 'Qo'llanma' havolasi bilan"
+        ],
+        "qarorlar": [
+          "⭐ ANIQLASH TSENZURA EMAS. Aniqlangan post o'chirilmaydi, yashirilmaydi va muallif ogohlantirish olmaydi. Task tavsifi: 'jim o'chirish eng yomon variant — u odamni yakkalaydi'. Bayroq faqat ikki narsa qiladi: navbat tepasiga chiqaradi va yordam ma'lumotini ko'rsatadi.",
+          "YOLG'ON IJOBIY ATAYLAB KO'P. Ro'yxat keng va aniqlik (precision) qurbon qilingan: noto'g'ri aniqlangan post moderatorning bir daqiqasini oladi, o'tkazib yuborilgani esa odamni yolg'iz qoldiradi. Ro'yxat kengligini alohida test himoya qiladi (kimdir 'aniqlikni oshiraman' deb torraytirmasin).",
+          "APOSTROF NORMALLASHTIRISH majburiy: o'zbek lotin yozuvida apostrof kamida 4 xil belgi bilan yoziladi. Normallashtirmasak, aniqlash foydalanuvchining KLAVIATURASIGA bog'liq bo'lardi.",
+          "IKKI TIL, IKKI ALIFBO (o'zbek lotin + kirill + rus): odam og'ir paytda qaysi tilda yozishini oldindan bilib bo'lmaydi.",
+          "`inqiroz_aniqlandi` MAYDON, `Report` dan hisoblab emas: bayroq kontentning xossasi. Shikoyatdan hisoblansak, moderator uni yopgan zahoti yordam ma'lumoti sahifadan yo'qolardi — post esa hali turibdi.",
+          "Yordam bloki MUALLIFGA HAM, O'QUVCHIGA HAM: do'stining postini ochgan odam — yordam so'rashi mumkin bo'lgan yagona odam bo'lishi mumkin.",
+          "Blok ohangi: postni 'belgilangan' deb ATAMAYDI (kuzatuv tuyg'usi + uyat), maslahat BERMAYDI (biz shifokor emasmiz), 'yordam so'rang' deb BUYURMAYDI (og'ir paytda buyruq bosim). Faqat raqamni ko'z oldiga qo'yadi.",
+          "Qo'llanma KOD ICHIDA va navbatdan bir bosish narida: alohida hujjatda turgan qo'llanma tungi soat 2 da topilmaydi — task tavsifi aynan shu holatdan ogohlantiradi.",
+          "Loyiha egasining shaxsiy raqami inqiroz blokiga QO'YILMADI (2026-08-29 qarori): inqirozdagi odamga tayyorgarliksiz odam javob berishi xavfli."
+        ],
+        "topilgan_xatolar": [
+          "⭐⭐ HONEYPOT YORLIG'I EKRANDA KO'RINIB TURGAN (D2-T5 da kiritilgan, D2-T6 seansida JONLI BRAUZERDA topilgan). `class=\"honeypot\"` faqat `<input>` da edi, o'rovchi `<div>` esa faqat `aria-hidden` olgandi — natijada «Bu maydonni bo'sh qoldiring» matni ikkala formada ham ko'rinardi, ya'ni honeypot o'zini o'zi fosh qilardi va foydalanuvchi tushunarsiz maydon ko'rardi. TESTLAR BUNI O'TKAZIB YUBORDI: ular `input` ATRIBUTLARINI tekshirardi, ekranda nima ko'rinishini emas. Tuzatildi + guard test qo'shildi.",
+          "Test helper'i `vaqt_belgisi()` ni chaqirganda '0 soniyada to'ldirildi' bo'lib, D2-T5 spam evristikasi ishga tushardi — inqiroz testlari spamni o'lchab qolardi. Vaqt 60 soniya oldingi qilib qo'yildi.",
+          "`AuditAction` ga yangi qiymat qo'shish MIGRATSIYA talab qiladi (Django choices o'zgarishini kuzatadi) — pre-commit ushladi.",
+          "Testda apostrof yana ekranlash tuzog'iga tushdi (D2-T1 dagi bilan bir xil): `escape()` kerak."
+        ],
+        "guardlar_isbotlangan": "Ikkita xato ATAYLAB kiritildi (apostrof normallashtirish olib tashlandi; inqiroz kontentni yashirsin) — 4 test yiqildi, jumladan 'post ko'rinishda qoladi' va apostrof variantlari testlari.",
+        "olchangan_holat": {
+          "testlar": 605,
+          "qamrov_foiz": 95.31,
+          "d2_t6_testlari": 32,
+          "kalit_sozlar": 46,
+          "pre_commit_hooklar": 17
+        },
+        "keyingi_uchun_eslatma": [
+          "⚠️ RASMIY ISHONCH TELEFONI TOPILGANDA: `config/settings/base.py` -> ISHONCH_TELEFONI = {'nom': ..., 'raqam': ..., 'vaqt': ...} va `test_ISHONCH_TELEFONI_sozlamada_BOSH` testini yangilang. Boshqa hech narsa tegilmaydi.",
+          "ALOQA_TELEFONI (+998 99 503 63 62) D2-T10 dagi 'Bog'lanish' sahifasida ishlatiladi — inqiroz liniyasi sifatida EMAS.",
+          "Kalit so'zlar ro'yxati o'sishi kerak: haqiqiy postlar ko'rilgach yangi iboralar qo'shiladi. Qisqartirilmasin — test buni qo'riqlaydi."
+        ]
+      }
     },
     {
       "id": "D2-T7",

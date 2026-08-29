@@ -1,4 +1,4 @@
-"""Moderatsiya — xizmat funksiyalari (D2-T1, D2-T2, D2-T5, D2-T7)."""
+"""Moderatsiya — xizmat funksiyalari (D2-T1, D2-T2, D2-T5, D2-T6, D2-T7)."""
 
 from __future__ import annotations
 
@@ -327,7 +327,15 @@ def avtomatik_belgilash(*, target, baho) -> Report | None:
     # Bitta obyektga bitta OCHIQ tizim shikoyati yetarli: tahrirlash
     # har safar yangi qator yaratsa, navbat bir xil holat bilan
     # to'lib ketardi.
-    mavjud = Report.objects.ochiq().filter(reporter__isnull=True, **kwargs).first()
+    # ⚠️ `reason` ham filtrga kiradi: inqiroz shikoyati (D2-T6) ham
+    #    `reporter=None` bilan yoziladi. Sababsiz qidirsak, spam
+    #    izohi inqiroz izohining ustiga yozilardi va navbatdagi
+    #    eng muhim signal yo'qolardi.
+    mavjud = (
+        Report.objects.ochiq()
+        .filter(reporter__isnull=True, reason=ReportReason.SPAM, **kwargs)
+        .first()
+    )
     if mavjud is not None:
         mavjud.comment = baho.izoh[:2000]
         mavjud.save(update_fields=["comment", "updated_at"])
@@ -349,4 +357,64 @@ def avtomatik_belgilash(*, target, baho) -> Report | None:
         ball=baho.ball,
         sabablar=baho.sabablar,
     )
+    return hisobot
+
+
+# ===========================================================================
+# Inqirozli kontent (D2-T6)
+# ===========================================================================
+@transaction.atomic
+def inqirozni_belgilash(*, target, matnlar: list[str]) -> Report | None:
+    """Inqiroz belgisi topilsa kontentni navbat TEPASIGA chiqaradi.
+
+    ⚠️⚠️ KONTENT O'CHIRILMAYDI, YASHIRILMAYDI VA MUALLIF HECH QANDAY
+       OGOHLANTIRISH OLMAYDI. Task tavsifi buni ochiq aytadi: "jim
+       o'chirish eng yomon variant — u odamni yakkalaydi".
+
+       Bu funksiya faqat ikki narsa qiladi:
+         1. `inqiroz_aniqlandi` bayrog'ini qo'yadi (sahifada yordam
+            ma'lumoti chiqishi uchun);
+         2. `XAVF` sababli TIZIM shikoyatini yozadi — D2-T2 navbati
+            `XAVF` ni HAR DOIM eng tepaga qo'yadi, ya'ni "15 daqiqa
+            ichida moderatorga ko'rinadi" qabul mezoni bajariladi
+            (amalda darhol).
+
+    ⚠️ Aniqlash TASHXIS EMAS. Yolg'on ijobiy ataylab ko'p (ro'yxat keng
+       — `apps/common/inqiroz.py`), chunki o'tkazib yuborishning narxi
+       beqiyos yuqori. Qaror moderatorda: `/moderatsiya/qollanma/`.
+    """
+    from apps.common.inqiroz import topilgan_belgilar
+
+    belgilar = topilgan_belgilar(*matnlar)
+    if not belgilar:
+        return None
+
+    if not target.inqiroz_aniqlandi:
+        target.inqiroz_aniqlandi = True
+        target.save(update_fields=["inqiroz_aniqlandi", "updated_at"])
+
+    kwargs = _maqsad_kwargs(target)
+    izoh = "Inqiroz belgisi: " + "; ".join(belgilar[:5])
+
+    mavjud = (
+        Report.objects.ochiq()
+        .filter(reporter__isnull=True, reason=ReportReason.XAVF, **kwargs)
+        .first()
+    )
+    if mavjud is not None:
+        return mavjud
+
+    hisobot = Report.objects.create(
+        reporter=None,
+        reason=ReportReason.XAVF,
+        comment=izoh[:2000],
+        **kwargs,
+    )
+    audit(
+        action=AuditAction.INQIROZ_ANIQLANDI,
+        obyekt=hisobot.target_nomi,
+        izoh=izoh,
+        belgilar=belgilar,
+    )
+    log.warning("INQIROZ BELGISI: %s (%s)", hisobot.target_nomi, len(belgilar))
     return hisobot

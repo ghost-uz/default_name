@@ -1,0 +1,63 @@
+{% comment %}
+  Inqiroz yordami bloki (D2-T6).
+
+  Kontekst:
+    inqiroz_raqamlar   -> settings.SHOSHILINCH_RAQAMLAR
+    ishonch_telefoni   -> settings.ISHONCH_TELEFONI yoki None
+
+  ⚠️⚠️ OHANG — BU YERDA ENG MUHIM NARSA.
+
+     Blok MUALLIFGA HAM, O'QUVCHIGA HAM ko'rinadi va u:
+       · postni "belgilangan" deb ATAMAYDI — bu kuzatuv tuyg'usini
+         beradi va odamni uyaltiradi;
+       · maslahat BERMAYDI — biz shifokor emasmiz;
+       · "yordam so'rang" deb BUYURMAYDI — buyruq og'ir paytda
+         bosim bo'lib tuyuladi.
+
+     U faqat bitta narsa qiladi: raqamni ko'z oldiga qo'yadi.
+
+  ⚠️ Blok YOLG'ON IJOBIYda ham chiqadi (aniqlash ro'yxati ataylab keng).
+     Shuning uchun matn shunday yozilgan-ki, "bu menga tegishli emas"
+     deb o'ylagan odam ham noqulaylik sezmasin.
+
+  ⚠️ Ishonch telefoni sozlamada BO'SH bo'lsa, blok baribir chiqadi:
+     103/112 har doim to'g'ri. "Hech narsa yo'q" degan holatdan ko'ra
+     shu ikkisi ancha yaxshi.
+{% endcomment %}
+<aside
+  class="card mb-4 border-l-4 border-l-danger bg-danger-bg/40 px-4 py-3.5"
+  aria-labelledby="inqiroz-sarlavha"
+  data-inqiroz
+>
+  <p id="inqiroz-sarlavha" class="text-[15px] font-bold">
+    Agar hozir juda og'ir bo'lsa — yolg'iz emassiz
+  </p>
+
+  <p class="mt-1 text-[13px] leading-relaxed text-fg-muted">
+    Hayotga xavf bo'lsa, qo'ng'iroq qilish uchun kutmang.
+  </p>
+
+  <ul class="mt-2.5 space-y-1.5">
+    {% if ishonch_telefoni %}
+      <li class="flex flex-wrap items-baseline gap-x-2 text-sm">
+        <a href="tel:{{ ishonch_telefoni.raqam }}" class="font-bold text-danger hover:underline">
+          {{ ishonch_telefoni.raqam }}
+        </a>
+        <span class="font-semibold">{{ ishonch_telefoni.nom }}</span>
+        {% if ishonch_telefoni.vaqt %}
+          <span class="text-[13px] text-fg-muted">{{ ishonch_telefoni.vaqt }}</span>
+        {% endif %}
+      </li>
+    {% endif %}
+
+    {% for raqam in inqiroz_raqamlar %}
+      <li class="flex flex-wrap items-baseline gap-x-2 text-sm">
+        <a href="tel:{{ raqam.raqam }}" class="font-bold text-danger hover:underline">
+          {{ raqam.raqam }}
+        </a>
+        <span class="font-semibold">{{ raqam.nom }}</span>
+        <span class="text-[13px] text-fg-muted">{{ raqam.izoh }}</span>
+      </li>
+    {% endfor %}
+  </ul>
+</aside>

@@ -32,6 +32,15 @@
         {% endif %}
 
         {% comment %} ============ MUAMMO ============ {% endcomment %}
+        {% comment %}
+          ⚠️ Yordam bloki POSTDAN OLDIN (D2-T6): odam matnni o'qib
+             bo'lgach emas, ko'z tashlagan zahoti ko'rsin. Muallifga
+             ham, o'quvchiga ham chiqadi.
+        {% endcomment %}
+        {% if inqiroz %}
+          {% include "components/_inqiroz.html" %}
+        {% endif %}
+
         {% url 'dard_ovoz' complaint.pk as vote_url %}
         <article class="card overflow-hidden" data-vote-group>
           <div class="flex">

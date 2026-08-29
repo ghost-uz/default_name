@@ -223,6 +223,34 @@ def test_honeypot_ODAMDAN_yashiringan():
     assert 'autocomplete="off"' in render
 
 
+def test_honeypot_YORLIGI_ham_yashiringan(auth_client):
+    """⭐ JONLI BRAUZERDA TOPILGAN XATO (D2-T6 seansi).
+
+    Boshida `class="honeypot"` faqat `<input>` da edi, o'rovchi `<div>`
+    esa faqat `aria-hidden` olgandi. Natijada YORLIQ MATNI ("Bu
+    maydonni bo'sh qoldiring") formada KO'RINIB TURDI — ya'ni honeypot
+    o'zini o'zi fosh qilardi va foydalanuvchi tushunarsiz maydon
+    ko'rardi.
+
+    Testlar buni o'tkazib yubordi: ular `input` ATRIBUTLARINI
+    tekshirardi, ekranda nima ko'rinishini emas.
+    """
+    import re
+
+    from django.utils.html import escape
+
+    matn = auth_client.get("/yozish/").content.decode()
+    # ⚠️ Django `'` ni `&#x27;` ga aylantiradi (D2-T1 da ham shu tuzoq).
+    yorliq = escape("Bu maydonni bo'sh qoldiring")
+
+    assert yorliq in matn
+    # Yorliq honeypot konteyneri ichida bo'lishi shart.
+    blok = re.search(r'<div class="honeypot"[^>]*>(.*?)</div>', matn, re.DOTALL)
+    assert blok, "honeypot konteyneri topilmadi"
+    assert yorliq in blok.group(1)
+    assert matn.count(yorliq) == 1, "yorliq konteynerdan tashqarida ham bor"
+
+
 def test_honeypot_nomi_BRAUZER_AUTOFILL_ga_tushmaydi():
     """⚠️⚠️ Eng nozik joy: brauzer va parol menejerlari `website`,
     `email`, `url`, `phone` nomli maydonlarni AVTOMATIK to'ldiradi —

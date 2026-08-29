@@ -293,6 +293,25 @@ class ContentModel(TimeStampedModel, SoftDeleteModel, ModeratedModel):
         Complaint.objects.visible()
     """
 
+    # ⚠️ INQIROZ BELGISI (D2-T6) — TSENZURA EMAS.
+    #    Aniqlangan kontent O'CHIRILMAYDI va YASHIRILMAYDI: task tavsifi
+    #    buni ochiq aytadi — "jim o'chirish eng yomon variant, u odamni
+    #    yakkalaydi". Bayroq faqat ikki narsa qiladi: postni moderatsiya
+    #    navbatining eng tepasiga chiqaradi va sahifada yordam
+    #    ma'lumotini ko'rsatadi.
+    #
+    # ⚠️ NEGA MAYDON, `Report` dan HISOBLAB EMAS
+    #    Bayroq KONTENTNING xossasi, navbatning holati emas. Shikoyatdan
+    #    hisoblansak, moderator uni "ko'rib chiqildi" deb yopgan zahoti
+    #    yordam ma'lumoti sahifadan yo'qolardi — post esa hali turibdi.
+    inqiroz_aniqlandi = models.BooleanField(
+        "inqiroz belgisi aniqlangan",
+        default=False,
+        editable=False,
+        db_index=True,
+        help_text="Avtomatik aniqlash (D2-T6). Ko'rinishga TA'SIR QILMAYDI.",
+    )
+
     # ⚠️ `type: ignore[misc]` — django-stubs cheklovi, kod xatosi emas.
     #    Plagin `SoftDeleteModel.objects` ni SINF o'zgaruvchisi qilib
     #    materializatsiya qiladi, bu yerdagi qayta belgilash esa nusxa

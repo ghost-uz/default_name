@@ -18,6 +18,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
 from apps.accounts.models import User
+from apps.common.inqiroz import inqiroz_konteksti
 from apps.common.ratelimit import tezlik_cheklovi
 from apps.common.vote_views import (
     htmx_sorovimi,
@@ -26,7 +27,7 @@ from apps.common.vote_views import (
     ovozdan_keyingi_manzil,
 )
 from apps.common.voting import cast_vote, user_votes_for
-from apps.moderation.services import avtomatik_belgilash
+from apps.moderation.services import avtomatik_belgilash, inqirozni_belgilash
 from apps.solutions.forms import SolutionForm
 from apps.solutions.models import Solution, SolutionVote
 
@@ -228,6 +229,11 @@ def complaint_detail(
     for yechim in yechimlar:
         yechim.user_vote = yechim_ovozlari.get(yechim.pk)
 
+    # ⚠️ Yordam bloki MUALLIFGA HAM, O'QUVCHIGA HAM ko'rinadi (D2-T6):
+    #    do'stining postini ochgan odamga ham raqam kerak bo'lishi
+    #    mumkin. Yechimlardan birida belgi bo'lsa ham blok chiqadi.
+    inqiroz = muammo.inqiroz_aniqlandi or any(y.inqiroz_aniqlandi for y in yechimlar)
+
     return render(
         request,
         "complaints/detail.html",
@@ -238,6 +244,8 @@ def complaint_detail(
             "solution_form": solution_form or SolutionForm(),
             "muallifmi": ozinikimi,
             "tahrirlay_oladi": muammo.tahrirlay_oladimi(request.user),
+            "inqiroz": inqiroz,
+            **inqiroz_konteksti(),
         },
     )
 
@@ -261,6 +269,11 @@ def complaint_create(request: HttpRequest) -> HttpResponse:
             muammo = form.save(commit=False)
             muammo.author = request.user
             muammo.save()
+            # ⚠️ INQIROZ birinchi tekshiriladi: u navbatning eng
+            #    tepasiga chiqadi va spam signalidan muhimroq.
+            inqirozni_belgilash(
+                target=muammo, matnlar=[muammo.title, muammo.description]
+            )
             # ⚠️ Shubhali bo'lsa NAVBATGA tushadi, YASHIRILMAYDI
             #    (D2-T5 mahsulot qarori — apps/common/spam.py).
             avtomatik_belgilash(target=muammo, baho=form.spam_bahosi)
@@ -306,6 +319,9 @@ def complaint_edit(request: HttpRequest, slug: str) -> HttpResponse:
         )
         if form.is_valid():
             form.save()
+            inqirozni_belgilash(
+                target=muammo, matnlar=[muammo.title, muammo.description]
+            )
             avtomatik_belgilash(target=muammo, baho=form.spam_bahosi)
             messages.success(request, "O'zgarishlar saqlandi.")
             return redirect(muammo.get_absolute_url())

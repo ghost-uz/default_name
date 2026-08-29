@@ -29,9 +29,18 @@
         kerak", jurnal — "nima qilingan edi". Ikkinchisi nizo yoki
         huquqiy so'rov paytida kerak bo'ladi.
       {% endcomment %}
-      <a href="{% url 'moderatsiya_jurnal' %}" class="btn-outline btn-sm">
-        Audit jurnali
-      </a>
+      <div class="flex gap-2">
+        {% comment %}
+          ⚠️ Inqiroz qo'llanmasi navbatdan BIR BOSISH narida bo'lishi
+             shart (D2-T6): u kerak bo'ladigan payt — shoshilinch payt.
+        {% endcomment %}
+        <a href="{% url 'moderatsiya_qollanma' %}" class="btn-outline btn-sm !border-danger/50 !text-danger">
+          Inqiroz qo'llanmasi
+        </a>
+        <a href="{% url 'moderatsiya_jurnal' %}" class="btn-outline btn-sm">
+          Audit jurnali
+        </a>
+      </div>
     </div>
 
     {% comment %}

@@ -27,7 +27,7 @@ from apps.common.vote_views import (
 )
 from apps.common.voting import cast_vote
 from apps.complaints.models import Complaint
-from apps.moderation.services import avtomatik_belgilash
+from apps.moderation.services import avtomatik_belgilash, inqirozni_belgilash
 
 from .forms import SolutionForm
 from .models import Solution, SolutionVote
@@ -114,6 +114,7 @@ def solution_create(request: HttpRequest, slug: str) -> HttpResponse:
             content=form.cleaned_data["content"],
             is_anonymous=form.cleaned_data["is_anonymous"],
         )
+        inqirozni_belgilash(target=yechim, matnlar=[yechim.content])
         # ⚠️ Shubhali bo'lsa navbatga tushadi, yashirilmaydi (D2-T5).
         avtomatik_belgilash(target=yechim, baho=form.spam_bahosi)
         messages.success(request, "Yechimingiz qo'shildi.")

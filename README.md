@@ -419,6 +419,64 @@ Faqat **`CI holati`** tekshiruvini tanlang, alohida job'larni emas.
 | D2-T4 | Tezlik cheklovi — Redis'da, paketsiz; chegaralar sozlamada, 429 + tushunarli xabar |
 | D2-T5 | Spam evristikasi — honeypot, forma vaqti, havola soni; shubhali kontent yashirilmaydi |
 | D2-T7 | O'zgarmas audit jurnali — to'rt qatlamli himoya, staff sahifasi |
+| D2-T6 | ⚠️ Inqirozli kontent — aniqlash, yordam bloki, moderator qo'llanmasi (**qisman**: rasmiy raqam ochiq) |
+
+### ⚠️ Inqirozli kontent (D2-T6)
+
+Kalit so'z aniqlash → post **navbatning eng tepasiga** chiqadi va
+sahifada yordam bloki ko'rinadi.
+
+⚠️⚠️ **Aniqlash — tsenzura emas.** Aniqlangan post **o'chirilmaydi,
+yashirilmaydi** va muallif **hech qanday ogohlantirish olmaydi**. Task
+tavsifi buni ochiq aytadi: «jim o'chirish eng yomon variant — u odamni
+yakkalaydi».
+
+⚠️ **Yolg'on ijobiy ataylab ko'p.** Ro'yxat keng va aniqlik qurbon
+qilingan: noto'g'ri aniqlangan post moderatorning bir daqiqasini oladi,
+o'tkazib yuborilgani esa odamni yolg'iz qoldiradi. **Ro'yxatni
+qisqartirmang** — buni alohida test qo'riqlaydi.
+
+⚠️ **Apostrof normallashtirish majburiy.** O'zbek lotin yozuvida
+apostrof kamida to'rt xil belgi bilan yoziladi (`'` `ʻ` `‘` `` ` ``).
+Normallashtirmasak, aniqlash foydalanuvchining **klaviaturasiga**
+bog'liq bo'lib qolardi. Uch alifbo qamralgan: o'zbek lotin, o'zbek
+kirill, rus.
+
+**Moderator qo'llanmasi:** `/moderatsiya/qollanma/` — navbatdan va
+shoshilinch holat kartasidan bir bosish narida. Qo'llanma kod ichida
+ataylab: alohida hujjatda turgani tungi soat 2 da topilmaydi.
+
+---
+
+### ⚠️⚠️ `ISHONCH_TELEFONI` ataylab bo'sh
+
+```python
+ISHONCH_TELEFONI = None   # config/settings/base.py
+```
+
+Task eslatmasi: **«noto'g'ri inqiroz raqami raqam yo'qligidan
+xavfliroq»**. Javob bermaydigan raqamga qo'ng'iroq qilgan odam ikkinchi
+marta urinmaydi.
+
+Bu yerga **faqat rasmiy manbadan tasdiqlangan** ishonch liniyasi
+yoziladi. Loyiha egasining shaxsiy raqami bu yerga yozilmaydi —
+inqirozdagi odamga tayyorgarliksiz odam javob berishi xavfli
+(2026-08-29 da aniqlashtirilgan; u `ALOQA_TELEFONI` sifatida alohida
+turadi).
+
+Raqam yo'q bo'lsa ham blok ishlaydi: **103** va **112** har doim
+ko'rsatiladi.
+
+To'ldirish uchun:
+
+```python
+ISHONCH_TELEFONI = {"nom": "<tashkilot>", "raqam": "<raqam>", "vaqt": "24/7"}
+```
+
+…va `test_ISHONCH_TELEFONI_sozlamada_BOSH` testini yangilang — bu
+to'ldirishni **ongli qadam** qiladi, tasodifiy emas.
+
+---
 
 ### Audit jurnali (D2-T7) — `/moderatsiya/jurnal/`
 

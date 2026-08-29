@@ -14,6 +14,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
+from apps.common.inqiroz import inqiroz_konteksti
 from apps.common.ratelimit import tezlik_cheklovi
 from apps.complaints.models import Complaint
 from apps.solutions.models import Solution
@@ -296,3 +297,15 @@ def jurnal(request: HttpRequest) -> HttpResponse:
             "jami": sahifalovchi.count,
         },
     )
+
+
+@moderator_kerak
+def qollanma(request: HttpRequest) -> HttpResponse:
+    """Inqirozli kontent bilan ishlash qo'llanmasi (D2-T6 qabul mezoni).
+
+    ⚠️ Qo'llanma KOD ICHIDA va navbatdan bir bosish narida — ataylab.
+       Alohida hujjatda turgan qo'llanma tungi soat 2 da topilmaydi,
+       task tavsifi esa aynan shu holatdan ogohlantiradi: "tayyor
+       siyosat bo'lmasa qaror tungi soat 2 da shoshib qabul qilinadi".
+    """
+    return render(request, "moderation/qollanma.html", inqiroz_konteksti())

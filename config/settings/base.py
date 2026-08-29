@@ -171,6 +171,49 @@ CACHES = {
 
 
 # --------------------------------------------------------------------------
+# Inqirozli kontent (D2-T6)
+# --------------------------------------------------------------------------
+# ⚠️⚠️ ISHONCH TELEFONI ATAYLAB BO'SH.
+#
+#    Task eslatmasi: "noto'g'ri inqiroz raqami raqam yo'qligidan
+#    XAVFLIROQ". Javob bermaydigan yoki noto'g'ri raqamga qo'ng'iroq
+#    qilgan odam ikkinchi marta urinmaydi.
+#
+#    Bu yerga FAQAT rasmiy manbadan tasdiqlangan ishonch liniyasi
+#    yoziladi. Loyiha egasining shaxsiy raqami bu yerga YOZILMAYDI:
+#    inqirozdagi odamga tayyorgarliksiz odam javob berishi xavfli
+#    (2026-08-29 da loyiha egasi bilan aniqlashtirilgan).
+#
+#    To'ldirilganda shakl:
+#        ISHONCH_TELEFONI = {
+#            "nom": "<tashkilot nomi>",
+#            "raqam": "1146",
+#            "vaqt": "24/7",
+#        }
+ISHONCH_TELEFONI: dict[str, str] | None = None
+
+# ⚠️ Bular UMUMMILLIY va o'zgarmas raqamlar — ular har doim
+#    ko'rsatiladi, ishonch telefoni bo'lmasa ham. "Hech narsa yo'q"
+#    degan sahifadan ko'ra shu ikkisi ancha yaxshi.
+SHOSHILINCH_RAQAMLAR = [
+    {
+        "nom": "Tez tibbiy yordam",
+        "raqam": "103",
+        "izoh": "Hayotga xavf bo'lsa — darhol qo'ng'iroq qiling.",
+    },
+    {
+        "nom": "Yagona chaqiruv markazi",
+        "raqam": "112",
+        "izoh": "Barcha shoshilinch xizmatlar.",
+    },
+]
+
+# Loyiha bilan bog'lanish raqami — INQIROZ LINIYASI EMAS (D2-T10 da
+# "Bog'lanish" sahifasida ishlatiladi).
+ALOQA_TELEFONI = env("ALOQA_TELEFONI", "+998 99 503 63 62")
+
+
+# --------------------------------------------------------------------------
 # Tezlik cheklovi (D2-T4)
 # --------------------------------------------------------------------------
 # ⚠️ QABUL MEZONI: "cheklovlar sozlamada, kodda emas". Chegarani

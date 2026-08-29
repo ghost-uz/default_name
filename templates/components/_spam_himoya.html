@@ -17,7 +17,17 @@
      umuman ko'rinmasin. Maydonning o'zida ham `tabindex="-1"` bor,
      ya'ni klaviatura bilan ham unga tushib bo'lmaydi.
 {% endcomment %}
-<div aria-hidden="true">
+{% comment %}
+  ⚠️⚠️ YASHIRISH O'ROVCHI `<div>` DA, faqat `<input>` da EMAS.
+
+     Boshida `class="honeypot"` faqat maydonning o'zida edi va
+     `<div>` faqat `aria-hidden` olgandi — natijada YORLIQ MATNI
+     ("Bu maydonni bo'sh qoldiring") formada KO'RINIB TURDI.
+
+     Testlar buni o'tkazib yubordi, chunki ular `input` atributlarini
+     tekshirardi. Xato faqat jonli brauzerda, ekranga qarab topildi.
+{% endcomment %}
+<div class="honeypot" aria-hidden="true">
   <label for="{{ form.qoshimcha_izoh.id_for_label }}">{{ form.qoshimcha_izoh.label }}</label>
   {{ form.qoshimcha_izoh }}
 </div>

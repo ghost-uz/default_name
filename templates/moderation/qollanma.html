@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+
+{% comment %}
+  Moderator qo'llanmasi — inqirozli kontent (D2-T6 qabul mezoni:
+  "moderator uchun yozma qo'llanma bor").
+
+  ⚠️ Qo'llanma KOD ICHIDA, alohida hujjatda emas — ataylab. Alohida
+     faylda turgan qo'llanma tungi soat 2 da topilmaydi. Bu yerda u
+     navbatdan bir bosish narida.
+
+  ⚠️ Matn TIBBIY MASLAHAT BERMAYDI va bermasligi kerak. U faqat
+     "nima qilish" va "nima QILMASLIK" ni aytadi.
+{% endcomment %}
+
+{% block title %}Inqiroz qo'llanmasi — Dard.uz{% endblock %}
+{% block description %}Moderator uchun: inqirozli kontent bilan ishlash.{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-[720px] px-4 py-6 lg:px-6">
+  <main id="main">
+    <a href="{% url 'moderatsiya_navbat' %}" class="btn-ghost mb-5 !px-2">
+      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+      Navbatga qaytish
+    </a>
+
+    <h1 class="text-2xl font-extrabold">Inqirozli kontent — qo'llanma</h1>
+    <p class="mt-1.5 text-[15px] leading-relaxed text-fg-muted">
+      Post «Zarar yetkazish xavfi» belgisi bilan navbat tepasida turgan
+      bo'lsa, shu sahifadan boshlang.
+    </p>
+
+    <div class="card mt-5 border-l-4 border-l-danger bg-danger-bg/40 px-4 py-3.5">
+      <p class="text-[15px] font-bold">Eng muhim qoida</p>
+      <p class="mt-1 text-[14px] leading-relaxed">
+        Postni <strong>jim o'chirmang</strong>. Yordam so'ragan odamning
+        xabari sababsiz yo'qolsa, u buni «menga bu yerda ham joy yo'q»
+        deb tushunadi. Bu — eng yomon natija va aynan shuning uchun
+        avtomatik aniqlash hech narsani yashirmaydi.
+      </p>
+    </div>
+
+    <h2 class="mt-7 text-lg font-bold">Ketma-ketlik</h2>
+    <ol class="mt-2.5 space-y-2.5 text-[15px] leading-relaxed">
+      <li class="flex gap-3">
+        <span class="tnum shrink-0 font-bold text-fg-muted">1.</span>
+        <span><strong>Postni to'liq o'qing.</strong> Avtomatik belgi kalit
+        so'zga qarab qo'yiladi va tez-tez xato qiladi — «bu ish meni
+        o'ldirayapti» ham shu ro'yxatga tushadi. Avval haqiqiy holatmi
+        yoki yo'qmi, shuni aniqlang.</span>
+      </li>
+      <li class="flex gap-3">
+        <span class="tnum shrink-0 font-bold text-fg-muted">2.</span>
+        <span><strong>Yolg'on ijobiy bo'lsa</strong> — «Qoidabuzarlik
+        yo'q» tugmasi. Kontent tegilmaydi, yordam bloki sahifada
+        qoladi va bu zarar qilmaydi.</span>
+      </li>
+      <li class="flex gap-3">
+        <span class="tnum shrink-0 font-bold text-fg-muted">3.</span>
+        <span><strong>Haqiqiy holat bo'lsa</strong> — postni
+        <strong>qoldiring</strong>. Yordam bloki allaqachon sahifada
+        turibdi. Agar javob yozsangiz, quyidagi ohangga qarang.</span>
+      </li>
+      <li class="flex gap-3">
+        <span class="tnum shrink-0 font-bold text-fg-muted">4.</span>
+        <span><strong>Hayotga bevosita xavf ko'rinsa</strong> (aniq reja,
+        vaqt, vosita aytilgan) — {% for raqam in inqiroz_raqamlar %}<strong>{{ raqam.raqam }}</strong>{% if not forloop.last %} yoki {% endif %}{% endfor %}
+        ga qo'ng'iroq qiling. Moderator sifatida sizda foydalanuvchining
+        manzili yo'q, lekin shoshilinch xizmat nima qilish kerakligini
+        aytadi.</span>
+      </li>
+      <li class="flex gap-3">
+        <span class="tnum shrink-0 font-bold text-fg-muted">5.</span>
+        <span><strong>Shikoyatni yoping</strong> va izohda nima
+        qilganingizni yozing. Izoh audit jurnaliga tushadi
+        (<a href="{% url 'moderatsiya_jurnal' %}" class="link">jurnal</a>) —
+        keyingi moderator kontekstsiz qolmasin.</span>
+      </li>
+    </ol>
+
+    <h2 class="mt-7 text-lg font-bold">Javob yozsangiz</h2>
+    <div class="mt-2.5 grid gap-3 sm:grid-cols-2">
+      <div class="card border-solved-icon/40 bg-solved-bg/30 p-4">
+        <p class="text-[13px] font-bold uppercase tracking-wider text-solved">Yarasa</p>
+        <ul class="mt-2 space-y-1.5 text-[14px] leading-relaxed">
+          <li>«Yozganingiz uchun rahmat.»</li>
+          <li>«Sizni eshityapman.»</li>
+          <li>Raqamni <em>taklif qilish</em>, buyurmaslik.</li>
+          <li>Qisqa yozish.</li>
+        </ul>
+      </div>
+      <div class="card border-danger/40 bg-danger-bg/30 p-4">
+        <p class="text-[13px] font-bold uppercase tracking-wider text-danger">Yaramaydi</p>
+        <ul class="mt-2 space-y-1.5 text-[14px] leading-relaxed">
+          <li>«Bunday o'ylamang», «hammasi yaxshi bo'ladi».</li>
+          <li>Tashxis qo'yish yoki dori haqida gapirish.</li>
+          <li>Uzun nasihat.</li>
+          <li>Javobsiz qoldirish.</li>
+        </ul>
+      </div>
+    </div>
+
+    <h2 class="mt-7 text-lg font-bold">Chegara</h2>
+    <p class="mt-2 text-[15px] leading-relaxed text-fg-muted">
+      Biz shifokor emasmiz va davolamaymiz. Moderatorning vazifasi —
+      odamni yolg'iz qoldirmaslik va yordam raqamini ko'rsatish. Bundan
+      ortig'i mutaxassisning ishi.
+    </p>
+
+    {% if not ishonch_telefoni %}
+      <div class="card mt-5 border-line-strong bg-surface-2 px-4 py-3.5 text-[13px] leading-relaxed text-fg-muted">
+        ⚠️ Ixtisoslashgan ishonch telefoni hali sozlanmagan
+        (<code>ISHONCH_TELEFONI</code>). Rasmiy manbadan tasdiqlangan
+        raqam topilgach sozlamaga qo'yiladi va u yordam blokida
+        birinchi bo'lib chiqadi. Noto'g'ri raqam raqam yo'qligidan
+        xavfliroq, shuning uchun u ataylab bo'sh.
+      </div>
+    {% endif %}
+  </main>
+</div>
+{% endblock %}

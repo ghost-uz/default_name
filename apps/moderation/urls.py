@@ -13,6 +13,11 @@ urlpatterns = [
     path("moderatsiya/", views.navbat, name="moderatsiya_navbat"),
     path("moderatsiya/jurnal/", views.jurnal, name="moderatsiya_jurnal"),
     path(
+        "moderatsiya/qollanma/",
+        views.qollanma,
+        name="moderatsiya_qollanma",
+    ),
+    path(
         "moderatsiya/qaror/dard/<int:pk>/",
         views.qaror_muammo,
         name="moderatsiya_qaror_muammo",
