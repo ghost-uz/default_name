@@ -616,22 +616,51 @@ def test_navbat_sanogi_BITTA_SOROVDA_olinadi(staff_client, staff, user_factory):
     )
 
 
-def test_navbat_sanogi_META_ORDERING_dan_BUZILMAYDI(staff, user):
-    """⚠️⚠️ `ModerationAction.Meta.ordering = ("-created_at",)`.
+def test_navbat_sanogi_OSHKORA_TARTIBDAN_buzilmaydi(staff, user):
+    """⚠️⚠️ `values(...).annotate(...)` da OSHKORA tartib maydoni GROUP BY
+    ga QO'SHILADI — guruhlash `(muallif, created_at)` bo'yicha ketardi va
+    HAR CHORA o'ziga alohida guruh bo'lardi. Sanoqlar hammasi `1` chiqardi
+    va HECH QANDAY XATO BO'LMASDI: so'rov bajariladi, ma'lumot qaytadi,
+    faqat raqamlar yolg'on bo'ladi.
 
-    `values(...).annotate(...)` da Django standart tartibni GROUP BY
-    ga QO'SHIB YUBORADI — guruhlash `(muallif, created_at)` bo'yicha
-    ketardi va HAR CHORA o'ziga alohida guruh bo'lardi. Natijada
-    hamma sanoq `1` chiqardi va HECH QANDAY XATO BO'LMASDI.
+    ⚠️ `Meta.ordering` ("-created_at") esa GROUP BY ga TUSHMAYDI (Django
+       3.1 dan beri). Bu testning birinchi versiyasi aynan uni aybdor deb
+       ko'rsatgan edi va NOTO'G'RI edi — o'lchov ikkala so'rov ham bir xil
+       SQL berishini ko'rsatdi. Xulosa (`.order_by()` qolsin) o'zgarmadi,
+       lekin noto'g'ri sabab keyingi o'qiganni noto'g'ri joyni
+       qo'riqlashga majbur qilardi.
 
-    Shuning uchun bu yerda aynan RAQAM tekshiriladi.
+    Quyida BUZILGAN shakl ATAYLAB qurilib, farq ko'rsatiladi — bu
+    loyihaning "guard'ni ataylab buzib tekshir" qoidasi.
     """
+    from django.db.models import Count
+
+    from apps.moderation.models import ModerationAction
     from apps.moderation.selectors import _qoidabuzarlik_sonlari
+    from apps.moderation.services import QOIDABUZARLIK_CHORALARI
 
     for _ in range(3):
         chora(staff=staff, user=user)
 
     assert _qoidabuzarlik_sonlari({user.pk}) == {user.pk: 3}
+
+    asos = ModerationAction.objects.filter(
+        target_author_id__in={user.pk}, action__in=QOIDABUZARLIK_CHORALARI
+    ).filter(bekor_qilishlar__isnull=True)
+
+    # `Meta.ordering` o'zi ZARARSIZ: tozalangan va tozalanmagan shakl teng.
+    assert dict(asos.values_list("target_author_id").annotate(soni=Count("pk"))) == {
+        user.pk: 3
+    }
+
+    # OSHKORA tartib esa guruhlashni BUZADI — har chora alohida guruh.
+    buzilgan = list(
+        asos.order_by("created_at")
+        .values_list("target_author_id")
+        .annotate(soni=Count("pk"))
+    )
+    assert len(buzilgan) == 3, "oshkora tartib GROUP BY ga tushmadi?"
+    assert all(soni == 1 for _pk, soni in buzilgan)
 
 
 @override_settings(CHEKLOV_CHEGARASI=3, DOIMIY_BLOK_CHEGARASI=5)

@@ -271,17 +271,31 @@ def navbat() -> list[Holat]:
 def _qoidabuzarlik_sonlari(mualliflar: set[int]) -> dict[int, int]:
     """`{muallif_id: qoidabuzarliklar_soni}` — BITTA so'rovda (D2-T11).
 
-    ⚠️⚠️ `.order_by()` ATAYLAB va U MAJBURIY.
+    ⚠️⚠️ `.order_by()` ATAYLAB — OSHKORA tartibdan HIMOYA.
 
-       `ModerationAction.Meta.ordering = ("-created_at",)`. Django
-       `values(...).annotate(...)` da modelning standart tartibini
-       GROUP BY ga QO'SHIB YUBORADI — ya'ni guruhlash
-       `(muallif, created_at)` bo'yicha ketardi va har chora o'ziga
-       alohida guruh bo'lardi. Natijada HAMMA sanoq `1` chiqardi.
+       `values(...).annotate(...)` da so'rovdagi OSHKORA tartib maydoni
+       GROUP BY ga QO'SHILADI. Bu yerda hozir oshkora tartib yo'q,
+       lekin kimdir keyinchalik yuqoriga `.order_by("created_at")`
+       qo'shsa, guruhlash `(muallif, created_at)` bo'yicha ketardi va
+       har chora o'ziga alohida guruh bo'lardi — HAMMA sanoq `1`
+       chiqardi. O'lchandi (Django 6.1):
+
+           .order_by("created_at").values_list(...).annotate(...)
+           -> GROUP BY 1, "created_at"  -> [(4,1), (4,1), (21,1), (21,1)]
+
+           .order_by().values_list(...).annotate(...)
+           -> GROUP BY 1                -> {4: 2, 21: 2}
 
        Bu xato hech qanday belgi bermaydi: so'rov bajariladi, ma'lumot
-       qaytadi, faqat raqamlar yolg'on bo'ladi. `.order_by()` tartibni
-       tozalaydi va GROUP BY faqat muallif bo'yicha qoladi.
+       qaytadi, faqat raqamlar yolg'on bo'ladi.
+
+    ⚠️ `Meta.ordering` ("-created_at") esa GROUP BY ga TUSHMAYDI —
+       Django 3.1 dan beri u guruhlashda e'tiborga olinmaydi. Bu
+       funksiyaning birinchi versiyasida izoh aynan `Meta.ordering` ni
+       aybdor deb ko'rsatgan edi va bu NOTO'G'RI edi: ikkala so'rov ham
+       bir xil SQL beradi. Xulosa (`.order_by()` qolsin) o'zgarmadi,
+       lekin SABAB boshqa — va noto'g'ri sabab keyingi o'qiganni
+       noto'g'ri joyni qo'riqlashga majbur qilardi.
 
     ⚠️ Sanoq mantiqi `services.qoidabuzarliklar_soni()` bilan BIR XIL
        bo'lishi shart (bekor qilingani sanalmaydi) — aks holda navbat
@@ -300,7 +314,7 @@ def _qoidabuzarlik_sonlari(mualliflar: set[int]) -> dict[int, int]:
             target_author_id__in=mualliflar, action__in=QOIDABUZARLIK_CHORALARI
         )
         .filter(bekor_qilishlar__isnull=True)
-        .order_by()  # ⚠️ Meta.ordering'ni tozalaydi — yuqoriga qarang
+        .order_by()  # ⚠️ oshkora tartib GROUP BY'ga tushmasin — yuqoriga qarang
         .values_list("target_author_id")
         .annotate(soni=Count("pk"))
     )

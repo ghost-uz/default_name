@@ -1984,7 +1984,7 @@
           "d2_t11_testlari": 61
         },
         "keyingi_uchun_eslatma": [
-          "⚠️ `_qoidabuzarlik_sonlari()` dagi `.order_by()` NI OLIB TASHLAMANG: `ModerationAction.Meta.ordering` GROUP BY ga tushib, HAMMA sanoqni 1 qilardi — va hech qanday xato bermasdi. `test_navbat_sanogi_META_ORDERING_dan_BUZILMAYDI` qo'riqlaydi.",
+          "⚠️ `_qoidabuzarlik_sonlari()` dagi `.order_by()` NI OLIB TASHLAMANG: `values(...).annotate(...)` da OSHKORA tartib maydoni GROUP BY ga qo'shiladi (o'lchandi, Django 6.1: `.order_by(\"created_at\")` -> `GROUP BY 1, created_at` -> har chora alohida guruh, hamma sanoq 1 — xatosiz). Hozir oshkora tartib yo'q, `.order_by()` KELAJAKDA qo'shiladiganidan himoya qiladi. ⚠️ `Meta.ordering` esa GROUP BY ga TUSHMAYDI (Django 3.1 dan beri) — bu yozuvning birinchi versiyasi uni aybdor deb ko'rsatgan edi va noto'g'ri edi. Guard: `test_navbat_sanogi_OSHKORA_TARTIBDAN_buzilmaydi` buzilgan shaklni ataylab quradi.",
           "⚠️ Yangi blok/cheklash tugmasi qo'shsangiz ANONIM kontentda ko'rinmasin: `test_ANONIM_kontentda_blok_tugmasi_YOQ` butun sahifada `/bloklash/@` ni qidiradi.",
           "⚠️ Shablonga yangi Tailwind sinfi qo'shsangiz `npm run build` ishlating — aks holda sinf HTML'da turadi, lekin CSS'da yo'q va hech qanday ta'sir qilmaydi (`test_shablondagi_HAR_BIR_sinf_qurilgan_CSS_da_BOR`).",
           "Cheklov muddati tugaganda `is_banned` bayrog'i TOZALANMAYDI — `is_currently_banned` muddatni tekshiradi. Tozalaydigan fon vazifasi kerak bo'lsa, u M5/M7 da qo'shiladi.",

@@ -497,18 +497,34 @@ Ya'ni blok anonimlikni ochadigan asbobga aylanardi.
 Lentada bunday xavf yo'q: u yerda post shunchaki **yo'q** bo'ladi va
 yo'qlik signal bermaydi.
 
-### ⚠️ `Meta.ordering` + `values().annotate()` = jim buzilgan GROUP BY
+### ⚠️ `values().annotate()` + oshkora tartib = jim buzilgan GROUP BY
 
 `_qoidabuzarlik_sonlari()` dagi **`.order_by()` ni olib tashlamang**.
 
-`ModerationAction.Meta.ordering = ("-created_at",)`. Django
-`values(...).annotate(...)` da standart tartibni **GROUP BY ga qo'shib
-yuboradi** — guruhlash `(muallif, created_at)` bo'yicha ketardi va har
-chora o'ziga alohida guruh bo'lardi. Natijada **hamma sanoq `1`**
-chiqardi va **hech qanday xato bermasdi**.
+`values(...).annotate(...)` da so'rovdagi **oshkora** tartib maydoni
+GROUP BY ga qo'shiladi. O'lchandi (Django 6.1):
 
-Qo'riqchi: `test_navbat_sanogi_META_ORDERING_dan_BUZILMAYDI` — u
-so'rovlar sonini emas, aynan **raqamni** tekshiradi.
+```
+.order_by("created_at").values_list("target_author_id").annotate(Count("pk"))
+  -> GROUP BY 1, "created_at"   -> [(4,1), (4,1), (21,1), (21,1)]   ❌
+
+.order_by().values_list("target_author_id").annotate(Count("pk"))
+  -> GROUP BY 1                 -> {4: 2, 21: 2}                    ✅
+```
+
+Har chora o'ziga alohida guruh bo'ladi, **hamma sanoq `1`** chiqadi va
+**hech qanday xato bermaydi**: so'rov bajariladi, ma'lumot qaytadi,
+faqat raqamlar yolg'on bo'ladi.
+
+⚠️ **`Meta.ordering` esa GROUP BY ga TUSHMAYDI** — Django 3.1 dan beri
+guruhlashda e'tiborga olinmaydi. Bu bo'limning birinchi versiyasi aynan
+`Meta.ordering` ni aybdor deb yozgan edi va **noto'g'ri edi**; o'lchov
+ikkala shakl ham bir xil SQL berishini ko'rsatdi. Xulosa o'zgarmadi
+(`.order_by()` qolsin — u **kelajakda** yuqoriga qo'shiladigan oshkora
+tartibdan himoya), lekin sabab boshqa.
+
+Qo'riqchi: `test_navbat_sanogi_OSHKORA_TARTIBDAN_buzilmaydi` — u buzilgan
+shaklni **ataylab qurib**, farqni ko'rsatadi.
 
 ### Hisobni o'chirish va eksport (D2-T8) — `/hisob/`
 
