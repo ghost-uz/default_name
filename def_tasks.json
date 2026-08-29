@@ -1561,10 +1561,70 @@
       "bogliq": [
         "D2-T2"
       ],
-      "holat": "todo",
+      "holat": "done",
       "qabul_mezoni": [
         "admin'da o'chirish/tahrirlash o'chirilgan"
-      ]
+      ],
+      "tugatilgan": "2026-08-29",
+      "eslatma": "O'zgarmaslik TO'RT qatlamda: model save()/delete(), QuerySet update()/delete(), admin (add/change/delete yopiq). Yozish IKKI yo'l bilan: signal (ModerationAction — unutib bo'lmaydi) + audit() chaqiruvi (model yaratmaydigan amallar uchun).",
+      "natija": {
+        "yaratilgan": [
+          "apps/moderation/models.py — AuditLog, AuditAction, AuditQuerySet, JurnalOzgarmas",
+          "apps/moderation/audit.py — audit() yozuvchisi + ModerationAction post_save signali",
+          "apps/moderation/apps.py — ready() da signal ro'yxatga olinadi",
+          "apps/moderation/migrations/0003_auditlog.py",
+          "apps/moderation/views.py — jurnal (staff sahifasi, raqamli sahifalash)",
+          "templates/moderation/jurnal.html",
+          "apps/moderation/admin.py — AuditLogAdmin (add/change/delete YOPIQ)",
+          "apps/moderation/tests_audit.py — 21 test"
+        ],
+        "tekshirilgan": [
+          "⭐ qabul mezoni: admin'da qo'shish/tahrirlash/o'chirish YOPIQ",
+          "yozuv tahrirlanmaydi (model save())",
+          "yozuv o'chirilmaydi (model delete())",
+          "⭐ OMMAVIY update()/delete() ham yopiq — eng oson unutiladigan teshik",
+          "actor_nomi yozuv paytida nusxalanadi: hisob o'chirilsa ham 'kim' qoladi",
+          "actorsiz yozuv 'tizim' deb ko'rinadi",
+          "kontent chorasi SIGNAL orqali avtomatik tushadi",
+          "bekor qilish alohida harakat sifatida yoziladi",
+          "shikoyat yopish ochiq audit() bilan yoziladi (model yaratmaydi)",
+          "avtomatik filtr tizim nomidan yoziladi",
+          "mavjud chorani saqlash ikkinchi yozuv qo'shmaydi (created tekshiruvi)",
+          "jurnal staff'dan boshqaga 404",
+          "harakat bo'yicha filtr; noma'lum filtr sahifani buzmaydi",
+          "sahifalash (50 tadan), yangisidan eskisiga",
+          "sahifada tahrirlash/o'chirish tugmasi YO'Q",
+          "so'rov soni yozuvlar soniga bog'liq emas",
+          "🌐 JONLI: navbatda chora ko'rildi -> jurnalda 'Kontent ustidan chora, muammo #9, demo, izoh' paydo bo'ldi",
+          "🌐 JONLI: navbatdan jurnalga havola bor, jurnalda forma yo'q"
+        ],
+        "qarorlar": [
+          "AuditLog `ModerationAction` DAN ALOHIDA. ModerationAction — domen yozuvi (navbat, bekor qilish, kontent holati) va faqat kontent choralarini biladi. AuditLog boshqa savolga javob beradi: 'shu hisob nima qildi?' — unga kontentga tegmaydigan amallar ham tushadi (shikoyat yopish, D2-T11 bloklash, D2-T8 eksport). Bir modelga siqilsa domen maydonlari yarim hollarda bo'sh turardi.",
+          "YOZISH IKKI YO'L BILAN — ataylab. Signal: kontent chorasi eng muhim yozuv va uni qo'lda chaqirishga qoldirish bir kuni unutish demak. audit() chaqiruvi: staff amallarining hammasi ham model yaratmaydi, ya'ni ilinadigan signal yo'q. Faqat bittasiga tayanish ikkala holatda ham teshik qoldirardi.",
+          "`actor_nomi` DENORMALIZATSIYA MAJBURIY: `actor` SET_NULL, ya'ni hisob o'chsa 'kim qildi?' javobi yo'qolardi — javobsiz jurnal dalil emas.",
+          "Jurnal sahifasi admin'dan ALOHIDA: nizo yoki huquqiy so'rov paytida jurnalni O'QISH kerak, admin esa tahrirlash interfeysi.",
+          "Sahifalash RAQAMLI (Paginator), lentadagidek kursor emas: jurnalda '3-sahifaga o'tish' real ehtiyoj.",
+          "Interfeysda o'zgartirish yo'li UMUMAN yo'q — bor tugmani bir kuni ishlatib qo'yishadi."
+        ],
+        "cheklovlar": [
+          "⚠️ Himoya ORM darajasida. To'g'ridan-to'g'ri SQL (psql) yozuvni baribir o'zgartira oladi. Haqiqiy kafolat — baza triggeri yoki `REVOKE UPDATE, DELETE`; u deploy bosqichida qo'shiladi.",
+          "IP manzili yozilmaydi: task 'kim, nima, qachon, sabab' deydi. Kerak bo'lsa `audit()` ga `ip=` qo'shiladi (mijoz IP'si `apps/common/ratelimit.py::mijoz_ip` da).",
+          "Saqlash muddati (retention) siyosati yo'q — D2-T8 (ma'lumot o'chirish) bilan birga hal qilinadi. `AuditQuerySet._haqiqiy_ochirish()` shu maqsadda ataylab noqulay nom bilan qoldirilgan."
+        ],
+        "guardlar_isbotlangan": "Ikkita xato ATAYLAB kiritildi (QuerySet himoyasi olib tashlandi; actor_nomi nusxalanmadi) — 4 test yiqildi. Alohida AST guard `services.py` dagi staff-himoyali funksiyalarni sanaydi va yangi xizmat qo'shilganda YIQILADI, ya'ni jurnal testini yozishga majbur qiladi.",
+        "olchangan_holat": {
+          "testlar": 572,
+          "qamrov_foiz": 95.2,
+          "d2_t7_testlari": 21,
+          "ozgarmaslik_qatlamlari": 4,
+          "pre_commit_hooklar": 17
+        },
+        "keyingi_uchun_eslatma": [
+          "D2-T11 (bloklash): `AuditAction` ga yangi qiymat qo'shiladi va xizmat `audit()` chaqiradi. AST guard buni unutishga yo'l qo'ymaydi.",
+          "D2-T8 (eksport/o'chirish): jurnal saqlash muddati va `_haqiqiy_ochirish()` shu yerda hal qilinadi.",
+          "Deploy: `REVOKE UPDATE, DELETE ON moderation_auditlog` — ORM himoyasidan tashqarida qolgan yagona yo'l."
+        ]
+      }
     },
     {
       "id": "D2-T8",

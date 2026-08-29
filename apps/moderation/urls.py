@@ -11,6 +11,7 @@ urlpatterns = [
     #    Manzil chiroyli bo'lishi shart emas, lekin taxmin qilinadigan
     #    bo'lgani ma'qul: moderator uni yodda saqlaydi.
     path("moderatsiya/", views.navbat, name="moderatsiya_navbat"),
+    path("moderatsiya/jurnal/", views.jurnal, name="moderatsiya_jurnal"),
     path(
         "moderatsiya/qaror/dard/<int:pk>/",
         views.qaror_muammo,

@@ -5,7 +5,7 @@ moderatsiyasi ko'r platforma: qoidabuzarlikni faqat moderator tasodifan
 ko'rgandagina topiladi.
 
 `ModerationAction` — moderator kontent ustidan ko'rgan chorasi (D2-T2).
-O'zgarmas audit jurnali (barcha staff harakatlari) — D2-T7.
+`AuditLog` — o'zgarmas audit jurnali, barcha staff harakatlari (D2-T7).
 """
 
 from __future__ import annotations
@@ -409,3 +409,134 @@ class ModerationAction(TimeStampedModel):
         bo'lardi. Xato bo'lsa moderator oddiy yangi qaror qabul qiladi.
         """
         return self.action != ModerationActionType.BEKOR_QILISH
+
+
+# ===========================================================================
+# Audit jurnali (D2-T7)
+# ===========================================================================
+class JurnalOzgarmas(Exception):
+    """Audit jurnalini o'zgartirishga urinish."""
+
+
+class AuditAction(models.TextChoices):
+    """Jurnalga tushadigan harakatlar.
+
+    ⚠️ Ro'yxat O'SADI (D2-T11 bloklash, D2-T8 ma'lumot eksporti...).
+       Yangi staff amali qo'shilganda bu yerga ham qo'shiladi —
+       `test_audit.py` dagi guard buni majburlaydi.
+    """
+
+    KONTENT_CHORA = "kontent_chora", "Kontent ustidan chora"
+    CHORA_BEKOR = "chora_bekor", "Chora bekor qilindi"
+    SHIKOYAT_YOPILDI = "shikoyat_yopildi", "Shikoyat yopildi"
+    AVTOMATIK_BELGI = "avtomatik_belgi", "Avtomatik filtr belgiladi"
+
+
+class AuditQuerySet(models.QuerySet):
+    """⚠️ Ommaviy o'zgartirish va o'chirish YOPIQ.
+
+    Model darajasidagi `save()`/`delete()` ni chetlab o'tish oson:
+    `AuditLog.objects.filter(...).update(izoh="")` hech qanday model
+    metodini chaqirmaydi. Jurnal uchun bu teshik ochiq qolsa,
+    himoyaning ma'nosi yo'q.
+    """
+
+    def update(self, **kwargs):
+        raise JurnalOzgarmas(
+            "Audit jurnali o'zgartirilmaydi (D2-T7). Xato yozuv bo'lsa, "
+            "uni TUZATUVCHI yangi yozuv qo'shing."
+        )
+
+    def delete(self):
+        raise JurnalOzgarmas("Audit jurnali o'chirilmaydi (D2-T7).")
+
+    def _haqiqiy_ochirish(self):
+        """FAQAT test va ma'lumot saqlash siyosati uchun (D2-T8).
+
+        Nomi ataylab noqulay: tasodifan chaqirilmasin.
+        """
+        return super().delete()
+
+
+class AuditLog(models.Model):
+    """Staff harakatlarining O'ZGARMAS jurnali.
+
+    ⚠️ NEGA `ModerationAction` YETARLI EMAS
+       `ModerationAction` — DOMEN yozuvi: u navbat, bekor qilish va
+       kontent holati bilan ishlaydi va faqat KONTENT ustidagi
+       choralarni biladi. Audit jurnali esa boshqa savolga javob
+       beradi: "shu hisob nima qildi?". Unga kontentga tegmaydigan
+       amallar ham tushadi — shikoyat yopish, kelajakda bloklash
+       (D2-T11), ma'lumot eksporti (D2-T8).
+
+       Ikkalasi bir modelga siqilsa, `ModerationAction` ning domen
+       maydonlari (`oldingi_holat`, `bekor_qiladi`) yarim hollarda
+       bo'sh turardi va model nima ekani tushunarsiz bo'lardi.
+
+    ⚠️ `actor_nomi` DENORMALIZATSIYA — MAJBURIY
+       `actor` FK `SET_NULL`: hisob o'chirilsa u `None` bo'ladi. Audit
+       jurnali uchun aynan shu ma'lumotni yo'qotish mumkin emas —
+       "kim qildi?" savoliga javobsiz jurnal dalil emas. Shuning uchun
+       ism YOZUV PAYTIDA nusxalanadi.
+
+    ⚠️ CHEKLOV (bilib qo'yilgan): himoya ORM darajasida. To'g'ridan-
+       to'g'ri SQL (yoki `psql`) yozuvni baribir o'zgartira oladi.
+       Haqiqiy kafolat — baza darajasidagi trigger yoki `REVOKE
+       UPDATE, DELETE`. U deploy bosqichida qo'shiladi.
+    """
+
+    created_at = models.DateTimeField("vaqt", auto_now_add=True, db_index=True)
+
+    actor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        verbose_name="kim",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="audit_yozuvlari",
+    )
+    actor_nomi = models.CharField(
+        "kim (nusxa)",
+        max_length=150,
+        blank=True,
+        help_text="Hisob o'chirilsa ham qoladi. Bo'sh = tizim.",
+    )
+
+    action = models.CharField("harakat", max_length=32, choices=AuditAction.choices)
+    obyekt = models.CharField(
+        "obyekt",
+        max_length=100,
+        help_text="Masalan: «muammo #12», «shikoyat #4».",
+    )
+    izoh = models.TextField("sabab / izoh", blank=True)
+    malumot = models.JSONField("qo'shimcha", default=dict, blank=True)
+
+    objects = AuditQuerySet.as_manager()
+
+    class Meta:
+        verbose_name = "audit yozuvi"
+        verbose_name_plural = "audit jurnali"
+        ordering = ("-created_at", "-pk")
+        indexes = [
+            models.Index(fields=["action", "-created_at"], name="audit_harakat_idx"),
+            models.Index(fields=["actor", "-created_at"], name="audit_kim_idx"),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.get_action_display()} — {self.obyekt}"
+
+    def save(self, *args, **kwargs):
+        """⚠️ FAQAT QO'SHISH. Mavjud yozuvni saqlash — xato."""
+        if not self._state.adding:
+            raise JurnalOzgarmas(
+                "Audit yozuvi tahrirlanmaydi (D2-T7). Xato bo'lsa, uni "
+                "TUZATUVCHI yangi yozuv qo'shing."
+            )
+        return super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        raise JurnalOzgarmas("Audit yozuvi o'chirilmaydi (D2-T7).")
+
+    @property
+    def kim(self) -> str:
+        return self.actor_nomi or "tizim"

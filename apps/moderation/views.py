@@ -8,6 +8,7 @@ from collections.abc import Callable
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
+from django.core.paginator import Paginator
 from django.http import Http404, HttpRequest, HttpResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -18,7 +19,13 @@ from apps.complaints.models import Complaint
 from apps.solutions.models import Solution
 
 from .forms import ReportForm
-from .models import ModerationAction, ModerationActionType, ReportReason
+from .models import (
+    AuditAction,
+    AuditLog,
+    ModerationAction,
+    ModerationActionType,
+    ReportReason,
+)
 from .selectors import navbat as navbat_holatlari
 from .services import (
     AllaqachonShikoyatQilingan,
@@ -251,3 +258,41 @@ def qarorni_bekor(request: HttpRequest, pk: int) -> HttpResponse:
     else:
         messages.info(request, f"Qaror bekor qilindi — {chora.target_nomi}.")
     return redirect("moderatsiya_navbat")
+
+
+# ⚠️ Bir sahifadagi yozuvlar soni. Jurnal tez o'sadi, ya'ni cheklovsiz
+#    ro'yxat bir kuni sahifani o'ldiradi.
+JURNAL_SAHIFA = 50
+
+
+@moderator_kerak
+def jurnal(request: HttpRequest) -> HttpResponse:
+    """Audit jurnali — staff uchun (D2-T7).
+
+    ⚠️ Django admin ham bor, lekin bu sahifa ATAYLAB alohida: nizo yoki
+       huquqiy so'rov paytida jurnalni O'QISH kerak bo'ladi, admin esa
+       tahrirlash uchun mo'ljallangan interfeys va u yerda "nima
+       bo'lgan?" savoliga javob qidirish noqulay.
+
+    ⚠️ Sahifalash RAQAMLI (`Paginator`), lentadagidek kursor emas:
+       jurnalda "3-sahifaga o'tish" real ehtiyoj, lentada esa yo'q.
+    """
+    yozuvlar = AuditLog.objects.select_related("actor")
+
+    tanlangan = request.GET.get("harakat", "")
+    if tanlangan in AuditAction.values:
+        yozuvlar = yozuvlar.filter(action=tanlangan)
+
+    sahifalovchi = Paginator(yozuvlar, JURNAL_SAHIFA)
+    sahifa = sahifalovchi.get_page(request.GET.get("sahifa"))
+
+    return render(
+        request,
+        "moderation/jurnal.html",
+        {
+            "sahifa": sahifa,
+            "harakatlar": AuditAction.choices,
+            "tanlangan": tanlangan,
+            "jami": sahifalovchi.count,
+        },
+    )

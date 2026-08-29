@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% comment %}
+  Audit jurnali (D2-T7) — staff uchun.
+
+  ⚠️ Bu sahifa O'QISH uchun. Hech qanday tugma, hech qanday tahrirlash:
+     jurnal o'zgarmas (`AuditLog.save()` mavjud yozuvni rad etadi).
+     Interfeysda "o'chirish" tugmasi bo'lmasligi ham qoidaning bir
+     qismi — bor tugmani bir kuni ishlatib qo'yishadi.
+{% endcomment %}
+
+{% block title %}Audit jurnali — Dard.uz{% endblock %}
+{% block description %}Moderator harakatlarining o'zgarmas jurnali.{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-[900px] px-4 py-6 lg:px-6">
+  <main id="main">
+    <div class="mb-5">
+      <h1 class="text-2xl font-extrabold">Audit jurnali</h1>
+      <p class="mt-1 text-[15px] text-fg-muted">
+        {{ jami }} ta yozuv. Jurnal faqat to'ldiriladi — tahrirlanmaydi va
+        o'chirilmaydi.
+      </p>
+    </div>
+
+    {% comment %}
+      Filtr oddiy `<a>` havolalari bilan: JavaScript'siz ishlaydi va
+      har filtrning o'z manzili bo'ladi (nusxalab yuborsa bo'ladi).
+    {% endcomment %}
+    <nav class="mb-4 flex flex-wrap gap-1.5" aria-label="Harakat bo'yicha filtr">
+      <a href="{% url 'moderatsiya_jurnal' %}"
+         class="chip {% if not tanlangan %}chip-active{% endif %}"
+         {% if not tanlangan %}aria-current="page"{% endif %}>Hammasi</a>
+      {% for qiymat, yorliq in harakatlar %}
+        <a href="?harakat={{ qiymat }}"
+           class="chip {% if tanlangan == qiymat %}chip-active{% endif %}"
+           {% if tanlangan == qiymat %}aria-current="page"{% endif %}>{{ yorliq }}</a>
+      {% endfor %}
+    </nav>
+
+    {% if sahifa.object_list %}
+      <ul class="card divide-y divide-line">
+        {% for yozuv in sahifa %}
+          <li class="px-4 py-3">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1 text-[13px]">
+              <span class="font-bold">{{ yozuv.get_action_display }}</span>
+              <span class="text-fg-muted">{{ yozuv.obyekt }}</span>
+              <span class="text-fg-muted" aria-hidden="true">·</span>
+              {% comment %}
+                ⚠️ `yozuv.kim` — `actor_nomi` nusxasi. Hisob o'chirilsa
+                   ham "kim qildi?" savoliga javob qoladi; javobsiz
+                   jurnal dalil emas.
+              {% endcomment %}
+              <span class="font-semibold">{{ yozuv.kim }}</span>
+              <time class="ml-auto text-fg-muted" datetime="{{ yozuv.created_at|date:'c' }}">
+                {{ yozuv.created_at|date:"j-F, H:i" }}
+              </time>
+            </div>
+            {% if yozuv.izoh %}
+              <p class="mt-1 text-[13px] leading-relaxed text-fg-muted">{{ yozuv.izoh }}</p>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+
+      {% if sahifa.has_other_pages %}
+        <nav class="mt-4 flex items-center justify-between gap-3 text-[13px]" aria-label="Sahifalar">
+          {% if sahifa.has_previous %}
+            <a href="?harakat={{ tanlangan }}&amp;sahifa={{ sahifa.previous_page_number }}" class="btn-outline btn-sm">Oldingi</a>
+          {% else %}
+            <span></span>
+          {% endif %}
+          <span class="text-fg-muted">{{ sahifa.number }} / {{ sahifa.paginator.num_pages }}</span>
+          {% if sahifa.has_next %}
+            <a href="?harakat={{ tanlangan }}&amp;sahifa={{ sahifa.next_page_number }}" class="btn-outline btn-sm">Keyingi</a>
+          {% else %}
+            <span></span>
+          {% endif %}
+        </nav>
+      {% endif %}
+    {% else %}
+      <div class="card px-6 py-10 text-center">
+        <p class="text-lg font-bold">Yozuv yo'q</p>
+        <p class="mt-1.5 text-[15px] text-fg-muted">
+          {% if tanlangan %}Bu turdagi harakat hali qilinmagan.{% else %}Jurnal hali bo'sh.{% endif %}
+        </p>
+      </div>
+    {% endif %}
+  </main>
+</div>
+{% endblock %}

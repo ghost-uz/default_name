@@ -1,4 +1,4 @@
-"""Moderatsiya — admin paneli (D2-T1, D2-T2).
+"""Moderatsiya — admin paneli (D2-T1, D2-T2, D2-T7).
 
 ⚠️ Bu VAQTINCHALIK yechim. To'liq navbat interfeysi — D2-T2:
    "Django admin bu ish uchun juda sekin — moderator har bir holatda
@@ -15,7 +15,7 @@ from django.contrib import admin
 from django.db import models
 from django.http import HttpRequest
 
-from .models import ModerationAction, Report, ReportStatus
+from .models import AuditLog, ModerationAction, Report, ReportStatus
 
 
 @admin.register(Report)
@@ -140,6 +140,40 @@ class ModerationActionAdmin(admin.ModelAdmin):
             .select_related("moderator", "complaint", "solution")
             .prefetch_related("bekor_qilishlar")
         )
+
+    def has_add_permission(self, request, obj=None) -> bool:
+        return False
+
+    def has_change_permission(self, request, obj=None) -> bool:
+        return False
+
+    def has_delete_permission(self, request, obj=None) -> bool:
+        return False
+
+
+@admin.register(AuditLog)
+class AuditLogAdmin(admin.ModelAdmin):
+    """⚠️ QABUL MEZONI: "admin'da o'chirish/tahrirlash o'chirilgan".
+
+    Uchalasi ham yopiq: qo'shish, tahrirlash, o'chirish. Jurnal faqat
+    kod orqali (`audit()`) to'ldiriladi.
+
+    ⚠️ Admin qatlami YAGONA himoya EMAS. Model `save()`/`delete()` va
+       `AuditQuerySet.update()`/`delete()` ham rad etadi — chunki
+       admin'ni chetlab o'tish (shell, boshqa kod) juda oson.
+    """
+
+    list_display = ("created_at", "action", "obyekt", "kim_ustuni")
+    list_filter = ("action", "created_at")
+    search_fields = ("obyekt", "izoh", "actor_nomi")
+    date_hierarchy = "created_at"
+
+    @admin.display(description="kim", ordering="actor_nomi")
+    def kim_ustuni(self, obj: AuditLog) -> str:
+        return obj.kim
+
+    def get_queryset(self, request: HttpRequest) -> models.QuerySet[AuditLog]:
+        return super().get_queryset(request).select_related("actor")
 
     def has_add_permission(self, request, obj=None) -> bool:
         return False

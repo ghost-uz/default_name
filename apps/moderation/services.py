@@ -1,4 +1,4 @@
-"""Moderatsiya — xizmat funksiyalari (D2-T1, D2-T2, D2-T5)."""
+"""Moderatsiya — xizmat funksiyalari (D2-T1, D2-T2, D2-T5, D2-T7)."""
 
 from __future__ import annotations
 
@@ -7,9 +7,11 @@ import logging
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import IntegrityError, transaction
 
+from .audit import audit
 from .models import (
     CHORA_HOLATI,
     ESKALATSIYA_CHEGARASI,
+    AuditAction,
     ModerationAction,
     ModerationActionType,
     Report,
@@ -122,6 +124,17 @@ def shikoyatni_yopish(
             "resolution_note",
             "updated_at",
         ]
+    )
+
+    # ⚠️ Bu amal MODEL YARATMAYDI, ya'ni `ModerationAction`
+    #    signali uni ushlamaydi — jurnalga OCHIQ yoziladi.
+    audit(
+        action=AuditAction.SHIKOYAT_YOPILDI,
+        obyekt=f"shikoyat #{report.pk}",
+        actor=moderator,
+        izoh=report.resolution_note,
+        qabul_qilindi=qabul_qilindi,
+        maqsad=report.target_nomi,
     )
     return report
 
@@ -326,5 +339,14 @@ def avtomatik_belgilash(*, target, baho) -> Report | None:
         comment=baho.izoh[:2000],
         **kwargs,
     )
-    log.info("Avtomatik filtr: %s ball=%s", hisobot.target_nomi, baho.ball)
+    # ⚠️ `actor=None` — bu TIZIM harakati, odam emas. Jurnalda
+    #    u "tizim" deb ko'rinadi va moderator qarorlaridan
+    #    ajralib turadi.
+    audit(
+        action=AuditAction.AVTOMATIK_BELGI,
+        obyekt=hisobot.target_nomi,
+        izoh=baho.izoh,
+        ball=baho.ball,
+        sabablar=baho.sabablar,
+    )
     return hisobot

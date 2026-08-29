@@ -418,6 +418,57 @@ Faqat **`CI holati`** tekshiruvini tanlang, alohida job'larni emas.
 | D2-T2 | Moderatsiya navbati — obyekt bo'yicha guruhlangan holatlar, klaviatura, qaytariladigan qarorlar |
 | D2-T4 | Tezlik cheklovi — Redis'da, paketsiz; chegaralar sozlamada, 429 + tushunarli xabar |
 | D2-T5 | Spam evristikasi — honeypot, forma vaqti, havola soni; shubhali kontent yashirilmaydi |
+| D2-T7 | O'zgarmas audit jurnali — to'rt qatlamli himoya, staff sahifasi |
+
+### Audit jurnali (D2-T7) — `/moderatsiya/jurnal/`
+
+`AuditLog` — staff harakatlarining **o'zgarmas** yozuvi: kim, nima,
+qachon, sabab. Nizo yoki huquqiy so'rov chiqqanda jurnal yagona dalil
+bo'ladi.
+
+**O'zgarmaslik to'rt qatlamda:**
+
+| Qatlam | Nima yopiq |
+|---|---|
+| `AuditLog.save()` | mavjud yozuvni saqlash |
+| `AuditLog.delete()` | bitta yozuvni o'chirish |
+| `AuditQuerySet.update()` / `.delete()` | **ommaviy** o'zgartirish |
+| `AuditLogAdmin` | qo'shish, tahrirlash, o'chirish |
+
+⚠️ Uchinchi qator eng oson unutiladigani:
+`AuditLog.objects.filter(...).update(izoh="")` **hech qanday model
+metodini chaqirmaydi**, ya'ni `save()` dagi himoya uni ushlamaydi.
+
+⚠️ **Cheklov:** himoya ORM darajasida. To'g'ridan-to'g'ri SQL (`psql`)
+yozuvni baribir o'zgartira oladi — haqiqiy kafolat baza triggeri yoki
+`REVOKE UPDATE, DELETE ON moderation_auditlog`. **Deploy paytida
+qo'shilsin.**
+
+---
+
+### ⚠️ Jurnalga yozish ikki yo'l bilan — ataylab
+
+| Yo'l | Nima uchun |
+|---|---|
+| **Signal** (`ModerationAction` `post_save`) | Kontent ustidagi chora eng muhim yozuv; qo'lda chaqirishga qoldirilsa bir kuni unutilardi |
+| **`audit()` chaqiruvi** | Staff amallarining hammasi ham model yaratmaydi (shikoyat yopish, kelajakda bloklash) — ilinadigan signal yo'q |
+
+Faqat bittasiga tayanish ikkala holatda ham teshik qoldirardi.
+
+`tests_audit.py` dagi **AST guard** `services.py` dagi staff-himoyali
+funksiyalarni sanaydi va yangi xizmat qo'shilganda **yiqiladi** — ya'ni
+jurnal testini yozishga majbur qiladi.
+
+---
+
+### ⚠️ `actor_nomi` — denormalizatsiya majburiy
+
+`actor` FK `SET_NULL`: hisob o'chirilsa u `None` bo'ladi. Audit jurnali
+uchun aynan shu ma'lumotni yo'qotish mumkin emas — **«kim qildi?»
+savoliga javobsiz jurnal dalil emas.** Shuning uchun ism yozuv paytida
+nusxalanadi.
+
+---
 
 ### Spam evristikasi (D2-T5)
 

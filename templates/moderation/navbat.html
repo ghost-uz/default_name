@@ -23,6 +23,15 @@
           {% endif %}
         </p>
       </div>
+
+      {% comment %}
+        Audit jurnaliga havola (D2-T7). Navbat — "hozir nima qilish
+        kerak", jurnal — "nima qilingan edi". Ikkinchisi nizo yoki
+        huquqiy so'rov paytida kerak bo'ladi.
+      {% endcomment %}
+      <a href="{% url 'moderatsiya_jurnal' %}" class="btn-outline btn-sm">
+        Audit jurnali
+      </a>
     </div>
 
     {% comment %}
