@@ -128,6 +128,51 @@
     {% endif %}
   </section>
 
+  {# ============ NISHONLAR (D3-T2) ============ #}
+  {% comment %}
+    ⚠️⚠️ QULFLANGAN NISHON VA PROGRESS FAQAT EGASIGA (foydalanuvchi
+       qarori). Ommaviy profilda faqat OLINGAN nishonlar, RAQAMSIZ.
+
+       Sabab — D3-T4 dagi sanoq-teshigining qaytishi: ommaviy sanoq
+       anonim ishni hisoblamaydi, nishon esa hisoblaydi. Progress
+       ommaviy bo'lsa, ayirma anonim ishlarning ANIQ sonini berardi.
+       Ro'yxatning o'zi `services.nishon_holati()` da filtrlanadi —
+       shablon shunchaki chizadi.
+
+    ⚠️ QULFLANGAN NISHON SABABI BILAN KO'RSATILADI (task `nega`):
+       "bu shunchaki bezak emas, xulqni yo'naltiradi". Shuning uchun
+       `tavsif` va progress ko'rinadi, nishon esa yashirilmaydi.
+  {% endcomment %}
+  {% if nishonlar %}
+    <section class="card mt-3 p-5" aria-labelledby="nishon-sarlavha">
+      <h2 id="nishon-sarlavha" class="text-[11px] font-bold uppercase tracking-wider text-fg-muted">
+        {% if ozimi %}Yutuqlar{% else %}Olingan yutuqlar{% endif %}
+      </h2>
+      <ul class="mt-3 flex flex-wrap gap-2">
+        {% for n in nishonlar %}
+          {% if n.olingan %}
+            <li class="chip !border-karma-icon/40 !bg-karma-bg !text-karma"
+                title="{{ n.berilgan_at|date:'j-F Y' }} da olindi">
+              {% include "components/_nishon_ikonka.html" with ikonka=n.badge.ikonka %}
+              {{ n.badge.nom }}
+            </li>
+          {% else %}
+            <li class="chip opacity-50" title="{{ n.badge.tavsif }}">
+              <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+              {{ n.badge.nom }}
+              <span class="tnum ml-1 text-[11px]">{{ n.progress }}/{{ n.badge.chegara }}</span>
+            </li>
+          {% endif %}
+        {% endfor %}
+      </ul>
+      {% if ozimi %}
+        <p class="mt-2.5 text-[13px] text-fg-muted">
+          Qulflangan yutuqlar va progress faqat sizga ko'rinadi.
+        </p>
+      {% endif %}
+    </section>
+  {% endif %}
+
   {# ============ TABLAR ============ #}
   <div class="mt-6">
     <nav class="flex items-center gap-1 overflow-x-auto border-b border-line pb-px" aria-label="Profil bo'limlari">

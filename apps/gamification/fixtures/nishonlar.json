@@ -1,0 +1,146 @@
+[
+  {
+    "model": "gamification.badge",
+    "pk": 1,
+    "fields": {
+      "created_at": "2026-08-30T00:00:00Z",
+      "updated_at": "2026-08-30T00:00:00Z",
+      "slug": "birinchi-yechim",
+      "nom": "Birinchi yechim",
+      "tavsif": "Birinchi yechimingizni yozganingizda ochiladi.",
+      "ikonka": "check",
+      "metrika": "yechimlar",
+      "chegara": 1,
+      "tartib": 10,
+      "is_active": true
+    }
+  },
+  {
+    "model": "gamification.badge",
+    "pk": 2,
+    "fields": {
+      "created_at": "2026-08-30T00:00:00Z",
+      "updated_at": "2026-08-30T00:00:00Z",
+      "slug": "birinchi-dard",
+      "nom": "Birinchi dard",
+      "tavsif": "Birinchi dardingizni yozganingizda ochiladi.",
+      "ikonka": "check",
+      "metrika": "dardlar",
+      "chegara": 1,
+      "tartib": 20,
+      "is_active": true
+    }
+  },
+  {
+    "model": "gamification.badge",
+    "pk": 3,
+    "fields": {
+      "created_at": "2026-08-30T00:00:00Z",
+      "updated_at": "2026-08-30T00:00:00Z",
+      "slug": "yordam-berdi",
+      "nom": "Yordam berdi",
+      "tavsif": "Bitta yechimingiz qabul qilinsa ochiladi.",
+      "ikonka": "star",
+      "metrika": "qabul_qilingan",
+      "chegara": 1,
+      "tartib": 30,
+      "is_active": true
+    }
+  },
+  {
+    "model": "gamification.badge",
+    "pk": 4,
+    "fields": {
+      "created_at": "2026-08-30T00:00:00Z",
+      "updated_at": "2026-08-30T00:00:00Z",
+      "slug": "faol-javob-beruvchi",
+      "nom": "Faol javob beruvchi",
+      "tavsif": "10 ta yechim yozsangiz ochiladi.",
+      "ikonka": "chat",
+      "metrika": "yechimlar",
+      "chegara": 10,
+      "tartib": 40,
+      "is_active": true
+    }
+  },
+  {
+    "model": "gamification.badge",
+    "pk": 5,
+    "fields": {
+      "created_at": "2026-08-30T00:00:00Z",
+      "updated_at": "2026-08-30T00:00:00Z",
+      "slug": "yuz-karma",
+      "nom": "100 karma",
+      "tavsif": "Karmangiz 100 ga yetsa ochiladi.",
+      "ikonka": "bolt",
+      "metrika": "karma",
+      "chegara": 100,
+      "tartib": 50,
+      "is_active": true
+    }
+  },
+  {
+    "model": "gamification.badge",
+    "pk": 6,
+    "fields": {
+      "created_at": "2026-08-30T00:00:00Z",
+      "updated_at": "2026-08-30T00:00:00Z",
+      "slug": "ishonchli-maslahatchi",
+      "nom": "Ishonchli maslahatchi",
+      "tavsif": "10 ta yechimingiz qabul qilinsa ochiladi.",
+      "ikonka": "shield",
+      "metrika": "qabul_qilingan",
+      "chegara": 10,
+      "tartib": 60,
+      "is_active": true
+    }
+  },
+  {
+    "model": "gamification.badge",
+    "pk": 7,
+    "fields": {
+      "created_at": "2026-08-30T00:00:00Z",
+      "updated_at": "2026-08-30T00:00:00Z",
+      "slug": "ellik-yechim",
+      "nom": "50 yechim",
+      "tavsif": "50 ta yechim yozsangiz ochiladi.",
+      "ikonka": "chat",
+      "metrika": "yechimlar",
+      "chegara": 50,
+      "tartib": 70,
+      "is_active": true
+    }
+  },
+  {
+    "model": "gamification.badge",
+    "pk": 8,
+    "fields": {
+      "created_at": "2026-08-30T00:00:00Z",
+      "updated_at": "2026-08-30T00:00:00Z",
+      "slug": "ming-karma",
+      "nom": "1000 karma",
+      "tavsif": "Karmangiz 1000 ga yetsa ochiladi.",
+      "ikonka": "bolt",
+      "metrika": "karma",
+      "chegara": 1000,
+      "tartib": 80,
+      "is_active": true
+    }
+  },
+  {
+    "model": "gamification.badge",
+    "pk": 9,
+    "fields": {
+      "created_at": "2026-08-30T00:00:00Z",
+      "updated_at": "2026-08-30T00:00:00Z",
+      "slug": "yuz-ovoz",
+      "nom": "100 ovoz",
+      "tavsif": "Yechimlaringiz jami 100 ta ovoz olsa ochiladi.",
+      "ikonka": "flame",
+      "metrika": "olingan_ovoz",
+      "chegara": 100,
+      "tartib": 90,
+      "is_active": true
+    }
+  }
+]

@@ -32,6 +32,7 @@ from django.views.decorators.http import require_POST
 from apps.common.voting import user_votes_for
 from apps.complaints.models import ComplaintVote
 from apps.complaints.selectors import saqlangan_idlari
+from apps.gamification.services import nishon_holati
 
 from .forms import EkspertArizaForm
 from .models import ExpertProfile, MalumotEksporti, TasdiqHolati, User
@@ -426,6 +427,10 @@ def profile(request: HttpRequest, username: str) -> HttpResponse:
             "tablar": korinadigan_tablar(ozimi=ozimi),
             "sahifa": sahifa,
             "stat": profil_statistikasi(profil=profil, ozimi=ozimi),
+            # ⚠️ Qulflangan nishon va progress FAQAT EGASIGA — sabab
+            #    `gamification.services.nishon_holati()` da (D3-T2
+            #    foydalanuvchi qarori, D3-T4 sanoq-teshigi bilan bog'liq).
+            "nishonlar": nishon_holati(profil=profil, ozimi=ozimi),
             # ⚠️ Bloklash tugmasi uchun: profil egasi bloklanganmi.
             #    Ro'yxat bir marta olinadi (D2-T11 bilan bir xil qoida).
             "bloklangan": profil.pk in set(bloklangan_idlar(user=request.user)),

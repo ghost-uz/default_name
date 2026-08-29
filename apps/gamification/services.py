@@ -1,4 +1,4 @@
-"""Gamifikatsiya — xizmat funksiyalari (D1-T10, D3-T1)."""
+"""Gamifikatsiya — xizmat funksiyalari (D1-T10, D3-T1, D3-T2)."""
 
 from __future__ import annotations
 
@@ -10,8 +10,11 @@ from django.db import models, transaction
 from .models import (
     KARMA_QIYMATLARI,
     KOMPENSATSIYA_SABABLARI,
+    Badge,
     KarmaEvent,
     KarmaReason,
+    NishonMetrikasi,
+    UserBadge,
 )
 
 log = logging.getLogger(__name__)
@@ -238,3 +241,144 @@ def kontent_karmasini_tiklash(*, solution) -> KarmaEvent | None:
         reason=KarmaReason.KONTENT_TIKLANDI,
         ball=-kompensatsiya,
     )
+
+
+# ===========================================================================
+# Nishonlar (D3-T2)
+# ===========================================================================
+def _metrikalar(*, user) -> dict[str, int]:
+    """Foydalanuvchining barcha o'lchovlari — IKKI so'rovda.
+
+    ⚠️⚠️ ANONIM ISH HAM SANALADI (foydalanuvchi qarori). Filtrda
+       `is_anonymous` YO'Q: anonim javob berish jazolanmasligi kerak —
+       D3-T1 dagi karma qarori bilan aynan bir xil sabab.
+
+    ⚠️ `visible()` esa BOR: moderator olib tashlagan yechim nishonga
+       hisoblanmaydi. D3-T1 da uning karmasi ham qaytariladi, ya'ni
+       ikkala tizim bir xil narsani "yo'q" deb biladi.
+
+    ⚠️ Metrikalar HAR SAFAR QAYTA HISOBLANADI, keshlanmaydi. Kesh
+       bo'lsa u haqiqatdan uzilardi (aynan `karma_cached` da bo'lgani
+       kabi) va nishon "bor edi, endi yo'q" holatiga tushardi. Ikki
+       so'rov bu narxni to'lashga arziydi — funksiya kamdan-kam
+       chaqiriladi.
+    """
+    from apps.complaints.models import Complaint
+    from apps.solutions.models import Solution
+
+    yechimlar = (
+        Solution.objects.visible()
+        .filter(author=user)
+        .aggregate(
+            soni=models.Count("pk"),
+            qabul=models.Count("pk", filter=models.Q(is_accepted=True)),
+            ovoz=models.Sum("upvotes_cached", default=0),
+        )
+    )
+    dardlar = Complaint.objects.visible().filter(author=user).count()
+
+    return {
+        NishonMetrikasi.KARMA: max(user.karma_cached, 0),
+        NishonMetrikasi.YECHIMLAR: yechimlar["soni"],
+        NishonMetrikasi.QABUL_QILINGAN: yechimlar["qabul"],
+        NishonMetrikasi.DARDLAR: dardlar,
+        NishonMetrikasi.OLINGAN_OVOZ: yechimlar["ovoz"],
+    }
+
+
+# ⚠️ Guard test buni `NishonMetrikasi` bilan solishtiradi: yangi metrika
+#    qo'shilib, hisoblash unutilsa, nishon HECH QACHON berilmasdi va bu
+#    hech qanday xato bermasdi.
+NISHON_METRIKALARI: frozenset[str] = frozenset(NishonMetrikasi.values)
+
+
+@transaction.atomic
+def nishonlarni_tekshirish(*, user) -> list[UserBadge]:
+    """Foydalanuvchi yangi nishon olganmi — tekshiradi va beradi.
+
+    ⚠️ SIGNAL EMAS, OCHIQ CHAQIRUV — D1-T10 dagi bir xil qaror:
+       signal `bulk_create`, `loaddata` va ommaviy import'da ishlamaydi.
+
+    ⚠️ NISHON QAYTIB OLINMAYDI: bu funksiya faqat QO'SHADI. Karma
+       tushib ketsa ham (kompensatsiya, D3-T1) nishon qoladi — sabab
+       `UserBadge` docstring'ida.
+
+    ⚠️ `ignore_conflicts` — poyga holati: ikki so'rov bir vaqtda
+       tekshirsa, ikkinchisi noyoblik cheklovига urilardi. Xato o'rniga
+       jimgina o'tkazib yuborish TO'G'RI: natija baribir bir xil.
+    """
+    if user is None or getattr(user, "pk", None) is None:
+        return []
+
+    faol = list(Badge.objects.filter(is_active=True))
+    if not faol:
+        return []
+
+    bor = set(UserBadge.objects.filter(user=user).values_list("badge_id", flat=True))
+    kutilayotgan = [b for b in faol if b.pk not in bor]
+    if not kutilayotgan:
+        return []
+
+    olchovlar = _metrikalar(user=user)
+    yangilar = [
+        UserBadge(user=user, badge=b)
+        for b in kutilayotgan
+        if olchovlar.get(b.metrika, 0) >= b.chegara
+    ]
+    if yangilar:
+        UserBadge.objects.bulk_create(yangilar, ignore_conflicts=True)
+        log.info(
+            "Nishon berildi: user=%s -> %s",
+            user.pk,
+            [b.badge.slug for b in yangilar],
+        )
+    return yangilar
+
+
+def nishon_holati(*, profil, ozimi: bool) -> list[dict]:
+    """Profil uchun nishonlar ro'yxati (D3-T2 + D3-T4).
+
+    ⚠️⚠️ QULFLANGAN NISHON VA PROGRESS FAQAT EGASIGA (foydalanuvchi
+       qarori). Ommaviy profilda faqat OLINGAN nishonlar, RAQAMSIZ.
+
+       Sabab — D3-T4 dagi sanoq-teshigining qaytishi: ommaviy sanoq
+       anonim ishni hisoblamaydi, nishon esa hisoblaydi. Progress
+       ommaviy bo'lsa, ayirma anonim ishlarning ANIQ sonini berardi.
+       Olingan nishonning o'zi esa faqat "kamida N ta" degan noaniq
+       xulosaga imkon beradi — bu ongli qabul qilingan qoldiq.
+
+    ⚠️ Mehmon uchun ham ishlaydi (`ozimi=False`).
+    """
+    olingan = {
+        ub.badge_id: ub.berilgan_at
+        for ub in UserBadge.objects.filter(user=profil).select_related("badge")
+    }
+
+    if not ozimi:
+        return [
+            {
+                "badge": b,
+                "olingan": True,
+                "berilgan_at": olingan[b.pk],
+                "progress": None,
+            }
+            for b in Badge.objects.filter(is_active=True, pk__in=olingan)
+        ]
+
+    olchovlar = _metrikalar(user=profil)
+    natija = []
+    for b in Badge.objects.filter(is_active=True):
+        bormi = b.pk in olingan
+        natija.append(
+            {
+                "badge": b,
+                "olingan": bormi,
+                "berilgan_at": olingan.get(b.pk),
+                # ⚠️ Progress chegaradan OSHMAYDI: "12/10" chalkash
+                #    ko'rinardi va progress chizig'i buzilardi.
+                "progress": None
+                if bormi
+                else min(olchovlar.get(b.metrika, 0), b.chegara),
+            }
+        )
+    return natija

@@ -2060,10 +2060,66 @@
       "bogliq": [
         "D3-T1"
       ],
-      "holat": "todo",
+      "holat": "done",
       "qabul_mezoni": [
         "nishon shartlari ma'lumotlarda, kodda emas"
-      ]
+      ],
+      "tugatilgan": "2026-08-30",
+      "natija": {
+        "yaratilgan": [
+          "apps/gamification/models.py — Badge, UserBadge, NishonIkonka, NishonMetrikasi",
+          "apps/gamification/migrations/0003_badge_userbadge.py",
+          "apps/gamification/services.py — _metrikalar(), nishonlarni_tekshirish(), nishon_holati()",
+          "apps/gamification/tasks.py — nishonlarni_yangilash() (Celery beat, sutkada bir)",
+          "apps/gamification/fixtures/nishonlar.json — 9 ta nishon (MA'LUMOT)",
+          "apps/solutions/services.py — accept_solution() da ochiq chaqiruv",
+          "config/settings/base.py — beat jadvaliga qo'shildi",
+          "templates/components/_nishon_ikonka.html — kalit -> SVG",
+          "templates/accounts/profile.html — 'Yutuqlar' bloki (D3-T4 da olib tashlangan soxta blok o'rniga)",
+          "apps/gamification/tests_nishon.py — 25 test"
+        ],
+        "qabul_mezonlari": {
+          "shartlar_malumotlarda_kodda_emas": "✅ `Badge` qatori: nom, tavsif, ikonka, METRIKA va CHEGARA. Yangi nishon qo'shish uchun kod TEGILMAYDI — test buni KOD YOZMASDAN nishon qo'shib isbotlaydi."
+        },
+        "tekshirilgan": [
+          "⭐⭐ yangi nishon KODSIZ qo'shiladi (faqat baza qatori) va darhol ishlaydi",
+          "chegarani o'zgartirish ham kodsiz",
+          "guard: `NishonMetrikasi` <-> `_metrikalar()` (nom VA haqiqiy hisoblash)",
+          "guard: `NishonIkonka` <-> shablon (CategoryIcon dagi bir xil naqsh)",
+          "guard: modelda `shart`/`ifoda`/`formula` maydoni PAYDO BO'LMASIN",
+          "fixture yuklanadi, takroriy yuklash xato bermaydi, kalitlari haqiqiy",
+          "nishon QAYTIB OLINMAYDI (karma tushsa ham)",
+          "anonim ish HISOBLANADI; olib tashlangan kontent HISOBLANMAYDI",
+          "nol chegara BAZA darajasida taqiqlangan; nofaol nishon berilmaydi",
+          "yechim qabul qilinganda nishon darhol beriladi",
+          "Celery vazifasi ovozdan kelgan nishonni beradi, faqat YAQINDAGI faollarni tekshiradi",
+          "⭐⭐ begonaga faqat OLINGAN nishonlar, raqamsiz; egasiga qulf + progress",
+          "progress chegaradan oshmaydi; qulflangan nishon SABABI bilan ko'rinadi",
+          "profil so'rov soni nishonlar soniga bog'liq emas",
+          "🌐 JONLI: egasiga 2 olingan + 7 qulflangan (1/10, 17/100, ...); mehmonga faqat 'Birinchi yechim, Birinchi dard' — raqam ham, qulf ham yo'q"
+        ],
+        "qarorlar": [
+          "⭐⭐ SHART = METRIKA + CHEGARA, IFODA SATRI EMAS. \"Shart ma'lumotda\" degani ba'zan \"bazada ifoda saqlaymiz va hisoblaymiz\" deb tushuniladi — bu admin panelga kirgan odam yozgan matn serverda ishga tushishi degani. Loyiha bu qarorni `CategoryIcon` da allaqachon qabul qilgan (u yerda SVG, bu yerda ifoda — bir xil teshikning ikki shakli). Yopiq metrika lug'ati + son chegarasi butun ehtiyojni qoplaydi, `eval` ham, mini-parser ham kerak emas.",
+          "⭐⭐ ANONIM ISH HISOBLANADI, lekin QULF va PROGRESS FAQAT EGASIGA (foydalanuvchi qarori). Anonim javob jazolanmaydi (D3-T1 karma qarori bilan izchil); progress ommaviy bo'lsa, ommaviy sanoq (anonimsiz, D3-T4) bilan ayirma anonim ishlarning ANIQ sonini berardi. QOLDIQ TESHIK ONGLI QABUL QILINGAN: olingan nishon + ma'lum chegara 'kamida N ta' degan noaniq xulosaga imkon beradi.",
+          "NISHON QAYTIB OLINMAYDI: karma tushsa ham (kompensatsiya, D3-T1) nishon qoladi. 'Sizda bor edi, endi yo'q' odamni jazolagandek bo'lardi. Yutuq — TARIX, joriy holat emas.",
+          "BERISH `accept_solution()` DA, OVOZ YO'LIDA EMAS: qabul — kam uchraydigan va kuchli signal; ovoz esa tez-tez va har ovozda ikkita qo'shimcha so'rov D1-T14 byudjetini yeb qo'yardi. Ovozdan kelgan nishonlarni Celery beat yopadi (kechikish bor, yo'qotish yo'q).",
+          "SIGNAL EMAS, OCHIQ CHAQIRUV — D1-T10 dagi bir xil qaror.",
+          "Celery oynasi 25 soat (24 emas): beat siljishi 'ko'r nuqta' qoldirardi; ustma-ust tushish zararsiz, chunki tekshiruv idempotent.",
+          "Metrikalar KESHLANMAYDI: kesh haqiqatdan uzilardi (`karma_cached` dagi kabi) va nishon 'bor edi, endi yo'q' holatiga tushardi."
+        ],
+        "olchangan_holat": {
+          "testlar": 867,
+          "qamrov_foiz": 95.33,
+          "d3_t2_testlari": 25
+        },
+        "keyingi_uchun_eslatma": [
+          "⚠️ Yangi METRIKA qo'shsangiz: `NishonMetrikasi` ga VA `_metrikalar()` ga — ikkita guard ikkalasini ham tekshiradi (nom va haqiqiy hisoblash).",
+          "⚠️ Yangi IKONKA qo'shsangiz: `NishonIkonka` ga VA `_nishon_ikonka.html` ga.",
+          "⚠️ Yangi NISHON qo'shish uchun KOD KERAK EMAS — fixture yoki admin.",
+          "DEPLOY: `manage.py loaddata nishonlar` — kategoriyalar bilan bir qatorda.",
+          "D3-T3 (reyting) shu ledgerdan yig'iladi; nishonlar unga bog'liq emas."
+        ]
+      }
     },
     {
       "id": "D3-T3",

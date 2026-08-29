@@ -468,6 +468,16 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": 3600.0,
         "options": {"expires": 3000},
     },
+    # ⚠️ Nishon berish `accept_solution()` da ochiq chaqiriladi, lekin
+    #    OVOZ yo'lida chaqirilmaydi (u juda tez-tez bo'ladi va D1-T14 da
+    #    qotirilgan so'rov byudjetini yeb qo'yardi). Bu vazifa ovozdan
+    #    kelib chiqadigan nishonlarni yopadi — kechikish bor, yo'qotish
+    #    yo'q.
+    "nishonlarni-yangilash": {
+        "task": "apps.gamification.tasks.nishonlarni_yangilash",
+        "schedule": 86400.0,
+        "options": {"expires": 43200},
+    },
 }
 
 

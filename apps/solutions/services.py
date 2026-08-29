@@ -14,6 +14,7 @@ from django.utils import timezone
 from apps.common.voting import VoteResult, cast_vote
 from apps.complaints.models import Complaint, ComplaintStatus
 from apps.gamification.services import (
+    nishonlarni_tekshirish,
     ovoz_karmasi,
     yechim_qabul_karmasi,
     yechim_qabuli_bekor_karmasi,
@@ -128,6 +129,20 @@ def accept_solution(*, solution: Solution, by_user) -> Solution:
 
     # 4) Karma — D1-T10 qabul mezoni.
     yechim_qabul_karmasi(solution=solution)
+
+    # 5) Nishonlar (D3-T2).
+    #
+    # ⚠️ NEGA AYNAN SHU YERDA, ovoz yo'lida EMAS.
+    #    Qabul qilish — KAM UCHRAYDIGAN va KUCHLI signal, ya'ni
+    #    nishonni darhol berish uchun eng ma'noli payt. Ovoz esa
+    #    tez-tez bo'ladi: har ovozda nishon tekshiruvi ikkita
+    #    qo'shimcha so'rov qo'shardi va bu D1-T14 da qotirilgan
+    #    so'rov byudjetini yeb qo'yardi.
+    #
+    # ⚠️ Ovozdan kelib chiqadigan nishonlarni Celery beat vazifasi
+    #    yopadi (`gamification.tasks.nishonlarni_yangilash`) — ya'ni
+    #    kechikish bor, lekin yo'qotish yo'q.
+    nishonlarni_tekshirish(user=solution.author)
 
     return solution
 
