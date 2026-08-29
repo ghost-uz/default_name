@@ -18,6 +18,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 
+from apps.common.ratelimit import tezlik_cheklovi
 from apps.common.vote_views import (
     htmx_sorovimi,
     ovoz_qiymatini_oqish,
@@ -33,6 +34,7 @@ from .services import accept_solution, unaccept_solution, yechim_yozish
 
 
 @require_POST
+@tezlik_cheklovi("ovoz")
 def yechim_ovoz(request: HttpRequest, pk: int) -> HttpResponse:
     """Yechimga ovoz berish.
 
@@ -81,6 +83,7 @@ def yechim_ovoz(request: HttpRequest, pk: int) -> HttpResponse:
 # ===========================================================================
 @login_required
 @require_POST
+@tezlik_cheklovi("yechim_yozish")
 def solution_create(request: HttpRequest, slug: str) -> HttpResponse:
     """Muammoga yechim qo'shish.
 

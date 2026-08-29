@@ -18,6 +18,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
 from apps.accounts.models import User
+from apps.common.ratelimit import tezlik_cheklovi
 from apps.common.vote_views import (
     htmx_sorovimi,
     ovoz_qiymatini_oqish,
@@ -104,6 +105,7 @@ def feed(request: HttpRequest) -> HttpResponse:
 # Ovoz berish (D1-T8)
 # ===========================================================================
 @require_POST
+@tezlik_cheklovi("ovoz")
 def dard_ovoz(request: HttpRequest, pk: int) -> HttpResponse:
     """Muammoga ovoz berish / bekor qilish / almashtirish.
 
@@ -243,6 +245,7 @@ def complaint_detail(
 # Yaratish va tahrirlash (D1-T9)
 # ===========================================================================
 @login_required
+@tezlik_cheklovi("dard_yozish")
 def complaint_create(request: HttpRequest) -> HttpResponse:
     """Yangi dard yozish."""
     # `getattr` — `@login_required` autentifikatsiyani kafolatlaydi, lekin
@@ -310,6 +313,7 @@ def complaint_edit(request: HttpRequest, slug: str) -> HttpResponse:
 # Saqlanganlar (D1-T13)
 # ===========================================================================
 @require_POST
+@tezlik_cheklovi("saqlash")
 def dard_saqlash(request: HttpRequest, pk: int) -> HttpResponse:
     """Saqlash / saqlanganlardan olib tashlash — bitta tugma, ikki holat.
 

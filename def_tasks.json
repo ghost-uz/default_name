@@ -1374,11 +1374,80 @@
       "bogliq": [
         "D1-T8"
       ],
-      "holat": "todo",
+      "holat": "done",
       "qabul_mezoni": [
         "chegara oshsa 429 va tushunarli xabar",
         "cheklovlar sozlamada, kodda emas"
-      ]
+      ],
+      "tugatilgan": "2026-08-29",
+      "eslatma": "Qo'shimcha paketsiz (django-ratelimit RAD ETILDI — Django kesh API'sida atomik incr() bor). IKKI JIM XATO oldi olindi: (1) nginx ortida REMOTE_ADDR butun saytni bitta IP hisobiga qo'shardi; (2) GET ham sanalsa, formani ikkinchi marta OCHGAN odam bloklanardi.",
+      "natija": {
+        "yaratilgan": [
+          "apps/common/ratelimit.py — chegarani_oqish, mijoz_ip, tezlik_cheklovi dekoratori",
+          "config/settings/base.py — TEZLIK_CHEKLOVLARI + ISHONCHLI_PROKSILAR_SONI",
+          "config/settings/prod.py — ISHONCHLI_PROKSILAR_SONI = 1 (nginx)",
+          "templates/429.html — JavaScript'siz yo'l uchun sahifa",
+          "static/js/app.js — 12-bo'lim: htmx:responseError -> toast",
+          "conftest.py — _keshni_tozalash autouse fixture",
+          "apps/common/tests/test_tezlik_cheklovi.py — 38 test"
+        ],
+        "qamralgan_nuqtalar": [
+          "ovoz berish (dard_ovoz, yechim_ovoz) — 30/m foydalanuvchi, 120/m IP",
+          "post yozish (complaint_create) — 5/h, 20/h",
+          "yechim yozish (solution_create) — 20/h, 60/h",
+          "shikoyat (dard_shikoyat, yechim_shikoyat) — 10/h, 40/h",
+          "xatcho'p (dard_saqlash) — 60/m, 200/m (task ro'yxatida yo'q edi, qo'shildi)"
+        ],
+        "tekshirilgan": [
+          "qabul mezoni: chegara oshsa 429 + tushunarli xabar (Retry-After sarlavhasi bilan)",
+          "qabul mezoni: chegaralar SOZLAMADA — barcha testlar @override_settings orqali xulqni o'zgartiradi",
+          "OQISH so'rovlari (GET/HEAD/OPTIONS) SANALMAYDI",
+          "har foydalanuvchi va har IP o'z hisobiga ega",
+          "bitta IP ortidagi ikki foydalanuvchi IP hisobini bo'lishadi (CGNAT holati)",
+          "anonim foydalanuvchida faqat IP chegarasi qo'llanadi",
+          "oyna almashsa hisob noldan boshlanadi (vaqt monkeypatch bilan)",
+          "kesh ishlamasa so'rov O'TADI (fail open) + jurnalga yoziladi",
+          "noto'g'ri chegara ('30/min') XATO beradi, jim o'tmaydi",
+          "proksi 0 -> XFF butunlay inobatga olinmaydi (soxtalashtirish ishlamaydi)",
+          "proksi 1/2 -> XFF ro'yxatining oxiridan N-elementi olinadi",
+          "XFF kutilganidan qisqa -> REMOTE_ADDR ga qaytadi, yiqilmaydi",
+          "staff uchun istisno YO'Q",
+          "IP chegarasi foydalanuvchi chegarasidan BO'SHROQ (munosabat testda qotirilgan)",
+          "🌐 JONLI: 32 marta ovoz -> toast 'Juda tez yuboryapsiz. Chegara: 30 marta / daqiqa. 9 soniyadan keyin...'",
+          "🌐 JONLI: JS'siz 31-so'rov -> 429 + to'liq sahifa (Retry-After: 35)",
+          "🌐 JONLI: oddiy ovozda konsolda 0 xato"
+        ],
+        "qarorlar": [
+          "PAKETSIZ. `requirements/base.txt` dagi qoida: 'buni stdlib yoki Django bilan qilib bo'ladimi?'. Bu yerda javob ha — Django kesh API'sida atomik `incr()` bor va Redis backend uni server tomonida bajaradi. Butun mantiq ~200 qator (izohlar bilan).",
+          "SOBIT OYNA (fixed window). Oyna raqami kalitning bir qismi -> eskirish o'z-o'zidan, tozalash kerak emas. Kamchiligi: oyna chegarasida ikki baravar burst mumkin. ATAYLAB qabul qilingan — silliq oyna Lua skript talab qiladi, foyda esa kichik: chegaralar odam uchun juda bo'sh, skript uchun juda tor.",
+          "FAIL OPEN. Redis o'chsa so'rov o'tadi. Aks holda Redis nosozligi butun saytni 'yozib bo'lmaydigan' holatga tushirardi. Tezlik cheklovi — yumshatish chorasi, xavfsizlik chegarasi emas: haqiqiy himoya baza cheklovlari va xizmat qatlamida.",
+          "IP CHEGARALARI ATAYLAB BO'SH. O'zbekistonda mobil operatorlar CGNAT ishlatadi: bitta tashqi IP ortida minglab abonent. Tor IP chegarasi butun mahallani bloklardi va sabab tashqaridan ko'rinmasdi. Asosiy og'irlik FOYDALANUVCHI chegarasida. Bu munosabat alohida test bilan qotirilgan.",
+          "STAFF UCHUN ISTISNO YO'Q. 'Moderatorga cheklov qo'llanmaydi' degan yashirin qoida hisob buzib kirilganda aynan eng kuchli hisobni cheklovsiz qoldirardi. Moderator harakatlari (D2-T2) dekorator bilan o'ralmagan, ya'ni baribir tez ishlaydi.",
+          "429 OHANGI AYBLOVCHI EMAS. Chegaraga urilganlarning aksariyati hujumchi emas — bir necha marta bosgan yoki ulanishi uzilgan odam. 'Sizni bloklab qo'ydik' degan matn aynan og'ir mavzuni yozmoqchi bo'lgan odamni saytdan haydardi."
+        ],
+        "topilgan_xatolar": [
+          "NGINX ORTIDA `REMOTE_ADDR` — nginx allaqachon `X-Forwarded-For` va `X-Real-IP` yuboradi, lekin Django ularni O'QIMASDI. Naive yechim (REMOTE_ADDR) prodda butun saytni bitta IP hisobiga qo'shib, 120/m dan keyin HAMMANI bloklardi. Teskari naive yechim (XFF ga so'zsiz ishonish) esa cheklovni butunlay ma'nosiz qilardi — sarlavhani mijoz o'zi yozadi. Yechim: `ISHONCHLI_PROKSILAR_SONI` (0 dev, 1 prod) va ro'yxat OXIRIDAN sanash.",
+          "GET SO'ROVLARI SANALSA — 'soatiga 5 ta post' chegarasi formani 6 marta OCHGAN odamni bloklardi va sabab butunlay ko'rinmasdi ('hech narsa yozmadim-ku?'). `SANALADIGAN_USULLAR` qo'shildi (faqat POST/PUT/PATCH/DELETE).",
+          "KESH TESTLAR ORASIDA OQIB KETARDI. LocMem kesh baza kabi qaytarilmaydi, cheklov kaliti esa foydalanuvchi pk va 127.0.0.1 dan quriladi — ikkalasi ham testlar orasida takrorlanadi. Natijasi eng yomon turdagi xato bo'lardi: testlar alohida o'tadi, birga ishlatilganda tasodifiy 429 bilan yiqiladi va aybdor test butunlay boshqa faylda bo'ladi. `conftest.py` ga `_keshni_tozalash` autouse fixture qo'shildi.",
+          "HTMX 2xx BO'LMAGAN JAVOBNI DOM'GA QO'YMAYDI — ya'ni 429 foydalanuvchi uchun HECH NARSA bo'lmasdi: tugma bosiladi, ovoz o'zgarmaydi, xato ham chiqmaydi. Odam qayta-qayta bosadi va cheklovni yanada chuqurroq buzadi. `htmx:responseError` ishlovchisi qo'shildi (app.js 12-bo'lim).",
+          "429 sahifasidagi 'Yozgan matningiz yo'qolmadi' matni ovoz berganda chalg'itardi ('qanaqa matn?') — umumiylashtirildi.",
+          "ruff RUF100: `# noqa: BLE001` — bu qoida loyihada yoqilmagan, ya'ni izoh keraksiz edi."
+        ],
+        "guardlar_isbotlangan": "Kodga ikkita xato ATAYLAB kiritildi (GET ham sanalsin; XFF ga so'zsiz ishonilsin) — 14 ta test yiqildi, jumladan aynan shu ikki holatni qoplaydigan testlar. Tuzatilgach hammasi qaytadan yashil.",
+        "olchangan_holat": {
+          "testlar": 514,
+          "qamrov_foiz": 94.93,
+          "d2_t4_testlari": 38,
+          "yangi_paketlar": 0,
+          "pre_commit_hooklar": 17
+        },
+        "keyingi_uchun_eslatma": [
+          "D2-T5 (spam evristikasi): shu yerdagi `mijoz_ip()` qayta ishlatiladi; honeypot va forma to'ldirish vaqti alohida qatlam.",
+          "D2-T9 (CSP): 429 sahifasi `base.html` dan meros oladi, ya'ni nonce mexanizmi allaqachon ishlaydi.",
+          "⚠️ DEPLOY PAYTIDA: nginx oldiga CDN (Cloudflare) qo'yilsa `ISHONCHLI_PROKSILAR_SONI` 2 ga o'zgartirilishi SHART — aks holda barcha foydalanuvchilar CDN chekka tugunining IP'siga tushadi.",
+          "Telegram login (D1-T1) hozircha cheklanmagan — D2-T5 yoki alohida taskda ko'rib chiqilsin."
+        ]
+      }
     },
     {
       "id": "D2-T5",

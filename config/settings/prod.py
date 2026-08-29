@@ -50,6 +50,19 @@ HTTPS_ENABLED = env_bool("DJANGO_HTTPS", True)
 #    xavfli bo'ladi (foydalanuvchi sarlavhani o'zi qo'yishi mumkin).
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
+# ⚠️ Xuddi shu sabab tezlik cheklovi uchun ham (D2-T4): nginx ortida
+#    `REMOTE_ADDR` HAR DOIM nginx'ning manzili bo'ladi, ya'ni IP
+#    chegarasi butun saytni bitta hisobga qo'shib, hammani birdan
+#    bloklab qo'yardi. Nginx `X-Forwarded-For` ro'yxatining OXIRIGA
+#    o'ziga ulangan manzilni qo'shadi (`$proxy_add_x_forwarded_for`),
+#    shuning uchun bitta proksi = 1.
+#
+#    ⚠️ Bu qiymat proksilar sonidan KATTA bo'lmasligi kerak: har bir
+#       ortiqcha birlik mijoz o'zi yozgan sarlavhaga ishonish degani
+#       va cheklovni butunlay chetlab o'tish imkonini beradi.
+#       CDN (masalan Cloudflare) qo'shilsa — 2.
+ISHONCHLI_PROKSILAR_SONI = 1
+
 SECURE_SSL_REDIRECT = HTTPS_ENABLED
 SESSION_COOKIE_SECURE = HTTPS_ENABLED
 CSRF_COOKIE_SECURE = HTTPS_ENABLED

@@ -781,4 +781,30 @@
       fokus(el || holatlar()[0]);
     });
   }
+
+  /* ---------------------------------------------------------------------
+     12. TEZLIK CHEKLOVI — 429 JAVOBINI KO'RSATISH (D2-T4)
+
+     ⚠️ HTMX 2xx BO'LMAGAN JAVOBNI DOM'GA QO'YMAYDI. Ya'ni server 429
+        qaytarsa, foydalanuvchi uchun HECH NARSA BO'LMAYDI: tugma
+        bosiladi, ovoz o'zgarmaydi, xato ham chiqmaydi. Bu "sayt
+        buzilgan" tuyg'usini beradi va odam qayta-qayta bosadi —
+        ya'ni cheklovni yanada chuqurroq buzadi.
+
+        Shuning uchun 429 ALOHIDA ushlanadi va matni toast qilib
+        ko'rsatiladi. Javob tanasi serverda tayyorlanadi
+        (`apps/common/ratelimit.py::_429`) — matn bir joyda turadi.
+
+     ⚠️ 401 (mehmon ovoz bermoqchi) bu yerda ushlanmaydi: uni
+        `login-hint` qatlami hal qiladi (D1-T8) va ikkita bir vaqtda
+        chiqadigan xabar chalkashtirardi.
+     --------------------------------------------------------------------- */
+  document.body.addEventListener("htmx:responseError", (e) => {
+    const xhr = e.detail && e.detail.xhr;
+    if (!xhr || xhr.status !== 429) return;
+    toast(
+      xhr.responseText || "Juda tez yuboryapsiz. Biroz kuting.",
+      "error",
+    );
+  });
 })();

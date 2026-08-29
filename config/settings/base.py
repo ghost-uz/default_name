@@ -171,6 +171,47 @@ CACHES = {
 
 
 # --------------------------------------------------------------------------
+# Tezlik cheklovi (D2-T4)
+# --------------------------------------------------------------------------
+# ⚠️ QABUL MEZONI: "cheklovlar sozlamada, kodda emas". Chegarani
+#    o'zgartirish uchun kod tegilmaydi — shu lug'at tahrirlanadi
+#    (yoki muhitga xos sozlamada qayta belgilanadi).
+#
+# Shakl: "<son>/<[koeffitsiyent]><birlik>", birlik = s | m | h | d
+#        "30/m" = daqiqasiga 30 marta;  "5/2h" = ikki soatda 5 marta.
+#
+# ⚠️ IP CHEGARALARI ATAYLAB BO'SH. O'zbekistonda mobil operatorlar
+#    CGNAT ishlatadi: bitta tashqi IP ortida minglab abonent bo'lishi
+#    mumkin. Tor IP cheklovi butun mahallani birdan bloklardi va buni
+#    aniqlash juda qiyin bo'lardi ("menda ishlamayapti, do'stimda
+#    ishlayapti"). Asosiy og'irlik FOYDALANUVCHI chegarasida.
+#
+# ⚠️ Sonlar odam uchun juda bo'sh, skript uchun juda tor bo'lishi
+#    kerak. Masalan haqiqiy odam daqiqasiga 30 marta ovoz bermaydi,
+#    skript esa soniyasiga yuzlab urinadi.
+TEZLIK_CHEKLOVLARI = {
+    # Post yozish — eng qimmat amal (moderatsiya, lenta, bildirishnoma).
+    "dard_yozish": {"foydalanuvchi": "5/h", "ip": "20/h"},
+    "yechim_yozish": {"foydalanuvchi": "20/h", "ip": "60/h"},
+    # ⚠️ Ovoz — eng arzon va eng ko'p suiiste'mol qilinadigan nuqta
+    #    (task tavsifi): cheklovsiz bitta skript reytingni butunlay
+    #    buzadi. Shuning uchun oyna daqiqa, soat emas.
+    "ovoz": {"foydalanuvchi": "30/m", "ip": "120/m"},
+    "shikoyat": {"foydalanuvchi": "10/h", "ip": "40/h"},
+    # Xatcho'p — task ro'yxatida yo'q edi, lekin bu ham yozish amali va
+    # xuddi ovoz kabi arzon. Ochiq qoldirish ma'nosiz.
+    "saqlash": {"foydalanuvchi": "60/m", "ip": "200/m"},
+}
+
+# ⚠️ Mijoz IP'sini aniqlash uchun ISHONCHLI proksilar soni.
+#    0 = to'g'ridan-to'g'ri ulanish, `REMOTE_ADDR` ishlatiladi (dev/test).
+#    Nginx ortida bu 1 bo'lishi SHART (`config/settings/prod.py`), aks
+#    holda butun sayt bitta IP hisobiga tushadi. Batafsil:
+#    `apps/common/ratelimit.py::mijoz_ip`.
+ISHONCHLI_PROKSILAR_SONI = 0
+
+
+# --------------------------------------------------------------------------
 # Autentifikatsiya
 # --------------------------------------------------------------------------
 AUTH_PASSWORD_VALIDATORS = [

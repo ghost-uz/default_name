@@ -126,6 +126,29 @@ def _tashqi_tarmoqni_taqiqlash(monkeypatch, request):
     monkeypatch.setattr(socket.socket, "connect", taqiqlangan)
 
 
+@pytest.fixture(autouse=True)
+def _keshni_tozalash():
+    """Har test toza keshdan boshlasin (D2-T4).
+
+    ⚠️⚠️ BUSIZ TEZLIK CHEKLOVI TESTLAR ORASIDA OQIB KETADI.
+
+       Kesh (test muhitida LocMem) baza kabi qaytarilmaydi: u jarayon
+       xotirasida yashaydi va testdan testga o'tadi. Cheklov kaliti esa
+       foydalanuvchi `pk` va IP (`127.0.0.1`) dan quriladi — ikkalasi
+       ham testlar orasida TAKRORLANADI.
+
+       Natijasi eng yomon turdagi xato bo'lardi: testlar ALOHIDA
+       o'tadi, birga ishlatilganda esa tasodifiy 429 bilan yiqiladi —
+       va yiqiladigan test aybdor testdan butunlay boshqa faylda
+       bo'lishi mumkin.
+    """
+    from django.core.cache import cache
+
+    cache.clear()
+    yield
+    cache.clear()
+
+
 # ===========================================================================
 # Foydalanuvchi fixture'lari
 # ===========================================================================

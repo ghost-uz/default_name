@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% comment %}
+  Tezlik cheklovi (D2-T4) — JavaScript'siz yo'l.
+
+  ⚠️ HTMX so'roviga bu sahifa QAYTMAYDI: u qisqa matn oladi va app.js
+     uni toast qilib ko'rsatadi. Bu sahifa oddiy forma POST'i uchun —
+     ya'ni JavaScript o'chirilgan yoki hali yuklanmagan holat uchun.
+
+  ⚠️ Ohang ayblovchi EMAS. Chegaraga urilgan odamlarning aksariyati
+     hujumchi emas: bir necha marta bosgan, sahifani yangilagan yoki
+     ulanishi uzilgan odam. "Sizni bloklab qo'ydik" degan matn ularni
+     qo'rqitardi — bu esa aynan og'ir mavzuni yozmoqchi bo'lgan odamni
+     saytdan haydaydi.
+{% endcomment %}
+
+{% block title %}Biroz kuting — Dard.uz{% endblock %}
+{% block description %}So'rovlar juda tez keldi.{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-[560px] px-4 py-16 lg:px-6">
+  <main id="main">
+    <h1 class="text-2xl font-extrabold">Biroz kuting</h1>
+
+    <p class="mt-2 text-[15px] leading-relaxed text-fg-muted">{{ xabar }}</p>
+
+    <div class="card mt-5 border-line-strong bg-surface-2 p-4 text-[13px] leading-relaxed text-fg-muted">
+      Hech narsa yo'qolmadi — orqaga qayting va qayta urinib ko'ring.
+      Cheklov saytni avtomatik skriptlardan himoya qiladi.
+
+      {# ⚠️ Matn UMUMIY: bu sahifa post yozishda ham, ovoz berishda ham #}
+      {# chiqadi. "Yozgan matningiz yo'qolmadi" deb yozilgan edi va #}
+      {# ovoz berganda chalg'itardi — odam "qanaqa matn?" deb o'ylardi. #}
+    </div>
+
+    <div class="mt-6 flex flex-col-reverse gap-2 sm:flex-row">
+      <a href="{% url 'feed' %}" class="btn-outline sm:flex-1">Lentaga qaytish</a>
+      {% comment %}
+        ⚠️ `history.back()` EMAS — u JavaScript talab qiladi, bu sahifa
+           esa aynan JavaScript'siz holat uchun. Lentaga qaytish
+           har doim ishlaydigan yo'l.
+      {% endcomment %}
+    </div>
+  </main>
+</div>
+{% endblock %}

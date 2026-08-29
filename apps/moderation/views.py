@@ -13,6 +13,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
+from apps.common.ratelimit import tezlik_cheklovi
 from apps.complaints.models import Complaint
 from apps.solutions.models import Solution
 
@@ -103,6 +104,7 @@ def _shikoyat_sahifasi(
 
 
 @login_required
+@tezlik_cheklovi("shikoyat")
 def dard_shikoyat(request: HttpRequest, pk: int) -> HttpResponse:
     """Muammoga shikoyat.
 
@@ -116,6 +118,7 @@ def dard_shikoyat(request: HttpRequest, pk: int) -> HttpResponse:
 
 
 @login_required
+@tezlik_cheklovi("shikoyat")
 def yechim_shikoyat(request: HttpRequest, pk: int) -> HttpResponse:
     """Yechimga shikoyat."""
     yechim = get_object_or_404(Solution.objects.visible(), pk=pk)

@@ -416,6 +416,95 @@ Faqat **`CI holati`** tekshiruvini tanlang, alohida job'larni emas.
 | D2-T3 | Ko'rinish invarianti — ikki qatlamli guard (`visible()` majburlanadi) |
 | D2-T1 | Shikoyat (`Report`) modeli va oqimi — eskalatsiya navbatni o'zgartiradi, ko'rinishni emas |
 | D2-T2 | Moderatsiya navbati — obyekt bo'yicha guruhlangan holatlar, klaviatura, qaytariladigan qarorlar |
+| D2-T4 | Tezlik cheklovi — Redis'da, paketsiz; chegaralar sozlamada, 429 + tushunarli xabar |
+
+### Tezlik cheklovi (D2-T4)
+
+Chegaralar `config/settings/base.py` dagi **`TEZLIK_CHEKLOVLARI`** da —
+kodda emas. Shakl: `"<son>/<[koeffitsiyent]><birlik>"`, birlik
+`s|m|h|d`. Masalan `"30/m"` = daqiqasiga 30 marta, `"5/2h"` = ikki
+soatda 5 marta.
+
+| Nuqta | Foydalanuvchi | IP |
+|---|---|---|
+| Ovoz berish | 30/daqiqa | 120/daqiqa |
+| Post yozish | 5/soat | 20/soat |
+| Yechim yozish | 20/soat | 60/soat |
+| Shikoyat | 10/soat | 40/soat |
+| Xatcho'p | 60/daqiqa | 200/daqiqa |
+
+⚠️ **IP chegaralari ataylab bo'sh.** O'zbekistonda mobil operatorlar
+CGNAT ishlatadi — bitta tashqi IP ortida minglab abonent bo'lishi
+mumkin. Tor IP chegarasi butun mahallani bloklardi va sabab
+tashqaridan umuman ko'rinmasdi («menda ishlamayapti, do'stimda
+ishlayapti»). Asosiy og'irlik **foydalanuvchi** chegarasida; bu
+munosabat alohida test bilan qotirilgan.
+
+⚠️ **Faqat yozish so'rovlari sanaladi** (POST/PUT/PATCH/DELETE). Aks
+holda «soatiga 5 ta post» chegarasi formani 6 marta **ochgan** odamni
+bloklardi.
+
+⚠️ **Kesh ishlamasa so'rov o'tadi** (fail open). Redis nosozligi butun
+saytni «yozib bo'lmaydigan» holatga tushirmasligi kerak — tezlik
+cheklovi yumshatish chorasi, xavfsizlik chegarasi emas.
+
+---
+
+### ⚠️⚠️ `ISHONCHLI_PROKSILAR_SONI` — deploy paytida tekshiring
+
+Mijoz IP'si `apps/common/ratelimit.py::mijoz_ip` da aniqlanadi va bu
+yerda **ikkita teskari xato** bor, ikkalasi ham jim:
+
+| Xato | Oqibati |
+|---|---|
+| `REMOTE_ADDR` ni ishlatish | Nginx ortida u **har doim nginx manzili** — butun sayt bitta hisobga tushadi va IP chegarasi hammani birdan bloklaydi |
+| `X-Forwarded-For` ga so'zsiz ishonish | Sarlavhani **mijoz o'zi yozadi** — har so'rovda boshqa qiymat yuborgan skript cheklovga umuman urilmaydi |
+
+Yechim — ishonchli proksilar soni. Nginx
+`$proxy_add_x_forwarded_for` bilan ro'yxat **oxiriga** o'ziga ulangan
+manzilni qo'shadi, ya'ni bitta proksi bo'lsa mijoz IP'si oxirgi
+element; undan chapdagilarni mijoz o'zi yozgan bo'lishi mumkin va ular
+e'tiborga olinmaydi.
+
+```python
+ISHONCHLI_PROKSILAR_SONI = 0   # dev/test — REMOTE_ADDR
+ISHONCHLI_PROKSILAR_SONI = 1   # prod — nginx
+ISHONCHLI_PROKSILAR_SONI = 2   # CDN (Cloudflare) + nginx
+```
+
+⚠️ Bu son proksilar sonidan **katta bo'lmasligi** kerak: har bir
+ortiqcha birlik mijoz o'zi yozgan sarlavhaga ishonish degani.
+
+---
+
+### ⚠️ HTMX 2xx bo'lmagan javobni DOM'ga qo'ymaydi
+
+Server 429 qaytarsa foydalanuvchi uchun **hech narsa bo'lmaydi**:
+tugma bosiladi, ovoz o'zgarmaydi, xato ham chiqmaydi — odam qayta-qayta
+bosadi va cheklovni yanada chuqurroq buzadi.
+
+Shuning uchun `app.js` (12-bo'lim) `htmx:responseError` ni ushlab, 429
+matnini toast qilib ko'rsatadi. JavaScript'siz yo'lda esa `429.html`
+to'liq sahifa sifatida qaytadi.
+
+⚠️ Sahifaning ohangi ayblovchi **emas**: chegaraga urilganlarning
+aksariyati hujumchi emas, bir necha marta bosgan yoki ulanishi uzilgan
+odam.
+
+---
+
+### ⚠️ Testlarda kesh tozalanadi
+
+`conftest.py` dagi `_keshni_tozalash` **autouse** fixture'ini olib
+tashlamang. Kesh baza kabi qaytarilmaydi, tezlik cheklovi kaliti esa
+foydalanuvchi `pk` va `127.0.0.1` dan quriladi — ikkalasi ham testlar
+orasida takrorlanadi.
+
+Usiz eng yomon turdagi xato chiqadi: testlar **alohida** o'tadi, birga
+ishlatilganda tasodifiy 429 bilan yiqiladi — va yiqiladigan test
+aybdoridan butunlay boshqa faylda bo'ladi.
+
+---
 
 ### Moderatsiya navbati (D2-T2) — `/moderatsiya/`
 
