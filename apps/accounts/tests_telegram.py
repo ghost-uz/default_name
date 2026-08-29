@@ -521,7 +521,13 @@ def test_next_manzili_saqlanadi(client, settings):
         reverse("telegram_callback"),
         {**imzolangan(), "state": state, "next": "/dard/biror-narsa/"},
     )
-    assert javob["Location"] == "/dard/biror-narsa/"
+
+    # ⚠️ D2-T10: YANGI foydalanuvchi avval rozilik sahifasiga tushadi,
+    #    lekin `next` YO'QOLMAYDI — rozilikdan keyin o'sha manzilga
+    #    qaytariladi. Aks holda odam kirgandan keyin qayerga
+    #    ketayotganini yo'qotardi.
+    assert javob["Location"].startswith(reverse("rozilik"))
+    assert "next=/dard/biror-narsa/" in javob["Location"]
 
 
 @pytest.mark.django_db
@@ -537,7 +543,12 @@ def test_OCHIQ_YONALTIRISHGA_yol_yoq(client, settings):
         reverse("telegram_callback"),
         {**imzolangan(), "state": state, "next": "https://yovuz.example/kirish"},
     )
-    assert javob["Location"] == "/"
+
+    # ⚠️ Begona manzil tashlanadi va zaxira "/" qoladi. D2-T10 dan beri
+    #    yangi foydalanuvchi oldin rozilik sahifasiga tushadi, lekin
+    #    begona manzil u yerga ham O'TMAYDI.
+    assert javob["Location"].startswith(reverse("rozilik"))
+    assert "yovuz.example" not in javob["Location"]
 
 
 # ===========================================================================

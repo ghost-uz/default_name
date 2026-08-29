@@ -18,6 +18,7 @@ from typing import Any
 from .env import (
     database_from_url,
     env,
+    env_bool,
     env_int,
     load_dotenv,
 )
@@ -219,6 +220,42 @@ PERMISSIONS_POLICY = (
 #    holatda `SECURE_REFERRER_POLICY` "same-origin" dan
 #    "strict-origin-when-cross-origin" ga BO'SHASHIB ketardi.
 #    Takrorlarni `test_csp.py::test_sozlamalarda_TAKROR_YOQ` qo'riqlaydi.
+
+
+# --------------------------------------------------------------------------
+# Huquqiy sahifalar va rozilik (D2-T10)
+# --------------------------------------------------------------------------
+# ⚠️ VERSIYA — SANA. Shartlar yoki maxfiylik siyosati MAZMUNAN
+#    o'zgarganda bu qiymat yangilanadi va BARCHA foydalanuvchilar qayta
+#    rozilik beradi (`User.rozilik_bormi` versiyani solishtiradi).
+#
+#    Imlo tuzatish uchun o'zgartirmang: har o'zgarish butun bazani
+#    "rozilik bermagan" holatga tushiradi va odamlar yozishdan
+#    to'xtaydi.
+HUQUQIY_VERSIYA = "2026-08-29"
+
+# ⚠️⚠️ MATNLAR YURIST TOMONIDAN KO'RILDIMI (D2-T10 qabul mezoni).
+#    `False` bo'lsa har bir huquqiy sahifada ochiq ogohlantirish
+#    turadi. Yuristning xulosasi kelgach `True` qilinadi — matnlarga
+#    tegilmaydi, bitta joy o'zgaradi.
+#
+#    ⚠️ Buni "sahifa chiroyliroq ko'rinsin" deb yoqib qo'ymang: belgi
+#       foydalanuvchiga NIMANI o'qiyotganini aytadi.
+HUQUQIY_KORILDI = env_bool("HUQUQIY_KORILDI", False)
+
+# ⚠️ Reja auditoriyani 16 yoshdan deb belgilagan. Shaxsiy va ruhiy
+#    mavzular bilan ishlaydigan platforma uchun bu huquqiy minimum.
+YOSH_CHEGARASI = 16
+
+# ⚠️ Bog'lanish ma'lumotlari. Telefon raqami loyiha egasiniki
+#    (2026-08-29 da tasdiqlangan) — u INQIROZ LINIYASI EMAS
+#    (`ISHONCH_TELEFONI` ga qarang).
+#
+# ⚠️ Ochiq saytdagi raqam skraper botlar tomonidan yig'iladi va spam
+#    qo'ng'iroq keladi. Telegram varianti qo'yilsa, sahifa uni birinchi
+#    ko'rsatadi va raqam ikkinchi darajaga tushadi.
+ALOQA_TELEGRAM = env("ALOQA_TELEGRAM", "")
+ALOQA_EMAIL = env("ALOQA_EMAIL", "")
 
 
 # --------------------------------------------------------------------------

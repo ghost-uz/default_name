@@ -6,6 +6,7 @@ kerak — ular xavfsizlik va'dalari, qulaylik emas.
 
 from datetime import timedelta
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
@@ -100,6 +101,13 @@ class TelegramIdTests(TestCase):
 class BanTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username="testchi", password="x")
+        # ⚠️ D2-T10 dan beri `can_write` ROZILIK ham talab qiladi.
+        #    Bu sinf blok mantig'ini sinaydi, ya'ni foydalanuvchi
+        #    "odatiy" holatda bo'lishi kerak — aks holda testlar blokni
+        #    emas, rozilikni o'lchab qolardi.
+        self.user.rozilik_at = timezone.now()
+        self.user.rozilik_versiyasi = settings.HUQUQIY_VERSIYA
+        self.user.save(update_fields=["rozilik_at", "rozilik_versiyasi"])
 
     def test_standart_holatda_yoza_oladi(self):
         self.assertFalse(self.user.is_currently_banned)

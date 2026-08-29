@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% comment %}
+  Shartlarga rozilik (D2-T10).
+
+  ⚠️ Bu sahifa kirgandan KEYIN chiqadi, login sahifasida emas —
+     sabab `views.rozilik` docstring'ida (Telegram vidjeti bizning
+     formamiz emas).
+
+  ⚠️ Ikkita ALOHIDA katakcha: yosh tasdig'i va shartlarga rozilik
+     boshqa-boshqa narsalar. Bittaga qo'shilsa, keyin «16+ ekanini
+     tasdiqlaganmi?» degan savolga aniq javob bo'lmasdi.
+{% endcomment %}
+
+{% block title %}Rozilik — Dard.uz{% endblock %}
+{% block description %}Yozishdan oldin shartlarni qabul qiling.{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-[560px] px-4 py-10 lg:px-6">
+  <main id="main">
+    <h1 class="text-2xl font-extrabold">Yozishdan oldin</h1>
+    <p class="mt-2 text-[15px] leading-relaxed text-fg-muted">
+      Saytni o'qish uchun hech narsa talab qilinmaydi. Yozish uchun esa
+      ikki narsani tasdiqlashingiz kerak.
+    </p>
+
+    {% if xato %}
+      <div class="card mt-4 border-danger/40 bg-danger-bg p-4 text-[15px] text-danger" role="alert">
+        Ikkala katakchani ham belgilang.
+      </div>
+    {% endif %}
+
+    <form method="post" class="mt-6 space-y-4">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ next }}" />
+
+      <label class="card flex cursor-pointer items-start gap-3 p-4 transition-colors hover:bg-surface-2">
+        <input type="checkbox" name="yosh" value="1" class="mt-0.5 h-5 w-5 shrink-0"
+               {% if yosh %}checked{% endif %} />
+        <span class="text-[15px] leading-relaxed">
+          Menga <strong>16 yosh</strong> to'lgan.
+          <span class="mt-1 block text-[13px] text-fg-muted">
+            Bu yerda shaxsiy va ruhiy mavzular muhokama qilinadi.
+          </span>
+        </span>
+      </label>
+
+      <label class="card flex cursor-pointer items-start gap-3 p-4 transition-colors hover:bg-surface-2">
+        <input type="checkbox" name="shartlar" value="1" class="mt-0.5 h-5 w-5 shrink-0"
+               {% if shartlar %}checked{% endif %} />
+        <span class="text-[15px] leading-relaxed">
+          <a href="{% url 'shartlar' %}" class="link" target="_blank" rel="noopener">Foydalanish shartlari</a>
+          va
+          <a href="{% url 'maxfiylik' %}" class="link" target="_blank" rel="noopener">maxfiylik siyosati</a>
+          bilan tanishdim.
+          <span class="mt-1 block text-[13px] text-fg-muted">
+            Eng muhimi: anonim post <strong>moderatorga anonim emas</strong>,
+            va hisobni o'chirsangiz yozganlaringiz saytda qoladi.
+          </span>
+        </span>
+      </label>
+
+      <button type="submit" class="btn-primary w-full">Roziman, davom etaman</button>
+    </form>
+
+    <p class="mt-4 text-center text-[13px] text-fg-muted">
+      Rozi bo'lmasangiz ham saytni o'qishingiz mumkin —
+      <a href="{% url 'feed' %}" class="link">lentaga o'tish</a>.
+    </p>
+  </main>
+</div>
+{% endblock %}

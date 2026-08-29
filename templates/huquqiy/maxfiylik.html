@@ -1,0 +1,117 @@
+{% extends 'huquqiy/_asos.html' %}
+
+{% comment %}
+  ⚠️ Bu matn KODNI TASVIRLAYDI, umumiy so'zlar emas. Har bir band
+     ortida haqiqiy qaror turadi (D2-T2 anonimlik, D2-T5 spam
+     evristikasi, D2-T6 inqiroz, D2-T7 audit jurnali, D2-T8 o'chirish).
+     Kod o'zgarsa BU MATN HAM o'zgarishi kerak.
+{% endcomment %}
+
+{% block title %}Maxfiylik siyosati — Dard.uz{% endblock %}
+{% block description %}Qanday ma'lumot yig'iladi, kim ko'radi va nima o'chadi.{% endblock %}
+{% block huquqiy_sarlavha %}Maxfiylik siyosati{% endblock %}
+
+{% block huquqiy_matn %}
+  <h2 class="text-lg font-bold">1. Nima yig'iladi</h2>
+  <ul class="ml-5 list-disc space-y-1.5">
+    <li><strong>Telegram'dan:</strong> raqamli identifikator, foydalanuvchi
+      nomi va ismingiz. <strong>Telefon raqamingiz olinmaydi.</strong></li>
+    <li><strong>Sizdan:</strong> yozgan postlaringiz, yechimlaringiz,
+      ovozlaringiz va saqlaganlaringiz.</li>
+    <li><strong>Texnik:</strong> so'rov vaqti va IP manzil — faqat
+      suiiste'molni cheklash uchun (bir daqiqada necha marta ovoz
+      berilgani kabi). Ular hisobga bog'lab saqlanmaydi.</li>
+  </ul>
+  <p class="text-[14px] text-fg-muted">
+    Elektron pochta manzili so'ralmaydi va saqlanmaydi.
+  </p>
+
+  <h2 class="text-lg font-bold">2. ⚠️ Anonim post moderatorga anonim emas</h2>
+  <p>
+    Postni anonim e'lon qilganingizda ismingiz <strong>boshqa
+    foydalanuvchilarga</strong> ko'rinmaydi — lentada ham, post
+    sahifasida ham «Anonim» yoziladi.
+  </p>
+  <p>
+    Lekin <strong>moderatorlar haqiqiy muallifni ko'radi</strong>. Busiz
+    takroriy qoidabuzarni aniqlab bo'lmasdi: har safar anonim yozgan
+    odam cheksiz davom etardi. Buni bilib turib yozing.
+  </p>
+
+  <h2 class="text-lg font-bold">3. Avtomatik tekshiruvlar</h2>
+  <p>
+    Yozganingiz ikkita avtomatik tekshiruvdan o'tadi:
+  </p>
+  <ul class="ml-5 list-disc space-y-1.5">
+    <li><strong>Spam belgilari</strong> — formani to'ldirish tezligi,
+      havolalar soni, hisob yoshi. Shubhali post <strong>o'chirilmaydi va
+      yashirilmaydi</strong>, faqat moderator navbatiga tushadi.</li>
+    <li><strong>Inqiroz belgilari</strong> — o'ziga zarar yetkazish haqidagi
+      iboralar. Bunda post navbat boshiga chiqadi va sahifada yordam
+      raqamlari ko'rsatiladi. Post <strong>o'chirilmaydi</strong> va sizga
+      hech qanday ogohlantirish yuborilmaydi.</li>
+  </ul>
+  <p class="text-[14px] text-fg-muted">
+    Ikkala tekshiruv ham kalit so'z va oddiy qoidalarga asoslanadi. Ular
+    tez-tez xato qiladi — shuning uchun ular hech narsani o'chirmaydi,
+    faqat odamga ko'rsatadi.
+  </p>
+
+  <h2 class="text-lg font-bold">4. Kim ko'radi</h2>
+  <ul class="ml-5 list-disc space-y-1.5">
+    <li><strong>Hamma:</strong> postlaringiz, yechimlaringiz, ballaringiz.</li>
+    <li><strong>Faqat siz:</strong> saqlaganlaringiz, ovozlaringiz.</li>
+    <li><strong>Moderatorlar:</strong> yuqoridagilar + anonim postlarning
+      haqiqiy muallifi + sizga kelgan shikoyatlar.</li>
+    <li><strong>Hech kim:</strong> siz kimga shikoyat qilganingiz —
+      shikoyat qilingan odam buni bilmaydi.</li>
+  </ul>
+
+  <h2 class="text-lg font-bold">5. Moderator harakatlari jurnali</h2>
+  <p>
+    Har bir moderator chorasi o'zgarmas jurnalga yoziladi: kim, nima,
+    qachon, qanday sabab bilan. Jurnal tahrirlanmaydi va o'chirilmaydi —
+    nizo chiqqanda u yagona dalil bo'ladi.
+  </p>
+
+  <h2 class="text-lg font-bold">6. Ma'lumotlaringizni yuklab olish</h2>
+  <p>
+    <a href="{% url 'hisob' %}" class="link">Hisobim</a> sahifasida
+    ma'lumotlaringiz nusxasini JSON faylida so'rashingiz mumkin. Fayl
+    7 kun turadi, keyin o'chiriladi.
+  </p>
+  <p class="text-[14px] text-fg-muted">
+    ⚠️ Faylga <strong>boshqa odamlarning</strong> ma'lumoti kirmaydi: kim
+    sizga ovoz bergani, kim javob yozgani va kim shikoyat qilgani — bular
+    ularning ma'lumoti, sizniki emas.
+  </p>
+
+  <h2 class="text-lg font-bold">7. Hisobni o'chirish</h2>
+  <p><strong>O'chadi:</strong> foydalanuvchi nomingiz, Telegram
+    bog'lanishi, ismingiz, «o'zim haqimda», ovozlaringiz va
+    xatcho'plaringiz.</p>
+  <p><strong>Qoladi:</strong> yozgan postlaringiz va yechimlaringiz
+    (muallif o'rnida «O'chirilgan foydalanuvchi»), karma tarixi va
+    moderatsiya jurnali.</p>
+  <p class="text-[14px] text-fg-muted">
+    Sabab shartlarda tushuntirilgan: yozganingiz boshqa odamlarga ham
+    tegishli.
+  </p>
+
+  <h2 class="text-lg font-bold">8. Uchinchi tomonlar</h2>
+  <ul class="ml-5 list-disc space-y-1.5">
+    <li><strong>Telegram</strong> — kirish uchun. Ularga faqat kirish
+      so'rovi boradi, sizning postlaringiz emas.</li>
+    <li><strong>Google Fonts</strong> — shriftlar. Sahifa ochilganda
+      brauzeringiz ularning serveridan fayl oladi.</li>
+  </ul>
+  <p class="text-[14px] text-fg-muted">
+    Reklama tarmoqlari va tahlil (analytics) xizmatlari ishlatilmaydi.
+  </p>
+
+  <h2 class="text-lg font-bold">9. Savol bo'lsa</h2>
+  <p>
+    <a href="{% url 'boglanish' %}" class="link">Bog'lanish</a> sahifasiga
+    qarang.
+  </p>
+{% endblock %}

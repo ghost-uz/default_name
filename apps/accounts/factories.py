@@ -11,7 +11,9 @@ ko'mib yuboradi.
 from __future__ import annotations
 
 import factory
+from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 
 User = get_user_model()
 
@@ -30,6 +32,20 @@ class UserFactory(factory.django.DjangoModelFactory):
     username = factory.Sequence(lambda n: f"foydalanuvchi{n}")
     first_name = factory.Faker("first_name")
     email = factory.LazyAttribute(lambda o: f"{o.username}@example.uz")
+
+    # ⚠️ ROZILIK STANDART BO'YICHA BERILGAN (D2-T10).
+    #
+    #    Fabrika "odatiy, ishlaydigan foydalanuvchi" ni qaytarishi kerak:
+    #    haqiqiy hayotda kirgan odam darhol rozilik sahifasidan o'tadi va
+    #    undan keyingina yozadi. Rozilik berilmagan holat — ISTISNO, va
+    #    uni sinash uchun alohida fabrika bor (`RoziliksizUserFactory`).
+    #
+    #    Aks holda `can_write` rozilik talab qilishi bilan 50 ta test
+    #    bir vaqtda yiqilardi va har biriga qo'lda rozilik qo'shish
+    #    kerak bo'lardi — testlar sinalayotgan narsadan uzoqlashardi.
+    rozilik_at = factory.LazyFunction(timezone.now)
+    rozilik_versiyasi = factory.LazyFunction(lambda: settings.HUQUQIY_VERSIYA)
+    yosh_tasdigi_at = factory.LazyFunction(timezone.now)
 
     @factory.post_generation
     def password(obj, create: bool, extracted: str | None, **kwargs) -> None:
@@ -80,3 +96,16 @@ class BannedUserFactory(TelegramUserFactory):
 
     is_banned = True
     ban_reason = "Test uchun bloklangan"
+
+
+class RoziliksizUserFactory(TelegramUserFactory):
+    """Rozilik BERMAGAN foydalanuvchi (D2-T10 ni sinash uchun).
+
+    ⚠️ Alohida fabrika: rozilik oqimini sinaydigan testlar buni ochiq
+       ishlatadi va o'quvchi "nega bu foydalanuvchi boshqacha?" degan
+       savolga javobni fabrika NOMIDAN oladi.
+    """
+
+    rozilik_at = None
+    rozilik_versiyasi = ""
+    yosh_tasdigi_at = None

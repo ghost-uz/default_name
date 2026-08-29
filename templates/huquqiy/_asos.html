@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% comment %}
+  Huquqiy sahifalar uchun umumiy asos (D2-T10).
+
+  ⚠️ Yurist tekshiruvi haqidagi belgi SHU YERDA, har sahifada emas:
+     xulosa kelgach u bitta joydan olib tashlanadi
+     (`settings.HUQUQIY_KORILDI`), matnlarga tegilmaydi.
+{% endcomment %}
+
+{% block content %}
+<div class="mx-auto max-w-[720px] px-4 py-8 lg:px-6">
+  <main id="main">
+    <h1 class="text-2xl font-extrabold">{% block huquqiy_sarlavha %}{% endblock %}</h1>
+    <p class="mt-1 text-[13px] text-fg-muted">
+      Versiya: {{ versiya }}
+    </p>
+
+    {% if not korildi %}
+      <div class="card mt-4 border-l-4 border-l-boom bg-boom-bg/40 px-4 py-3.5 text-[13px] leading-relaxed">
+        ⚠️ Bu matn <strong>yurist tomonidan tekshirilmagan</strong>. U
+        platformaning haqiqiy xulqini aniq tasvirlaydi, lekin huquqiy
+        xulosa emas. Tekshiruvdan o'tgach bu belgi olib tashlanadi.
+      </div>
+    {% endif %}
+
+    <div class="mt-6 space-y-5 text-[15px] leading-relaxed">
+      {% block huquqiy_matn %}{% endblock %}
+    </div>
+
+    <nav class="mt-10 flex flex-wrap gap-1.5 border-t border-line pt-5" aria-label="Huquqiy sahifalar">
+      <a href="{% url 'shartlar' %}" class="chip">Foydalanish shartlari</a>
+      <a href="{% url 'maxfiylik' %}" class="chip">Maxfiylik siyosati</a>
+      <a href="{% url 'qoidalar' %}" class="chip">Jamoa qoidalari</a>
+      <a href="{% url 'boglanish' %}" class="chip">Bog'lanish</a>
+    </nav>
+  </main>
+</div>
+{% endblock %}

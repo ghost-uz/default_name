@@ -105,6 +105,27 @@ class User(AbstractUser):
     )
     ban_reason = models.CharField("blok sababi", max_length=200, blank=True)
 
+    # -- Rozilik va yosh (D2-T10) -----------------------------------------
+    # ⚠️ QABUL MEZONI: "rozilik sanasi saqlanadi".
+    #
+    # ⚠️ VERSIYA HAM SAQLANADI, faqat sana emas. Shartlar o'zgarganda
+    #    "roziman" degan yozuv qaysi MATNGA tegishli ekani ma'lum
+    #    bo'lishi kerak — aks holda jurnal "rozi bo'lgan" deydi-yu,
+    #    nimaga rozi bo'lgani noma'lum qoladi. Versiya o'zgarsa
+    #    foydalanuvchi qayta rozilik beradi.
+    rozilik_at = models.DateTimeField(
+        "rozilik sanasi", null=True, blank=True, editable=False
+    )
+    rozilik_versiyasi = models.CharField(
+        "rozilik versiyasi", max_length=20, blank=True, editable=False
+    )
+    # ⚠️ ALOHIDA maydon: yosh tasdig'i shartlarga rozilikdan boshqa
+    #    narsa. Ular bitta katakchaga qo'shilsa, keyin "16+ ekanini
+    #    tasdiqlaganmi?" degan savolga aniq javob bo'lmasdi.
+    yosh_tasdigi_at = models.DateTimeField(
+        "yosh tasdig'i", null=True, blank=True, editable=False
+    )
+
     # -- Hisobni o'chirish (D2-T8) -----------------------------------------
     # ⚠️⚠️ QATOR O'CHIRILMAYDI, ANONIMLASHTIRILADI.
     #
@@ -209,9 +230,29 @@ class User(AbstractUser):
         return self.username_ozgartirilgan is None
 
     @property
+    def rozilik_bormi(self) -> bool:
+        """Joriy versiyaga rozilik berilganmi (D2-T10).
+
+        ⚠️ Versiya SOLISHTIRILADI: eski matnga berilgan rozilik yangi
+           matnni qoplamaydi. Shartlar o'zgarganda foydalanuvchi qayta
+           o'qib, qayta rozilik beradi.
+        """
+        from django.conf import settings
+
+        return (
+            self.rozilik_at is not None
+            and self.rozilik_versiyasi == settings.HUQUQIY_VERSIYA
+        )
+
+    @property
     def can_write(self) -> bool:
-        """Kontent yarata oladimi (dard, yechim, izoh, ovoz)."""
-        return self.is_active and not self.is_currently_banned
+        """Kontent yarata oladimi (dard, yechim, izoh, ovoz).
+
+        ⚠️ ROZILIK HAM SHART (D2-T10): shartlarni qabul qilmagan odam
+           kontent yoza olmasligi kerak. O'QISH esa ochiq qoladi —
+           saytni ko'rish uchun hech narsa talab qilinmaydi.
+        """
+        return self.is_active and not self.is_currently_banned and self.rozilik_bormi
 
 
 # ===========================================================================

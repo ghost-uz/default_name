@@ -29,6 +29,8 @@ urlpatterns += [
     path("", include("apps.complaints.urls")),
     path("", include("apps.solutions.urls")),
     path("", include("apps.moderation.urls")),
+    # Huquqiy sahifalar (D2-T10)
+    path("", include("apps.common.huquqiy")),
 ]
 
 # ⚠️ VAQTINCHALIK (D0-T6): hali yozilmagan sahifalarning maketi.

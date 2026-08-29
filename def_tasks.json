@@ -1850,11 +1850,64 @@
       "ustuvorlik": "P0",
       "hajm": "M",
       "bogliq": [],
-      "holat": "todo",
+      "holat": "qisman",
       "qabul_mezoni": [
         "matnlar yurist tomonidan ko'rilgan",
         "rozilik sanasi saqlanadi"
-      ]
+      ],
+      "tugatilgan": "2026-08-29",
+      "eslatma": "Sahifalar, rozilik oqimi va sana+versiya saqlash TO'LIQ. Qabul mezonlaridan biri OCHIQ: matnlar yurist tomonidan ko'rilmagan. Har sahifada ochiq belgi turadi (`HUQUQIY_KORILDI=False`) — xulosa kelgach bitta sozlama o'zgartiriladi.",
+      "natija": {
+        "yaratilgan": [
+          "apps/common/huquqiy.py — 4 ta ko'rinish + URL'lar",
+          "templates/huquqiy/ — _asos, shartlar, maxfiylik, qoidalar, boglanish",
+          "templates/components/_footer.html — har sahifada havolalar",
+          "apps/accounts/models.py — rozilik_at, rozilik_versiyasi, yosh_tasdigi_at, rozilik_bormi",
+          "apps/accounts/services.py — rozilikni_yozish()",
+          "apps/accounts/views.py — rozilik ko'rinishi + telegram_callback yo'naltirishi",
+          "templates/accounts/rozilik.html",
+          "config/settings/base.py — HUQUQIY_VERSIYA, HUQUQIY_KORILDI, YOSH_CHEGARASI, ALOQA_TELEGRAM/EMAIL",
+          "apps/accounts/factories.py — rozilik standart + RoziliksizUserFactory",
+          "apps/accounts/tests_rozilik.py — 42 test"
+        ],
+        "qabul_mezonlari": {
+          "yurist_korgan": "❌ OCHIQ — matnlar qoralama. Har sahifada ochiq belgi; `HUQUQIY_KORILDI=True` qilinganda yo'qoladi (test bilan tekshirilgan).",
+          "rozilik_sanasi_saqlanadi": "✅ Sana VA versiya. Versiya o'zgarsa rozilik qayta so'raladi."
+        },
+        "tekshirilgan": [
+          "huquqiy sahifalar KIRMAGANLARGA ham ochiq (odam nimaga rozi bo'layotganini oldindan ko'rsin)",
+          "har sahifada versiya va 'yurist tekshirmagan' belgisi",
+          "maxfiylikda: anonim post moderatorga anonim emas, avtomatik tekshiruvlar, o'chirish oqibati",
+          "bog'lanishda: 'ishonch telefoni emas' + 103/112",
+          "Telegram sozlansa u telefondan OLDIN chiqadi",
+          "rozilik: sana + versiya saqlanadi; eski versiya yangisini qoplamaydi",
+          "rozilik bermagan YOZA OLMAYDI (403), lekin O'QIY OLADI",
+          "ikkala katakcha ham majburiy",
+          "rozilikdan keyin `next` ga qaytariladi; begona manzil o'tmaydi",
+          "inqiroz blokida aloqa raqami YO'Q (ikkalasi chalkashmasin)",
+          "🌐 JONLI: 4 sahifa 200, footer havolalari, CSP buzilishi yo'q"
+        ],
+        "qarorlar": [
+          "ROZILIK LOGIN SAHIFASIDA EMAS, KIRGANDAN KEYIN. Telegram vidjeti bizning formamiz emas — katakchani unga bog'lash JavaScript talab qilardi va JS'siz brauzerda rozilik butunlay chetlab o'tilardi.",
+          "VERSIYA HAM SAQLANADI: 'roziman' yozuvi qaysi MATNGA tegishli ekani ma'lum bo'lmasa jurnal hech narsa isbotlamaydi.",
+          "Yosh tasdig'i ALOHIDA maydon: shartlarga rozilikdan boshqa narsa.",
+          "O'QISH ochiq qoladi: rozilik faqat `can_write` uchun shart.",
+          "Matnlar KODNI tasvirlaydi, umumiy so'zlar emas — har band ortida haqiqiy qaror turadi. Kod o'zgarsa matn ham o'zgarishi kerak.",
+          "Fabrikalar rozilik BERGAN foydalanuvchi qaytaradi (odatiy holat); istisno uchun RoziliksizUserFactory — aks holda 50 ta test bir vaqtda yiqilardi va har biriga qo'lda rozilik qo'shish kerak bo'lardi.",
+          "Aloqa raqami 'Bog'lanish' sahifasida, INQIROZ blokida EMAS (D2-T6 qarori bilan izchil)."
+        ],
+        "olchangan_holat": {
+          "testlar": 702,
+          "qamrov_foiz": 95.5,
+          "d2_t10_testlari": 42
+        },
+        "keyingi_uchun_eslatma": [
+          "⚠️ YURIST XULOSASI KELGANDA: `HUQUQIY_KORILDI=True` (yoki muhitga `HUQUQIY_KORILDI=1`) va `test_YURIST_KORMAGANI_ochiq_yozilgan` testini yangilang.",
+          "⚠️ Shartlar MAZMUNAN o'zgarsa `HUQUQIY_VERSIYA` ni yangilang — imlo tuzatish uchun EMAS, aks holda butun baza 'rozilik bermagan' bo'lib qoladi.",
+          "Telegram aloqa nomi topilsa: `ALOQA_TELEGRAM` muhit o'zgaruvchisi — raqam ikkinchi darajaga tushadi.",
+          "D2-T11 (bloklash) qoidalar sahifasida allaqachon tasvirlangan: ogohlantirish -> vaqtinchalik cheklov -> doimiy blok."
+        ]
+      }
     },
     {
       "id": "D2-T11",

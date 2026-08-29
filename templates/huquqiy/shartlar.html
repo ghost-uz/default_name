@@ -1,0 +1,76 @@
+{% extends 'huquqiy/_asos.html' %}
+
+{% block title %}Foydalanish shartlari — Dard.uz{% endblock %}
+{% block description %}Dard.uz dan foydalanish shartlari va yosh chegarasi.{% endblock %}
+{% block huquqiy_sarlavha %}Foydalanish shartlari{% endblock %}
+
+{% block huquqiy_matn %}
+  <h2 class="text-lg font-bold">1. Dard.uz nima</h2>
+  <p>
+    Dard.uz — odamlar o'z muammolarini yozib, boshqalardan yechim oladigan
+    ochiq platforma. Biz maslahat bermaymiz va javoblarning to'g'riligiga
+    kafolat bermaymiz: javoblarni sizga o'xshagan odamlar yozadi.
+  </p>
+
+  <h2 class="text-lg font-bold">2. Yosh chegarasi</h2>
+  <p>
+    Platformadan <strong>{{ yosh }} yoshdan katta</strong> odamlar
+    foydalanishi mumkin. Ro'yxatdan o'tishda buni tasdiqlaysiz.
+  </p>
+  <p class="text-[14px] text-fg-muted">
+    Sabab: bu yerda shaxsiy va ruhiy mavzular muhokama qilinadi. Kichik
+    yoshdagi foydalanuvchilar uchun bunday muhitni xavfsiz qilish alohida
+    choralar talab qiladi va bizda ular yo'q.
+  </p>
+
+  <h2 class="text-lg font-bold">3. Siz yozgan narsalar</h2>
+  <p>
+    Yozganingiz sizniki bo'lib qoladi. Biz uni saytda ko'rsatish uchun
+    ruxsat olamiz, xolos.
+  </p>
+  <p>
+    ⚠️ <strong>Hisobingizni o'chirsangiz, yozganlaringiz saytda qoladi</strong> —
+    faqat ular sizga bog'lanmaydi va muallif o'rnida «O'chirilgan
+    foydalanuvchi» ko'rinadi. Sabab: kimdir savol berib, siz javob
+    bergansiz; javobni o'chirish o'sha odamning savolini javobsiz
+    qoldirardi. Alohida postni o'chirmoqchi bo'lsangiz, uni
+    <strong>hisobni o'chirishdan oldin</strong> o'chiring.
+  </p>
+
+  <h2 class="text-lg font-bold">4. Nima yozib bo'lmaydi</h2>
+  <p>
+    Batafsil ro'yxat <a href="{% url 'qoidalar' %}" class="link">jamoa
+    qoidalarida</a>. Qisqacha: boshqalarning shaxsiy ma'lumoti, haqorat va
+    nafrat, reklama va spam.
+  </p>
+
+  <h2 class="text-lg font-bold">5. Moderatsiya</h2>
+  <p>
+    Moderatorlar kontentni yashirishi yoki olib tashlashi mumkin. Har bir
+    chora sababi bilan yoziladi va o'zgarmas jurnalda saqlanadi. Chora
+    noto'g'ri deb hisoblasangiz, <a href="{% url 'boglanish' %}" class="link">bog'laning</a>.
+  </p>
+
+  <h2 class="text-lg font-bold">6. Anonimlik chegarasi</h2>
+  <p>
+    Postni anonim e'lon qilsangiz, ismingiz <strong>boshqa
+    foydalanuvchilarga</strong> ko'rinmaydi. Lekin
+    <strong>moderatorlar haqiqiy muallifni ko'radi</strong> — busiz
+    takroriy qoidabuzarlikni to'xtatib bo'lmaydi. Batafsil:
+    <a href="{% url 'maxfiylik' %}" class="link">maxfiylik siyosati</a>.
+  </p>
+
+  <h2 class="text-lg font-bold">7. Kafolat yo'q</h2>
+  <p>
+    Sayt «qanday bo'lsa shundayligicha» ishlaydi. Uzilishlar, ma'lumot
+    yo'qolishi yoki noto'g'ri javob uchun javobgarlik olmaymiz. Muhim
+    ma'lumotni faqat shu yerda saqlamang — <a href="{% url 'hisob' %}" class="link">nusxasini
+    yuklab olishingiz</a> mumkin.
+  </p>
+
+  <h2 class="text-lg font-bold">8. Shartlar o'zgarishi</h2>
+  <p>
+    Shartlar o'zgarsa, kirganingizda yangi matnni ko'rasiz va qayta
+    rozilik so'raladi. Eski rozilik yangi matnni qoplamaydi.
+  </p>
+{% endblock %}

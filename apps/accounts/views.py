@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import secrets
 from typing import cast
+from urllib.parse import quote
 
 from django.conf import settings
 from django.contrib import messages
@@ -26,6 +27,7 @@ from .models import MalumotEksporti, User
 from .services import (
     eksport_soralgan,
     hisobni_ochirish,
+    rozilikni_yozish,
     telegram_foydalanuvchisini_olish_yoki_yaratish,
 )
 from .telegram import TelegramAuthXatosi, tekshirish
@@ -145,7 +147,16 @@ def telegram_callback(request: HttpRequest) -> HttpResponse:
     login(request, user, backend="django.contrib.auth.backends.ModelBackend")
     log.info("Telegram login: user=%s yangi=%s", user.pk, yangi)
 
-    return redirect(_xavfsiz_next(request, request.GET.get("next", "")))
+    keyingi = _xavfsiz_next(request, request.GET.get("next", ""))
+
+    # ⚠️ ROZILIK KIRGANDAN KEYIN so'raladi (D2-T10). Login sahifasidagi
+    #    katakcha Telegram vidjetiga bog'lanmaydi — vidjet bizning
+    #    formamiz emas, u o'zi yo'naltiradi. Server tomonda majburlash
+    #    yagona ishonchli yo'l.
+    if not user.rozilik_bormi:
+        return redirect(f"{reverse('rozilik')}?next={quote(keyingi)}")
+
+    return redirect(keyingi)
 
 
 @require_POST
@@ -245,3 +256,46 @@ def hisob_ochirish(request: HttpRequest) -> HttpResponse:
         return redirect("feed")
 
     return render(request, "accounts/hisob_ochirish.html", {})
+
+
+@login_required
+def rozilik(request: HttpRequest) -> HttpResponse:
+    """Shartlarga rozilik va yosh tasdig'i (D2-T10).
+
+    ⚠️ NEGA LOGIN SAHIFASIDAGI KATAKCHA EMAS
+       Telegram vidjeti bizning formamiz emas — u o'zi yo'naltiradi.
+       Katakchani unga bog'lash JavaScript talab qilardi va
+       JavaScript'siz brauzerda rozilik BUTUNLAY chetlab o'tilardi.
+       Kirgandan keyingi qadam esa server tomonda majburlanadi.
+
+    ⚠️ O'QISH ochiq qoladi: rozilik faqat YOZISH uchun shart
+       (`User.can_write`). Saytni ko'rish uchun hech narsa talab
+       qilinmaydi.
+    """
+    foydalanuvchi = cast("User", request.user)
+
+    if request.method == "POST":
+        shartlar = request.POST.get("shartlar") == "1"
+        yosh = request.POST.get("yosh") == "1"
+
+        if shartlar and yosh:
+            rozilikni_yozish(user=foydalanuvchi, yosh_tasdiqlandi=True)
+            messages.success(request, "Rahmat. Endi yozishingiz mumkin.")
+            return redirect(_xavfsiz_next(request, request.POST.get("next", "")))
+
+        return render(
+            request,
+            "accounts/rozilik.html",
+            {
+                "xato": True,
+                "shartlar": shartlar,
+                "yosh": yosh,
+                "next": request.POST.get("next", ""),
+            },
+        )
+
+    return render(
+        request,
+        "accounts/rozilik.html",
+        {"next": request.GET.get("next", "")},
+    )

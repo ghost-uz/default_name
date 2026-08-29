@@ -349,3 +349,25 @@ def eksport_soralgan(*, user):
     #    `DoesNotExist` bilan yiqilardi. Bu klassik poyga holati.
     transaction.on_commit(lambda: eksportni_tayyorlash.delay(eksport.pk))
     return eksport
+
+
+@transaction.atomic
+def rozilikni_yozish(*, user, yosh_tasdiqlandi: bool) -> None:
+    """Rozilik sanasi va VERSIYASINI yozadi (D2-T10 qabul mezoni).
+
+    ⚠️ VERSIYA HAM SAQLANADI. "Roziman" degan yozuv qaysi MATNGA
+       tegishli ekani ma'lum bo'lmasa, jurnal hech narsa isbotlamaydi.
+
+    ⚠️ Yosh tasdig'i ALOHIDA maydonda: u shartlarga rozilikdan boshqa
+       narsa va "16+ ekanini tasdiqlaganmi?" degan savolga aniq javob
+       kerak bo'ladi.
+    """
+    from django.conf import settings
+
+    user.rozilik_at = timezone.now()
+    user.rozilik_versiyasi = settings.HUQUQIY_VERSIYA
+    if yosh_tasdiqlandi and user.yosh_tasdigi_at is None:
+        user.yosh_tasdigi_at = timezone.now()
+
+    user.save(update_fields=["rozilik_at", "rozilik_versiyasi", "yosh_tasdigi_at"])
+    log.info("Rozilik yozildi: user=%s versiya=%s", user.pk, user.rozilik_versiyasi)

@@ -1,0 +1,45 @@
+{% extends 'huquqiy/_asos.html' %}
+
+{% comment %}
+  ⚠️ Bu sahifadagi raqam INQIROZ LINIYASI EMAS. Inqiroz yordami
+     alohida (`components/_inqiroz.html`, 103/112) — bu yerda uni
+     takrorlash odamni noto'g'ri joyga yuborardi.
+{% endcomment %}
+
+{% block title %}Bog'lanish — Dard.uz{% endblock %}
+{% block description %}Loyiha bilan bog'lanish.{% endblock %}
+{% block huquqiy_sarlavha %}Bog'lanish{% endblock %}
+
+{% block huquqiy_matn %}
+  <p>
+    Moderator qarori bo'yicha e'tirozingiz bormi, xato topdingizmi yoki
+    savol bormi — yozing.
+  </p>
+
+  <ul class="mt-2 space-y-2">
+    {% if aloqa_telegram %}
+      <li class="flex flex-wrap items-baseline gap-x-2">
+        <span class="font-semibold">Telegram:</span>
+        <a href="https://t.me/{{ aloqa_telegram }}" class="link">@{{ aloqa_telegram }}</a>
+      </li>
+    {% endif %}
+    {% if aloqa_email %}
+      <li class="flex flex-wrap items-baseline gap-x-2">
+        <span class="font-semibold">Email:</span>
+        <a href="mailto:{{ aloqa_email }}" class="link">{{ aloqa_email }}</a>
+      </li>
+    {% endif %}
+    {% if aloqa_telefon %}
+      <li class="flex flex-wrap items-baseline gap-x-2">
+        <span class="font-semibold">Telefon:</span>
+        <a href="tel:{{ aloqa_telefon }}" class="link">{{ aloqa_telefon }}</a>
+      </li>
+    {% endif %}
+  </ul>
+
+  <div class="card mt-5 border-l-4 border-l-danger bg-danger-bg/40 px-4 py-3.5 text-[14px] leading-relaxed">
+    ⚠️ Bu raqam <strong>ishonch telefoni emas</strong>. Hayotga xavf
+    bo'lsa <strong>103</strong> yoki <strong>112</strong> ga qo'ng'iroq
+    qiling — ular tayyorgarlikdan o'tgan va 24 soat ishlaydi.
+  </div>
+{% endblock %}
