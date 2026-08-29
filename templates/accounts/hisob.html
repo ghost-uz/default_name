@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+
+{% comment %}
+  Hisob sozlamalari (D2-T8): ma'lumot eksporti va hisobni o'chirish.
+{% endcomment %}
+
+{% block title %}Hisobim — Dard.uz{% endblock %}
+{% block description %}Ma'lumotlaringizni yuklab oling yoki hisobni o'chiring.{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-[640px] px-4 py-6 lg:px-6">
+  <main id="main">
+    <h1 class="text-2xl font-extrabold">Hisobim</h1>
+    <p class="mt-1 text-[15px] text-fg-muted">
+      {{ request.user.display_name }} · {{ dardlar_soni }} ta dard ·
+      {{ yechimlar_soni }} ta yechim
+    </p>
+
+    {# ------------------------------------------------------------------ #}
+    <section class="card mt-6 p-5" aria-labelledby="eksport-sarlavha">
+      <h2 id="eksport-sarlavha" class="text-lg font-bold">Ma'lumotlarimni yuklab olish</h2>
+      <p class="mt-1.5 text-[14px] leading-relaxed text-fg-muted">
+        Yozganlaringiz, karma tarixingiz va saqlaganlaringiz JSON faylida.
+        Tayyorlash bir necha daqiqa olishi mumkin.
+      </p>
+
+      {% comment %}
+        ⚠️ Nima KIRMASLIGI ham yozilgan — bu ochiqlik masalasi emas,
+           kutilmani to'g'rilash masalasi: "hamma narsa" deb kutgan odam
+           faylni ochib hayron bo'lmasin.
+      {% endcomment %}
+      <p class="mt-2 text-[13px] leading-relaxed text-fg-muted">
+        Faylga <strong>boshqa odamlarning</strong> ma'lumoti kirmaydi: kim
+        sizga ovoz bergani, kim javob yozgani va kim shikoyat qilgani —
+        bular ularning ma'lumoti.
+      </p>
+
+      <form method="post" action="{% url 'hisob_eksport' %}" class="mt-4">
+        {% csrf_token %}
+        <button type="submit" class="btn-outline">Nusxa so'rash</button>
+      </form>
+
+      {% if eksportlar %}
+        <ul class="mt-4 divide-y divide-line border-t border-line">
+          {% for eksport in eksportlar %}
+            <li class="flex flex-wrap items-center gap-x-3 gap-y-1 py-2.5 text-[13px]">
+              <time datetime="{{ eksport.created_at|date:'c' }}" class="text-fg-muted">
+                {{ eksport.created_at|date:"j-F, H:i" }}
+              </time>
+              <span class="badge">{{ eksport.get_holat_display }}</span>
+              {% if eksport.yuklab_olsa_boladimi %}
+                <a href="{% url 'hisob_eksport_yuklash' eksport.pk %}" class="btn-ghost btn-sm ml-auto !text-primary">
+                  Yuklab olish
+                </a>
+              {% elif eksport.holat == 'tayyor' %}
+                <span class="ml-auto text-fg-muted">muddati o'tgan</span>
+              {% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    </section>
+
+    {# ------------------------------------------------------------------ #}
+    <section class="card mt-5 border-danger/40 p-5" aria-labelledby="ochirish-sarlavha">
+      <h2 id="ochirish-sarlavha" class="text-lg font-bold text-danger">Hisobni o'chirish</h2>
+      <p class="mt-1.5 text-[14px] leading-relaxed text-fg-muted">
+        Shaxsiy ma'lumotlaringiz o'chiriladi. <strong class="text-fg">Yozganlaringiz
+        esa saytda qoladi</strong> — ular boshqa odamlarga yordam bergan va
+        ularni yo'q qilish o'sha odamlarning savoliga kelgan javobni ham
+        o'chirardi.
+      </p>
+      <a href="{% url 'hisob_ochirish' %}" class="btn-outline btn-sm mt-4 !border-danger/50 !text-danger">
+        O'chirish haqida
+      </a>
+    </section>
+  </main>
+</div>
+{% endblock %}

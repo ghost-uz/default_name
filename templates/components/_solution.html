@@ -31,7 +31,7 @@
         {% if solution.public_author %}
           <a href="{% url 'profile' solution.public_author.username %}" class="inline-flex items-center gap-2 font-semibold hover:text-primary">
             <span class="grid h-7 w-7 place-items-center rounded-full bg-surface-2 text-[11px] font-bold text-fg-muted" aria-hidden="true">{{ solution.public_author.initial }}</span>
-            {{ solution.public_author.username }}
+            {{ solution.public_author.display_name }}
           </a>
           <span class="inline-flex items-center gap-1 text-fg-muted">
             <svg class="h-3.5 w-3.5 text-karma-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m13 2-9 12h7l-1 8 9-12h-7z"/></svg>

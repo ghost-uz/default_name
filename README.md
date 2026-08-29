@@ -421,6 +421,52 @@ Faqat **`CI holati`** tekshiruvini tanlang, alohida job'larni emas.
 | D2-T7 | O'zgarmas audit jurnali — to'rt qatlamli himoya, staff sahifasi |
 | D2-T6 | ⚠️ Inqirozli kontent — aniqlash, yordam bloki, moderator qo'llanmasi (**qisman**: rasmiy raqam ochiq) |
 | D2-T9 | CSP (nonce bilan) va xavfsizlik sarlavhalari — `unsafe-inline` siz |
+| D2-T8 | Hisobni o'chirish (anonimlashtirish) va ma'lumot eksporti (JSON, fon vazifasi) |
+
+### Hisobni o'chirish va eksport (D2-T8) — `/hisob/`
+
+⚠️⚠️ **Hisob qatori o'chirilmaydi — anonimlashtiriladi.**
+
+| O'chadi | Qoladi |
+|---|---|
+| username, `telegram_id`, ism, bio, email | dardlar va yechimlar |
+| ovozlar va xatcho'plar | karma tarixi |
+| shikoyatlarda `reporter` | audit jurnali (D2-T7 — dalil) |
+
+Kontent qoladi, chunki u **boshqa odamlarga ham tegishli**: kimdir
+savol berib, siz javob bergansiz. Javobni o'chirish o'sha odamning
+savolini javobsiz qoldirardi.
+
+⚠️ **Nega bitta umumiy «sentinel» foydalanuvchi emas** (reja shuni
+taklif qilgandi): u holda barcha o'chirilgan hisoblarning kontenti
+bitta muallifga tegishli bo'lib qolardi va bir suhbatda ikki xil odam
+bir xil nom bilan chiqib, «o'zi bilan o'zi gaplashayotgan» odam
+taassurotini berardi. Har hisobga o'z o'rindoshi qoladi.
+
+Muallif nomi `User.display_name` orqali chiqadi — bitta joyda
+tuzatilsa hamma joyda to'g'ri bo'ladi.
+
+---
+
+### ⚠️ Eksportga boshqa odamlarning ma'lumoti kirmaydi
+
+Vasvasa katta — «menga tegishli hamma narsa» deb postga kelgan
+shikoyatlarni, kim ovoz berganini va kim javob yozganini qo'shib
+yuborish oson. Lekin bu **boshqa odamlarning** ma'lumoti bo'lardi va
+eksport ularning roziligisiz shaxsiy ma'lumot tarqatadigan quvurga
+aylanardi.
+
+Shuning uchun: shikoyatlarda `reporter` yozilmaydi, ovozlar faqat
+**son** sifatida chiqadi.
+
+⚠️ **Email emas, yuklab olish:** kirish faqat Telegram orqali va
+foydalanuvchida email **yo'q** — xat yuborish yo'li umuman mavjud emas.
+
+⚠️ Eksport **7 kundan keyin o'chiriladi** (beat vazifasi). «Bir marta
+so'ralgan, keyin unutilgan» fayl bazada yillab turishi — ma'lumot
+sizishining eng oddiy yo'li.
+
+---
 
 ### CSP va xavfsizlik sarlavhalari (D2-T9)
 

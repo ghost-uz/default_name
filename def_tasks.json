@@ -1702,10 +1702,74 @@
       "bogliq": [
         "D0-T5"
       ],
-      "holat": "todo",
+      "holat": "done",
       "qabul_mezoni": [
         "o'chirilgan foydalanuvchining kontenti qoladi, ismi 'O'chirilgan foydalanuvchi'ga aylanadi"
-      ]
+      ],
+      "tugatilgan": "2026-08-29",
+      "eslatma": "REJADAN CHEKINISH: bitta umumiy 'sentinel' foydalanuvchi O'RNIGA hisob JOYIDA anonimlashtiriladi (qator o'chirilmaydi). Umumiy sentinel bo'lsa barcha o'chirilgan hisoblarning kontenti bitta muallifga tegishli bo'lib qolardi va suhbatda 'o'zi bilan o'zi gaplashayotgan' odam taassurotini berardi. Qabul mezoni (kontent qoladi, ism 'O'chirilgan foydalanuvchi') ikkala yo'lda ham bajariladi.",
+      "natija": {
+        "yaratilgan": [
+          "apps/accounts/models.py — User.ochirilgan_at, OCHIRILGAN_NOM, MalumotEksporti, EksportHolati",
+          "apps/accounts/services.py — hisobni_ochirish(), eksport_soralgan()",
+          "apps/accounts/tasks.py — eksport_malumoti(), eksportni_tayyorlash(), eskirgan_eksportlarni_ochirish()",
+          "apps/accounts/views.py — hisob, hisob_eksport, hisob_eksport_yuklash, hisob_ochirish",
+          "templates/accounts/hisob.html, hisob_ochirish.html",
+          "config/settings/base.py — beat jadvaliga tozalash vazifasi",
+          "apps/accounts/tests_hisob.py — 32 test"
+        ],
+        "tekshirilgan": [
+          "⭐ qabul mezoni: kontent QOLADI, ism 'O'chirilgan foydalanuvchi' ga aylanadi (model + sahifa darajasida)",
+          "qator o'chirilmaydi — ikki o'chirilgan hisob bir xil ko'rinmaydi",
+          "shaxsiy ma'lumot tozalanadi: username, telegram_id, ism, bio, email",
+          "ovoz va xatcho'p o'chiriladi (sof shaxsiy afzalliklar)",
+          "shikoyat qoladi, lekin shikoyatchi None bo'ladi",
+          "audit jurnaliga tushadi, LEKIN eski nom yozilmaydi",
+          "ikki marta o'chirish zarar qilmaydi",
+          "o'chirish tasdiqsiz bajarilmaydi (nom yozilishi shart)",
+          "o'chirilgan hisob yoza olmaydi va kira olmaydi",
+          "⭐ eksport BOSHQALARNING ma'lumotini olmaydi (shikoyatchi, ovoz bergan)",
+          "eksportda anonim va yashirilgan postlar ham bor (muallif uchun ular anonim emas)",
+          "takroriy so'rov yangi yozuv yaratmaydi",
+          "xato bo'lsa holat XATO deb yoziladi (so'rov 'yo'qolmaydi')",
+          "boshqaning eksportini yuklab bo'lmaydi (404)",
+          "muddati o'tgan eksport berilmaydi va fon vazifasi uni o'chiradi",
+          "beat jadvalida tozalash vazifasi bor",
+          "🌐 JONLI: eksport HAQIQIY Celery worker orqali 2.5 soniyada tayyor bo'ldi, fayl yuklab olindi",
+          "🌐 JONLI: yuklangan JSON'da begona nomlar va shikoyatchilar YO'Q"
+        ],
+        "qarorlar": [
+          "⭐ QATOR O'CHIRILMAYDI, ANONIMLASHTIRILADI. `User.delete()` chaqirilsa `author` NULL bo'lardi va bitta muhokamadagi ikki xil odam bir xil 'muallifsiz' ko'rinardi — o'quvchi ularni bir odam deb o'ylashi mumkin.",
+          "⭐ BITTA UMUMIY SENTINEL EMAS (rejadan chekinish): barcha o'chirilgan hisoblar bitta muallifga tegishli bo'lib qolardi. Har hisobga o'z o'rindoshi qolgani to'g'riroq va D2-T11 (uch ogohlantirish) uchun ham zarur.",
+          "KONTENT QOLADI, chunki u boshqa odamlarga ham tegishli: kimdir savol berib, javob olgan. Javobni o'chirish o'sha odamning savolini javobsiz qoldirardi.",
+          "Ovoz va xatcho'p O'CHIRILADI: ular sof shaxsiy ma'lumot (odam nima o'qigani va nimani ma'qullagani), boshqalar uchun qiymati yo'q. Sanoqchilar qaytarilmaydi — ovozni qaytarib olish boshqa odamlarning postlari tartibini o'zgartirardi.",
+          "⭐ EKSPORTGA BOSHQALARNING MA'LUMOTI KIRMAYDI. Vasvasa katta ('menga tegishli hamma narsa'), lekin shikoyatchi, ovoz bergan va javob yozgan odamlar — boshqa odamlar. Ovozlar faqat SON sifatida chiqadi.",
+          "EMAIL EMAS, YUKLAB OLISH: kirish faqat Telegram orqali va foydalanuvchida email YO'Q — xat yuborish yo'li umuman mavjud emas.",
+          "Eksport MUDDATLI (7 kun) + beat tozalash: 'bir marta so'ralgan, keyin unutilgan' fayl bazada yillab turishi ma'lumot sizishining eng oddiy yo'li.",
+          "Tasdiqlash MATN bilan (nom yoziladi), oddiy tugma emas: qaytarib bo'lmaydigan amal tasodifan bajarilmasin.",
+          "O'chirish sahifasi NIMA QOLISHINI ochiq aytadi: 'hammasi o'chadi' deb o'ylagan odam keyin postlarini ko'rib aldangandek his qilmasligi kerak.",
+          "Audit jurnaliga ESKI NOM yozilmaydi: jurnal ochiq (D2-T7) va nom yozilsa anonimlashtirish ma'nosini yo'qotardi."
+        ],
+        "topilgan_xatolar": [
+          "⭐ EKSPORTDA `KarmaEvent.value` YOZILGANDI — bunday maydon YO'Q (u `points`). Eksport karma tarixi bo'lgan har qanday foydalanuvchi uchun AttributeError bilan yiqilardi va holat XATO bo'lib qolardi. Test buni ochdi (dastlab test ham noto'g'ri maydonni ishlatgani uchun).",
+          "`request.user` tipini mypy `AnonymousUser` ham bo'lishi mumkin deb hisoblaydi — `cast('User', ...)` bilan niyat ochiq ko'rsatildi.",
+          "`eksport.tayyor_at` `datetime | None` — `yuklab_olsa_boladimi` uni kafolatlaydi, lekin tip tekshiruvchi bilmaydi.",
+          "Testda apostrof tuzog'i YANA: shablonda YOZILGAN matn ekranlanmaydi, O'ZGARUVCHIdagi matn esa ekranlanadi — ikkalasini bir xil tekshirib bo'lmaydi."
+        ],
+        "guardlar_isbotlangan": "Ikkita xato ATAYLAB kiritildi (anonimlashtirish o'rniga `user.delete()`; eksportga begona shikoyatchilar qo'shildi) — 15 test yiqildi.",
+        "olchangan_holat": {
+          "testlar": 660,
+          "qamrov_foiz": 95.4,
+          "d2_t8_testlari": 32,
+          "eksport_muddati_kun": 7
+        },
+        "keyingi_uchun_eslatma": [
+          "D2-T11 (bloklash): `ochirilgan_at` va `is_active` allaqachon bor; bloklash ular bilan chalkashmasin.",
+          "D3-T4 (profil sahifasi): o'chirilgan hisob profili 404 qaytarishi yoki `OCHIRILGAN_NOM` ko'rsatishi kerak — hozir profil hali maket.",
+          "D2-T10 (huquqiy sahifalar): maxfiylik siyosatida shu yerdagi qarorlar yozilsin — nima o'chadi, nima qoladi, eksportga nima kiradi.",
+          "⚠️ Audit jurnali (D2-T7) o'chirishda TEGILMAYDI — u dalil. Huquqiy so'rov bo'lsa alohida ko'rib chiqiladi."
+        ]
+      }
     },
     {
       "id": "D2-T9",

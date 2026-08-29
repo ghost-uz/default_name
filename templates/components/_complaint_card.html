@@ -51,7 +51,7 @@
         {% if complaint.public_author %}
           <a href="{% url 'profile' complaint.public_author.username %}" class="inline-flex items-center gap-1.5 hover:text-fg">
             <span class="grid h-5 w-5 place-items-center rounded-full bg-primary text-[10px] font-bold text-on-primary" aria-hidden="true">{{ complaint.public_author.initial }}</span>
-            {{ complaint.public_author.username }}
+            {{ complaint.public_author.display_name }}
           </a>
         {% else %}
           <span class="inline-flex items-center gap-1.5">

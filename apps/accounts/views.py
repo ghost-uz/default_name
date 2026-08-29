@@ -4,16 +4,30 @@ from __future__ import annotations
 
 import logging
 import secrets
+from typing import cast
 
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth import login, logout
-from django.http import HttpRequest, HttpResponse, HttpResponseForbidden
-from django.shortcuts import redirect, render
+from django.contrib.auth.decorators import login_required
+from django.http import (
+    HttpRequest,
+    HttpResponse,
+    HttpResponseForbidden,
+    JsonResponse,
+)
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
-from .services import telegram_foydalanuvchisini_olish_yoki_yaratish
+from .models import MalumotEksporti, User
+from .services import (
+    eksport_soralgan,
+    hisobni_ochirish,
+    telegram_foydalanuvchisini_olish_yoki_yaratish,
+)
 from .telegram import TelegramAuthXatosi, tekshirish
 
 log = logging.getLogger(__name__)
@@ -144,3 +158,90 @@ def logout_view(request: HttpRequest) -> HttpResponse:
     """
     logout(request)
     return redirect(settings.LOGOUT_REDIRECT_URL)
+
+
+# ===========================================================================
+# Hisob sozlamalari: eksport va o'chirish (D2-T8)
+# ===========================================================================
+@login_required
+def hisob(request: HttpRequest) -> HttpResponse:
+    """Ma'lumot eksporti va hisobni o'chirish."""
+    # ⚠️ `@login_required` haqiqiy foydalanuvchini kafolatlaydi, lekin
+    #    tip tekshiruvchi buni bilmaydi (`AnonymousUser` ham mumkin deb
+    #    hisoblaydi). Mahalliy o'zgaruvchi niyatni ochiq ko'rsatadi.
+    foydalanuvchi = cast("User", request.user)
+
+    return render(
+        request,
+        "accounts/hisob.html",
+        {
+            "eksportlar": MalumotEksporti.objects.filter(user=foydalanuvchi)[:5],
+            "dardlar_soni": foydalanuvchi.complaints.count(),
+            "yechimlar_soni": foydalanuvchi.solutions.count(),
+        },
+    )
+
+
+@login_required
+@require_POST
+def hisob_eksport(request: HttpRequest) -> HttpResponse:
+    """Eksportni so'raydi (fon vazifasi)."""
+    eksport_soralgan(user=request.user)
+    messages.info(
+        request,
+        "Ma'lumotlaringiz tayyorlanmoqda. Tayyor bo'lgach shu sahifada "
+        "yuklab olish tugmasi chiqadi.",
+    )
+    return redirect("hisob")
+
+
+@login_required
+def hisob_eksport_yuklash(request: HttpRequest, pk: int) -> HttpResponse:
+    """Tayyor eksportni JSON fayl sifatida beradi.
+
+    ⚠️ `filter(user=request.user)` — `get_object_or_404(pk=pk)` YETARLI
+       EMAS: u holda manzildagi raqamni o'zgartirgan odam BOSHQA
+       odamning shaxsiy ma'lumotini yuklab olardi.
+    """
+    eksport = get_object_or_404(MalumotEksporti, pk=pk, user=request.user)
+
+    if not eksport.yuklab_olsa_boladimi:
+        messages.error(request, "Bu eksport tayyor emas yoki muddati o'tgan.")
+        return redirect("hisob")
+
+    javob = JsonResponse(
+        eksport.malumot, json_dumps_params={"ensure_ascii": False, "indent": 2}
+    )
+    # `yuklab_olsa_boladimi` TAYYOR holatni kafolatlaydi, ya'ni sana bor.
+    sana = (eksport.tayyor_at or timezone.now()).date().isoformat()
+    javob["Content-Disposition"] = f'attachment; filename="dard-uz-{sana}.json"'
+    return javob
+
+
+@login_required
+def hisob_ochirish(request: HttpRequest) -> HttpResponse:
+    """Hisobni o'chirish — tasdiqlash bilan.
+
+    ⚠️ TASDIQLASH MATN BILAN, oddiy tugma emas. Qaytarib bo'lmaydigan
+       amal tasodifan bajarilmasin: foydalanuvchi o'z nomini yozadi.
+
+    ⚠️ GET — tushuntirish sahifasi. Nima QOLISHI va nima KETISHI
+       ochiq yozilgan: "kontentim ham o'chadi" deb o'ylagan odam
+       keyin postlarini ko'rib hayron bo'lmasin.
+    """
+    if request.method == "POST":
+        tasdiq = (request.POST.get("tasdiq") or "").strip()
+        if tasdiq != request.user.username:
+            messages.error(request, "Tasdiqlash uchun foydalanuvchi nomingizni yozing.")
+            return render(request, "accounts/hisob_ochirish.html", {"xato": True})
+
+        hisobni_ochirish(user=request.user)
+        logout(request)
+        messages.info(
+            request,
+            "Hisobingiz o'chirildi. Yozganlaringiz saytda qoldi, lekin ular "
+            "endi sizga bog'lanmagan.",
+        )
+        return redirect("feed")
+
+    return render(request, "accounts/hisob_ochirish.html", {})

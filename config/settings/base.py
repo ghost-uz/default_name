@@ -404,6 +404,14 @@ CELERY_BEAT_SCHEDULE = {
         #    bir xil ishning nusxalari to'planib qolmaydi.
         "options": {"expires": 540},
     },
+    # ⚠️ Eksport ichida shaxsiy ma'lumot bor (D2-T8). "Bir marta
+    #    so'ralgan, keyin unutilgan" fayl bazada yillab turishi —
+    #    ma'lumot sizishining eng oddiy yo'li.
+    "eskirgan-eksportlarni-ochirish": {
+        "task": "apps.accounts.tasks.eskirgan_eksportlarni_ochirish",
+        "schedule": 3600.0,
+        "options": {"expires": 3000},
+    },
 }
 
 

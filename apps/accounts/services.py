@@ -6,6 +6,7 @@ shu yerda turadi — u testlanadigan va ko'rinishlardan mustaqil bo'lsin.
 
 from __future__ import annotations
 
+import logging
 import re
 import secrets
 
@@ -16,6 +17,8 @@ from django.utils.text import slugify
 
 from .models import User
 from .validators import RESERVED_USERNAMES, USERNAME_RE, validate_username
+
+log = logging.getLogger(__name__)
 
 
 def username_bandmi(nom: str) -> bool:
@@ -231,3 +234,118 @@ def telegram_foydalanuvchisini_olish_yoki_yaratish(
             continue
 
     raise RuntimeError("Bo'sh foydalanuvchi nomi topilmadi (5 urinish)")
+
+
+# ===========================================================================
+# Hisobni o'chirish va ma'lumot eksporti (D2-T8)
+# ===========================================================================
+@transaction.atomic
+def hisobni_ochirish(*, user) -> None:
+    """Shaxsiy ma'lumotni tozalaydi, KONTENTNI QOLDIRADI.
+
+    ⚠️⚠️ QABUL MEZONI: "o'chirilgan foydalanuvchining kontenti qoladi,
+       ismi 'O'chirilgan foydalanuvchi'ga aylanadi".
+
+       Sabab task tavsifida: foydalanuvchi o'chganda uning 200 ta
+       yechimi ham o'chsa, bu BOSHQA ODAMLARNING qiymatini yo'q qiladi
+       — ular savol berib, javob olgan edi.
+
+    ⚠️ QATOR O'CHIRILMAYDI. `User.delete()` chaqirilsa `author` `NULL`
+       bo'lardi va bitta muhokamadagi ikki xil odam bir xil
+       "muallifsiz" ko'rinardi. Anonimlashtirish har hisobga o'z
+       o'rindoshini qoldiradi.
+
+    Tozalanadi:
+      · `username` -> `ochirilgan_<hex>` (eski nom band bo'lib qolmaydi)
+      · `telegram_id` -> `None` (qayta ro'yxatdan o'tish mumkin bo'lsin)
+      · ism, bio, email
+      · ovozlar va xatcho'plar (shaxsiy afzalliklar)
+      · o'zi yozgan shikoyatlarda `reporter` -> `None`
+
+    Qoladi:
+      · dardlar va yechimlar (muallif — anonimlashtirilgan hisob)
+      · karma tarixi (kontent hali turibdi, ballar ma'noli)
+      · moderatsiya jurnali (D2-T7 — dalil, o'chirilmaydi)
+    """
+    from apps.complaints.models import ComplaintVote, SavedComplaint
+    from apps.moderation.audit import audit
+    from apps.moderation.models import AuditAction, Report
+    from apps.solutions.models import SolutionVote
+
+    if user.ochirilganmi:
+        return
+
+    eski_username = user.username
+
+    # ⚠️ Ovoz va xatcho'p — SOF shaxsiy ma'lumot: ular odam nima
+    #    o'qiganini va nimani ma'qullaganini ko'rsatadi. Kontentdan
+    #    farqli, ularni saqlashning boshqalar uchun qiymati yo'q.
+    #    Sanoqchilar `cast_vote()` orqali emas, to'g'ridan-to'g'ri
+    #    o'chirilgani uchun biroz "yuqori" qoladi — bu ataylab: ovozni
+    #    qaytarib olish reytingni qayta yozardi va boshqa odamlarning
+    #    postlari tartibi o'zgarardi.
+    ComplaintVote.objects.filter(user=user).delete()
+    SolutionVote.objects.filter(user=user).delete()
+    SavedComplaint.objects.filter(user=user).delete()
+
+    # Shikoyat qoladi (moderator qarorining asosi), lekin kim yozgani
+    # yo'qoladi — D2-T1 dagi `SET_NULL` bilan bir xil qaror.
+    Report.objects.filter(reporter=user).update(reporter=None)
+
+    user.username = f"ochirilgan_{secrets.token_hex(4)}"
+    user.oldingi_username = ""
+    user.telegram_id = None
+    user.first_name = ""
+    user.last_name = ""
+    user.email = ""
+    user.bio = ""
+    user.is_active = False
+    user.ochirilgan_at = timezone.now()
+    user.save(
+        update_fields=[
+            "username",
+            "oldingi_username",
+            "telegram_id",
+            "first_name",
+            "last_name",
+            "email",
+            "bio",
+            "is_active",
+            "ochirilgan_at",
+        ]
+    )
+
+    # ⚠️ Jurnalga ESKI nom yozilmaydi: aks holda anonimlashtirish
+    #    ma'nosini yo'qotardi — jurnal ochiq bo'lgani uchun (D2-T7)
+    #    eski nomni undan qayta topish mumkin bo'lardi.
+    audit(
+        action=AuditAction.HISOB_OCHIRILDI,
+        obyekt=f"foydalanuvchi #{user.pk}",
+        izoh="Foydalanuvchi o'z hisobini o'chirdi.",
+    )
+    log.info("Hisob o'chirildi: #%s (%s -> %s)", user.pk, eski_username, user.username)
+
+
+def eksport_soralgan(*, user):
+    """Eksport so'rovini yozadi va fon vazifasini navbatga qo'yadi.
+
+    ⚠️ Bir vaqtda BITTA navbatdagi so'rov: tugmani bir necha marta
+       bosgan odam o'nlab vazifa yaratib yubormasin.
+    """
+    from .models import EksportHolati, MalumotEksporti
+    from .tasks import EKSPORT_MUDDATI, eksportni_tayyorlash
+
+    mavjud = MalumotEksporti.objects.filter(
+        user=user, holat=EksportHolati.NAVBATDA
+    ).first()
+    if mavjud is not None:
+        return mavjud
+
+    eksport = MalumotEksporti.objects.create(
+        user=user, muddat=timezone.now() + EKSPORT_MUDDATI
+    )
+    # ⚠️ `on_commit` — vazifa TRANZAKSIYA YOPILGANDAN KEYIN yuborilsin.
+    #    Aks holda worker qatorni hali ko'rmasligi mumkin va vazifa
+    #    `DoesNotExist` bilan yiqilardi. Bu klassik poyga holati.
+    transaction.on_commit(lambda: eksportni_tayyorlash.delay(eksport.pk))
+    return eksport

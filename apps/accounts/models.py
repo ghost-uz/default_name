@@ -5,12 +5,16 @@
    noldan qurishni talab qiladi.
 """
 
+from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.db.models.functions import Lower
 from django.utils import timezone
 
 from .validators import USERNAME_HELP, validate_username
+
+# ⚠️ Qabul mezonidagi AYNAN shu matn (D2-T8).
+OCHIRILGAN_NOM = "O'chirilgan foydalanuvchi"
 
 
 class User(AbstractUser):
@@ -101,6 +105,30 @@ class User(AbstractUser):
     )
     ban_reason = models.CharField("blok sababi", max_length=200, blank=True)
 
+    # -- Hisobni o'chirish (D2-T8) -----------------------------------------
+    # ⚠️⚠️ QATOR O'CHIRILMAYDI, ANONIMLASHTIRILADI.
+    #
+    #    Sabab qabul mezonida: "o'chirilgan foydalanuvchining kontenti
+    #    QOLADI". Qator o'chirilsa `author` `NULL` bo'lardi va bitta
+    #    muhokamadagi ikki xil odam bir xil "muallifsiz" ko'rinardi —
+    #    o'quvchi ularni bir odam deb o'ylashi mumkin.
+    #
+    # ⚠️ NEGA BITTA UMUMIY "sentinel" FOYDALANUVCHI EMAS (reja shuni
+    #    taklif qilgandi): u holda BARCHA o'chirilgan hisoblarning
+    #    kontenti bitta muallifga tegishli bo'lib qolardi. Bir suhbatda
+    #    ikki xil odam bir xil nom bilan chiqib, "o'zi bilan o'zi
+    #    gaplashayotgan" odam taassurotini berardi. Har hisobga o'z
+    #    o'rindoshi qolgani to'g'riroq va D2-T11 (uch ogohlantirish)
+    #    uchun ham zarur.
+    ochirilgan_at = models.DateTimeField(
+        "hisob o'chirilgan",
+        null=True,
+        blank=True,
+        editable=False,
+        db_index=True,
+        help_text="To'ldirilgan bo'lsa: shaxsiy ma'lumot tozalangan, kontent qolgan.",
+    )
+
     class Meta:
         verbose_name = "foydalanuvchi"
         verbose_name_plural = "foydalanuvchilar"
@@ -132,12 +160,22 @@ class User(AbstractUser):
 
     # -- Ko'rsatiladigan nom ----------------------------------------------
     @property
+    def ochirilganmi(self) -> bool:
+        return self.ochirilgan_at is not None
+
+    @property
     def display_name(self) -> str:
         """Interfeysda ko'rsatiladigan nom.
 
         Telegram `first_name` beradi, lekin u ixtiyoriy va takrorlanishi
         mumkin — shuning uchun zaxira sifatida `username` ishlatiladi.
+
+        ⚠️ O'chirilgan hisob uchun QABUL MEZONIDAGI matn qaytadi. Bu
+           yerda qaytarilishi muhim: shablonlar shu xossani ishlatadi,
+           ya'ni bitta joyda tuzatilsa hamma joyda to'g'ri bo'ladi.
         """
+        if self.ochirilganmi:
+            return OCHIRILGAN_NOM
         return self.first_name.strip() or self.username
 
     @property
@@ -174,3 +212,62 @@ class User(AbstractUser):
     def can_write(self) -> bool:
         """Kontent yarata oladimi (dard, yechim, izoh, ovoz)."""
         return self.is_active and not self.is_currently_banned
+
+
+# ===========================================================================
+# Ma'lumot eksporti (D2-T8)
+# ===========================================================================
+class EksportHolati(models.TextChoices):
+    NAVBATDA = "navbatda", "Tayyorlanmoqda"
+    TAYYOR = "tayyor", "Tayyor"
+    XATO = "xato", "Xato"
+
+
+class MalumotEksporti(models.Model):
+    """Foydalanuvchining o'z ma'lumotlari nusxasi (JSON).
+
+    ⚠️ NEGA FON VAZIFASIDA (task tavsifi shuni talab qiladi)
+       Faol foydalanuvchida yuzlab post, yechim va ovoz bo'lishi mumkin.
+       So'rov ichida yig'ilsa sahifa o'nlab soniya osilib turardi va
+       gunicorn ishchisi band bo'lardi.
+
+    ⚠️ NEGA EMAIL EMAS (boshqa loyihalarda odatiy yo'l)
+       Bu yerda kirish FAQAT Telegram orqali va foydalanuvchida email
+       YO'Q. Xat yuborish yo'li umuman mavjud emas, shuning uchun
+       natija saqlanadi va foydalanuvchi uni o'zi yuklab oladi.
+
+    ⚠️ EKSPORT MUDDATLI. Ichida shaxsiy ma'lumot bor va u bazada
+       cheksiz turishi kerak emas — `muddat` dan keyin fon vazifasi
+       o'chiradi (`tasks.eskirgan_eksportlarni_ochirish`).
+    """
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        verbose_name="foydalanuvchi",
+        on_delete=models.CASCADE,
+        related_name="eksportlar",
+    )
+    holat = models.CharField(
+        "holat",
+        max_length=16,
+        choices=EksportHolati.choices,
+        default=EksportHolati.NAVBATDA,
+    )
+    malumot = models.JSONField("ma'lumot", null=True, blank=True, editable=False)
+    xato = models.TextField("xato", blank=True, editable=False)
+
+    created_at = models.DateTimeField("so'ralgan", auto_now_add=True, db_index=True)
+    tayyor_at = models.DateTimeField("tayyor bo'lgan", null=True, blank=True)
+    muddat = models.DateTimeField("amal qilish muddati", db_index=True)
+
+    class Meta:
+        verbose_name = "ma'lumot eksporti"
+        verbose_name_plural = "ma'lumot eksportlari"
+        ordering = ("-created_at",)
+
+    def __str__(self) -> str:
+        return f"{self.user_id} eksporti ({self.holat})"
+
+    @property
+    def yuklab_olsa_boladimi(self) -> bool:
+        return self.holat == EksportHolati.TAYYOR and self.muddat > timezone.now()

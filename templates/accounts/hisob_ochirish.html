@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% comment %}
+  Hisobni o'chirish — tasdiqlash (D2-T8).
+
+  ⚠️ Sahifa NIMA QOLISHINI va NIMA KETISHINI ochiq aytadi. "Hammasi
+     o'chadi" deb o'ylagan odam keyin o'z postlarini ko'rib
+     aldangandek his qilmasligi kerak — bu ishonchni yo'qotishning
+     eng tez yo'li.
+{% endcomment %}
+
+{% block title %}Hisobni o'chirish — Dard.uz{% endblock %}
+{% block description %}Hisobni o'chirishdan oldin nima bo'lishini o'qing.{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-[560px] px-4 py-8 lg:px-6">
+  <main id="main">
+    <a href="{% url 'hisob' %}" class="btn-ghost mb-5 !px-2">
+      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+      Orqaga
+    </a>
+
+    <h1 class="text-2xl font-extrabold">Hisobni o'chirish</h1>
+
+    <div class="mt-5 grid gap-3 sm:grid-cols-2">
+      <div class="card border-danger/40 bg-danger-bg/30 p-4">
+        <p class="text-[13px] font-bold uppercase tracking-wider text-danger">O'chadi</p>
+        <ul class="mt-2 space-y-1.5 text-[14px] leading-relaxed">
+          <li>Foydalanuvchi nomingiz</li>
+          <li>Telegram bog'lanishi</li>
+          <li>Ismingiz va «o'zim haqimda»</li>
+          <li>Ovozlaringiz va xatcho'plaringiz</li>
+        </ul>
+      </div>
+      <div class="card border-line-strong bg-surface-2 p-4">
+        <p class="text-[13px] font-bold uppercase tracking-wider text-fg-muted">Qoladi</p>
+        <ul class="mt-2 space-y-1.5 text-[14px] leading-relaxed">
+          <li>Yozgan dardlaringiz</li>
+          <li>Yozgan yechimlaringiz</li>
+          <li>Muallif o'rnida «O'chirilgan foydalanuvchi»</li>
+        </ul>
+      </div>
+    </div>
+
+    <p class="mt-4 text-[14px] leading-relaxed text-fg-muted">
+      Yozganlaringiz qoladi, chunki ular <strong class="text-fg">boshqa
+      odamlarga</strong> tegishli ham: kimdir savol berib, siz javob
+      bergansiz. Javobni o'chirish o'sha odamning savolini javobsiz
+      qoldirardi. Kontentingiz endi sizga bog'lanmaydi.
+    </p>
+
+    <div class="card mt-5 border-line-strong bg-surface-2 p-4 text-[13px] leading-relaxed text-fg-muted">
+      Biror post sizni oshkor qilishi mumkin deb o'ylasangiz —
+      <strong class="text-fg">o'chirishdan oldin</strong> o'sha postni
+      alohida o'chiring. Keyin unga kira olmaysiz.
+    </div>
+
+    {% comment %}
+      ⚠️ TASDIQLASH MATN BILAN, oddiy tugma emas: qaytarib bo'lmaydigan
+         amalni tasodifan bosib qo'yish mumkin bo'lmasin.
+    {% endcomment %}
+    <form method="post" class="mt-6">
+      {% csrf_token %}
+      <label for="tasdiq" class="label">
+        Tasdiqlash uchun <strong>{{ request.user.username }}</strong> deb yozing
+      </label>
+      <input
+        class="input mt-1.5 {% if xato %}input-invalid{% endif %}"
+        type="text"
+        id="tasdiq"
+        name="tasdiq"
+        autocomplete="off"
+        required
+      />
+      {% if xato %}
+        <p class="field-error">Nom mos kelmadi.</p>
+      {% endif %}
+
+      <div class="mt-5 flex flex-col-reverse gap-2 border-t border-line pt-5 sm:flex-row">
+        <a href="{% url 'hisob' %}" class="btn-outline sm:flex-1">Bekor qilish</a>
+        <button type="submit" class="btn bg-danger text-white hover:opacity-90 sm:flex-1">
+          Hisobni butunlay o'chirish
+        </button>
+      </div>
+    </form>
+  </main>
+</div>
+{% endblock %}
