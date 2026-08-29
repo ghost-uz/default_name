@@ -27,6 +27,7 @@ from apps.common.vote_views import (
 )
 from apps.common.voting import cast_vote
 from apps.complaints.models import Complaint
+from apps.moderation.services import avtomatik_belgilash
 
 from .forms import SolutionForm
 from .models import Solution, SolutionVote
@@ -105,7 +106,7 @@ def solution_create(request: HttpRequest, slug: str) -> HttpResponse:
             "Bu muammo yopilgan — yangi yechim qabul qilinmaydi."
         )
 
-    form = SolutionForm(request.POST)
+    form = SolutionForm(request.POST, foydalanuvchi=request.user)
     if form.is_valid():
         yechim = yechim_yozish(
             complaint=muammo,
@@ -113,6 +114,8 @@ def solution_create(request: HttpRequest, slug: str) -> HttpResponse:
             content=form.cleaned_data["content"],
             is_anonymous=form.cleaned_data["is_anonymous"],
         )
+        # ⚠️ Shubhali bo'lsa navbatga tushadi, yashirilmaydi (D2-T5).
+        avtomatik_belgilash(target=yechim, baho=form.spam_bahosi)
         messages.success(request, "Yechimingiz qo'shildi.")
         return redirect(yechim.get_absolute_url())
 

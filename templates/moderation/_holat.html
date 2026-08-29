@@ -95,6 +95,14 @@
 
   <div class="border-t border-line bg-surface-2 px-4 py-3">
     <p class="text-[13px] font-semibold">
+      {% comment %}
+        ⚠️ Avtomatik filtr signali ODAM shikoyatidan ajratib
+           ko'rsatiladi (D2-T5): ikkalasi bir xil ko'rinsa moderator
+           evristikaga odamga bergan ishonchni berardi.
+      {% endcomment %}
+      {% if holat.avtomatikmi %}
+        <span class="badge">avtomatik filtr</span>
+      {% endif %}
       {{ holat.soni }} ta shikoyat
       <span class="font-normal text-fg-muted">· birinchisi {{ holat.birinchi_shikoyat|timesince }} oldin</span>
     </p>

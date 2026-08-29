@@ -26,6 +26,7 @@ from apps.common.vote_views import (
     ovozdan_keyingi_manzil,
 )
 from apps.common.voting import cast_vote, user_votes_for
+from apps.moderation.services import avtomatik_belgilash
 from apps.solutions.forms import SolutionForm
 from apps.solutions.models import Solution, SolutionVote
 
@@ -255,15 +256,18 @@ def complaint_create(request: HttpRequest) -> HttpResponse:
         return HttpResponseForbidden("Hisobingiz cheklangan.")
 
     if request.method == "POST":
-        form = ComplaintForm(request.POST)
+        form = ComplaintForm(request.POST, foydalanuvchi=request.user)
         if form.is_valid():
             muammo = form.save(commit=False)
             muammo.author = request.user
             muammo.save()
+            # ⚠️ Shubhali bo'lsa NAVBATGA tushadi, YASHIRILMAYDI
+            #    (D2-T5 mahsulot qarori — apps/common/spam.py).
+            avtomatik_belgilash(target=muammo, baho=form.spam_bahosi)
             messages.success(request, "Dardingiz e'lon qilindi.")
             return redirect(muammo.get_absolute_url())
     else:
-        form = ComplaintForm()
+        form = ComplaintForm(foydalanuvchi=request.user)
 
     return render(
         request,
@@ -294,9 +298,15 @@ def complaint_edit(request: HttpRequest, slug: str) -> HttpResponse:
         )
 
     if request.method == "POST":
-        form = ComplaintForm(request.POST, instance=muammo, tahrirlash=True)
+        form = ComplaintForm(
+            request.POST,
+            instance=muammo,
+            tahrirlash=True,
+            foydalanuvchi=request.user,
+        )
         if form.is_valid():
             form.save()
+            avtomatik_belgilash(target=muammo, baho=form.spam_bahosi)
             messages.success(request, "O'zgarishlar saqlandi.")
             return redirect(muammo.get_absolute_url())
     else:

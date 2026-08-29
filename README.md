@@ -417,6 +417,87 @@ Faqat **`CI holati`** tekshiruvini tanlang, alohida job'larni emas.
 | D2-T1 | Shikoyat (`Report`) modeli va oqimi — eskalatsiya navbatni o'zgartiradi, ko'rinishni emas |
 | D2-T2 | Moderatsiya navbati — obyekt bo'yicha guruhlangan holatlar, klaviatura, qaytariladigan qarorlar |
 | D2-T4 | Tezlik cheklovi — Redis'da, paketsiz; chegaralar sozlamada, 429 + tushunarli xabar |
+| D2-T5 | Spam evristikasi — honeypot, forma vaqti, havola soni; shubhali kontent yashirilmaydi |
+
+### Spam evristikasi (D2-T5)
+
+`apps/common/spam.py`. Yozish formalari `SpamHimoyaliForm` dan meros
+oladi va ikkita ko'rinmas maydon qo'shadi: honeypot va **imzolangan**
+forma-ochilish vaqti.
+
+| Signal | Ball |
+|---|---|
+| Honeypot to'ldirilgan | **rad etiladi** |
+| 3 soniyadan tez to'ldirilgan | 3 |
+| 1 soniyadan tez | 4 |
+| Vaqt belgisi yo'q / imzo buzilgan | 3 |
+| 2 havola / 3–4 havola / 5+ havola | 1 / 2 / 3 |
+| Hisob 24 soatdan yosh | 1 |
+
+Chegara — **3 ball**. Ya'ni «3 soniyadan tez» yolg'iz o'zi yetadi (qabul
+mezoni), yangi hisob esa yolg'iz o'zi yetmaydi.
+
+⚠️⚠️ **Shubhali kontent yashirilmaydi** — mahsulot qarori. Post e'lon
+qilinadi va odamlar uni ko'radi; faqat moderatsiya navbatiga holat
+tushadi (`avtomatik_belgilash`). Sabab: yolg'on ijobiy holatning narxi
+bu yerda spamnikidan yuqori. Spam bir necha soat ko'rinib tursa —
+noqulay; og'ir dardini yozgan odamning posti jimgina yo'qolsa — u
+boshqa qaytmaydi.
+
+⚠️ **Yagona rad etadigan signal — honeypot.** Ko'rinmaydigan maydonni
+odam to'ldira olmaydi; bu mexanik aniqlik. Boshqa hech qanday signal,
+hattoki ularning yig'indisi ham, kontentni rad etmaydi: «1 soniyada
+to'ldirilgan» odamni ham ko'rsatishi mumkin — matnni boshqa joyda
+yozib qo'yib, nusxa ko'chirgan odam.
+
+---
+
+### ⚠️⚠️ Honeypot maydonining nomi — eng nozik joy
+
+Nomi **`website` / `email` / `url` / `phone` bo'lmasligi kerak.**
+Brauzer va parol menejerlari aynan shunday nomlarni **avtomatik
+to'ldiradi**, maydon ko'rinmasa ham. Natijada honeypot haqiqiy
+odamlarni ushlab, eng yomon turdagi yolg'on ijobiy berardi: odam hech
+narsa qilmagan, posti esa rad etilgan.
+
+Hozirgi nom — `qoshimcha_izoh` (autofill uchun ma'nosiz, «hamma
+maydonni to'ldiruvchi» botlar uchun farqi yo'q). Buni alohida test
+qotirib qo'yadi.
+
+⚠️ `display: none` **ataylab ishlatilmagan**: e'tiborliroq botlar
+hisoblangan uslubni tekshirib bunday maydonni o'tkazib yuboradi.
+Ekrandan tashqariga chiqarish DOM'da oddiy ko'rinadi.
+
+⚠️ CSS yetarli emas — maydonda `tabindex="-1"` (klaviatura) va
+`aria-hidden="true"` (ekran o'quvchi) ham bor. Uch qatlamning har biri
+tekshiriladi.
+
+---
+
+### ⚠️ Vaqt belgisi imzolangan, eskirgani esa shubhali emas
+
+Belgi `django.core.signing` bilan imzolanadi: oddiy `hidden` maydon
+bo'lsa, skript qiymatni o'tmishga surib «sekin to'ldirdim» deb
+ko'rsatardi.
+
+Eskirgan belgi (7 kundan oshgan) **shubhali emas** — u «juda uzoq
+to'ldirilgan» degani, bot xulqiga umuman o'xshamaydi. Qoralamani saqlab
+qo'yib, ertasiga davom ettirgan odam jazolanmasligi kerak.
+
+---
+
+### ⚠️ Tizim shikoyati — `Report` ga `reporter=None`
+
+Avtomatik filtr alohida model yaratmaydi: navbat allaqachon `Report`
+ustiga qurilgan (D2-T2), ya'ni guruhlash, tartiblash, choralar va
+bekor qilish bepul keladi.
+
+Navbat kartasida avtomatik signal **«avtomatik filtr»** belgisi bilan
+ajratiladi — «uchta odam shikoyat qildi» va «bizning filtr shubhali
+dedi» butunlay boshqa dalillar, va ikkalasi bir xil ko'rinsa moderator
+evristikaga odamga bergan ishonchni berardi.
+
+---
 
 ### Tezlik cheklovi (D2-T4)
 

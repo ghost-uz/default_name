@@ -41,6 +41,8 @@
             </div>
           {% endif %}
 
+          {% include "components/_spam_himoya.html" %}
+
           {% include "components/_field.html" with field=form.title counter=True helper="Savol shaklida yozing — bunday postlar 2 barobar ko'p yechim oladi." %}
           {% include "components/_field.html" with field=form.description counter=True helper="Shaxsiy ma'lumot (telefon, manzil, pasport) yozmang." %}
 

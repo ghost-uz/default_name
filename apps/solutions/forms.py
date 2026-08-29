@@ -5,13 +5,15 @@ from __future__ import annotations
 from django import forms
 from django.core.validators import MinLengthValidator
 
+from apps.common.spam import SpamHimoyaliForm
+
 from .models import Solution
 
 # Maketdagi `data-minlen="30"` bilan bir xil (templates/complaints/detail.html).
 YECHIM_MIN = 30
 
 
-class SolutionForm(forms.ModelForm):
+class SolutionForm(SpamHimoyaliForm, forms.ModelForm):
     """Yechim yozish.
 
     ⚠️ TAHRIRLASH FORMASI YO'Q — ATAYLAB.
@@ -45,6 +47,8 @@ class SolutionForm(forms.ModelForm):
             ),
             "is_anonymous": forms.CheckboxInput(attrs={"class": "peer sr-only"}),
         }
+
+    SPAM_MATN_MAYDONLARI = ("content",)
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)

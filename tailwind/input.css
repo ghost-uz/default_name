@@ -450,6 +450,24 @@
            focus:top-4;
     transition: top 200ms var(--ease-out-soft);
   }
+
+  /* Honeypot (D2-T5) — botlar ko'radi, odamlar ko'rmaydi.
+     ⚠️ `display: none` ATAYLAB ISHLATILMAGAN: e'tiborliroq botlar
+        hisoblangan uslubni tekshirib, `display:none` maydonni
+        o'tkazib yuboradi. Ekrandan tashqariga chiqarish esa DOM'da
+        oddiy ko'rinadi.
+     ⚠️ Odamdan yashirish uchun CSS yetarli emas — maydonda
+        `tabindex="-1"` (klaviatura) va `aria-hidden="true"` (ekran
+        o'quvchi) ham bor (`apps/common/spam.py`). */
+  .honeypot {
+    position: absolute !important;
+    left: -9999px !important;
+    top: 0;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+  }
 }
 
 /* --------------------------------------------------------------------------

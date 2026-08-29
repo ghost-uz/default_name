@@ -7,6 +7,8 @@ from typing import cast
 from django import forms
 from django.core.validators import MinLengthValidator
 
+from apps.common.spam import SpamHimoyaliForm
+
 from .models import Category, Complaint, Generation
 
 # ⚠️ MIN UZUNLIK SERVER TOMONDA (D1-T9 qabul mezoni).
@@ -21,7 +23,7 @@ SARLAVHA_MIN = 15
 TAVSIF_MIN = 50
 
 
-class ComplaintForm(forms.ModelForm):
+class ComplaintForm(SpamHimoyaliForm, forms.ModelForm):
     """Muammo yaratish va tahrirlash.
 
     ⚠️ `is_anonymous` TAHRIRLASHDA YO'Q — pastdagi `__init__` ga qarang.
@@ -72,6 +74,9 @@ class ComplaintForm(forms.ModelForm):
             # `<span>` `peer-checked:` bilan uning holatini chizadi.
             "is_anonymous": forms.CheckboxInput(attrs={"class": "peer sr-only"}),
         }
+
+    # Havolalar shu maydonlarda sanaladi (D2-T5).
+    SPAM_MATN_MAYDONLARI = ("title", "description")
 
     def __init__(self, *args, tahrirlash: bool = False, **kwargs) -> None:
         super().__init__(*args, **kwargs)

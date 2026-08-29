@@ -99,6 +99,17 @@ class Holat:
         return hisob.most_common()
 
     @property
+    def avtomatikmi(self) -> bool:
+        """Holatni AVTOMATIK FILTR ochganmi (D2-T5).
+
+        ⚠️ Moderator uchun bu farq muhim: "uchta odam shikoyat qildi" va
+           "bizning filtr shubhali dedi" — butunlay boshqa dalillar.
+           Ikkalasi bir xil ko'rinsa, moderator avtomatik signalga
+           odam signaliga bergan ishonchni berardi.
+        """
+        return any(s.reporter_id is None for s in self.shikoyatlar)
+
+    @property
     def izohlar(self) -> list[str]:
         return [s.comment for s in self.shikoyatlar if s.comment]
 

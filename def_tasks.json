@@ -1460,10 +1460,76 @@
       "bogliq": [
         "D1-T9"
       ],
-      "holat": "todo",
+      "holat": "done",
       "qabul_mezoni": [
         "3 sekunddan tez to'ldirilgan forma shubhali deb belgilanadi"
-      ]
+      ],
+      "tugatilgan": "2026-08-29",
+      "eslatma": "MAHSULOT QARORI (foydalanuvchi tanlagan): shubhali kontent YASHIRILMAYDI — e'lon qilinadi va moderatsiya navbatiga tushadi. Faqat honeypot (mexanik aniqlik) rad etadi. CAPTCHA QO'SHILMADI — tavsifdagi 'shubhali holatda CAPTCHA' o'rniga 'shubhali holatda navbat' tanlandi.",
+      "natija": {
+        "yaratilgan": [
+          "apps/common/spam.py — Baho, bahola(), SpamHimoyaliForm aralashmasi",
+          "templates/components/_spam_himoya.html — honeypot + vaqt belgisi",
+          "tailwind/input.css — .honeypot sinfi",
+          "apps/moderation/services.py — avtomatik_belgilash()",
+          "apps/moderation/selectors.py — Holat.avtomatikmi",
+          "templates/moderation/_holat.html — «avtomatik filtr» belgisi",
+          "apps/common/tests/test_spam.py — 37 test"
+        ],
+        "signallar": [
+          "honeypot to'ldirilgan -> BOT ANIQ (yagona rad etadigan holat)",
+          "3 soniyadan tez to'ldirilgan -> +3 (qabul mezoni: yolg'iz o'zi chegaraga yetadi)",
+          "1 soniyadan tez -> +4",
+          "vaqt belgisi yo'q yoki imzo buzilgan -> +3",
+          "kelajakdagi vaqt -> +3",
+          "havolalar: 2 -> +1, 3-4 -> +2, 5+ -> +3",
+          "hisob 24 soatdan yosh -> +1 (ATAYLAB kichik)",
+          "chegara: 3 ball"
+        ],
+        "tekshirilgan": [
+          "⭐ qabul mezoni: 3 soniyadan tez to'ldirilgan forma YOLG'IZ O'ZI shubhali",
+          "honeypot uch qatlamda yashirin: CSS (-9999px, opacity 0) + tabindex=-1 + aria-hidden (o'zida va o'rovchisida)",
+          "xato xabari honeypot mexanizmini FOSH QILMAYDI",
+          "eskirgan vaqt belgisi SHUBHALI EMAS (uzoq turgan qoralama jazolanmasin)",
+          "yalang'och domen ('fanfics.uz da o'qigandim') havola deb sanalmaydi",
+          "yangi hisob YOLG'IZ O'ZI shubhali emas",
+          "tahrirlash takroriy tizim shikoyati yaratmaydi",
+          "🌐 JONLI: odam kabi yozilgan post (≈4 soniya) — YOLG'ON IJOBIY YO'Q, 0 ta tizim shikoyati",
+          "🌐 JONLI: honeypot to'ldirilgan post YARATILMADI, umumiy xato ko'rsatildi",
+          "🌐 JONLI: 1 soniyada to'ldirilgan post YARATILDI, `visible` qoldi va navbatga tushdi",
+          "🌐 JONLI: navbat kartasida «avtomatik filtr» belgisi + sabab izohi",
+          "🌐 JONLI: Tab yo'li honeypotni butunlay chetlab o'tadi"
+        ],
+        "qarorlar": [
+          "⭐ SHUBHALI KONTENT YASHIRILMAYDI (foydalanuvchi tanlagan, 2026-08-29). Post e'lon qilinadi va odamlar ko'radi; faqat moderator navbatiga holat tushadi. Sabab: yolg'on ijobiy holatning narxi bu yerda spamnikidan yuqori — spam bir necha soat ko'rinib tursa noqulay, og'ir dardini yozgan odamning posti jimgina yo'qolsa u boshqa qaytmaydi.",
+          "YAGONA RAD ETADIGAN SIGNAL — HONEYPOT. Ko'rinmaydigan maydonni odam to'ldira olmaydi, bu mexanik aniqlik. Boshqa hech qanday signal (hattoki yig'indisi ham) blok qilmaydi: '1 soniyada to'ldirilgan' odamni ham ko'rsatishi mumkin — boshqa joyda yozib qo'yib nusxa ko'chirgan odam.",
+          "CAPTCHA QO'SHILMADI. Task tavsifi 'shubhali holatda CAPTCHA ko'rsatiladi' degandi, lekin CAPTCHA provayder (bog'liqlik) yoki zaif o'z-o'zidan yozilgan yechim talab qiladi. Undan ham muhimi: 'shubhali holatda navbat' bir xil natijani beradi va foydalanuvchini umuman to'xtatmaydi. Kerak bo'lsa keyinchalik shu nuqtaga ulanadi.",
+          "ALOHIDA 'SpamSignal' MODELI EMAS — tizim shikoyati `Report` ga `reporter=None` bilan tushadi. Navbat allaqachon `Report` ustiga qurilgan (D2-T2): guruhlash, tartiblash, choralar, bekor qilish — hammasi bepul keladi. Ikkinchi model ikkinchi navbat va ikkinchi unutiladigan joy degani bo'lardi.",
+          "Moderator uchun avtomatik signal ODAM shikoyatidan AJRATIB ko'rsatiladi (`Holat.avtomatikmi`): ikkalasi bir xil ko'rinsa moderator evristikaga odamga bergan ishonchni berardi.",
+          "Vaqt belgisi IMZOLANGAN (`django.core.signing`): oddiy hidden maydon bo'lsa skript uni o'tmishga surib 'sekin to'ldirdim' deb ko'rsatardi.",
+          "Yangi hisob balli ATAYLAB kichik (1): eng himoyasiz foydalanuvchi ham yangi hisob bilan keladi — odam dardini yozish uchun ro'yxatdan o'tadi, ro'yxatdan o'tib keyin dard kutib o'tirmaydi."
+        ],
+        "topilgan_xatolar": [
+          "⚠️⚠️ HONEYPOT NOMI: `website`/`email`/`url`/`phone` kabi nomlarni BRAUZER VA PAROL MENEJERLARI avtomatik to'ldiradi — maydon ko'rinmasa ham. Bunday nom honeypot'ni haqiqiy odamlarni ushlaydigan tuzoqqa aylantirardi va bu eng yomon turdagi yolg'on ijobiy bo'lardi (odam hech narsa qilmagan, posti rad etilgan). Neytral nom (`qoshimcha_izoh`) tanlandi va alohida test bilan qotirildi.",
+          "`display: none` ATAYLAB ISHLATILMADI: e'tiborliroq botlar hisoblangan uslubni tekshirib bunday maydonni o'tkazib yuboradi. Ekrandan tashqariga chiqarish DOM'da oddiy ko'rinadi.",
+          "Eskirgan vaqt belgisi dastlab 'buzilgan' bilan bir xil ko'rilardi — ya'ni qoralamani ertasiga davom ettirgan odam shubhali bo'lardi. `SignatureExpired` alohida ushlanadi va SHUBHALI EMAS.",
+          "ruff N817: `ComplaintForm as CF` — akronim sifatida import qilish taqiqlangan."
+        ],
+        "guardlar_isbotlangan": "Uchta xato ATAYLAB kiritildi (SolutionForm himoyani yo'qotdi; shablondan include olib tashlandi; honeypot nomi `website` ga o'zgartirildi) — 4 test yiqildi, jumladan aynan shu uch holatni qoplaydigan guardlar.",
+        "olchangan_holat": {
+          "testlar": 551,
+          "qamrov_foiz": 95.19,
+          "d2_t5_testlari": 37,
+          "yangi_paketlar": 0,
+          "pre_commit_hooklar": 17
+        },
+        "keyingi_uchun_eslatma": [
+          "Shikoyat formasi (D2-T1) spam himoyasidan TASHQARIDA — u tezlik cheklovi bilan qoplangan va honeypot u yerda kam foyda beradi (shikoyat kontenti ommaga chiqmaydi).",
+          "D2-T11 (shadowban/bloklash) uchun signal manbai tayyor: `Report.reporter__isnull=True` bo'yicha foydalanuvchining avtomatik belgilanish tarixini sanash mumkin.",
+          "Agar spam haqiqiy muammoga aylansa: birinchi qadam — SHUBHA_BALLI ni pasaytirish yoki yangi signal qo'shish; kontentni yashirishga o'tish MAHSULOT QARORI va foydalanuvchi bilan qayta kelishilishi kerak.",
+          "CAPTCHA kerak bo'lsa `SpamHimoyaliForm.clean()` dagi `shubhalimi` shoxiga ulanadi — mexanizm tayyor."
+        ]
+      }
     },
     {
       "id": "D2-T6",

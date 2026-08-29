@@ -1,4 +1,4 @@
-"""Moderatsiya — xizmat funksiyalari (D2-T1, D2-T2)."""
+"""Moderatsiya — xizmat funksiyalari (D2-T1, D2-T2, D2-T5)."""
 
 from __future__ import annotations
 
@@ -13,6 +13,7 @@ from .models import (
     ModerationAction,
     ModerationActionType,
     Report,
+    ReportReason,
     ReportStatus,
 )
 
@@ -281,3 +282,49 @@ def qarorni_bekor_qilish(*, moderator, chora: ModerationAction) -> ModerationAct
 
     log.info("Chora bekor qilindi: #%s %s", chora.pk, chora.target_nomi)
     return qaytarish
+
+
+# ===========================================================================
+# Avtomatik filtr (D2-T5)
+# ===========================================================================
+def avtomatik_belgilash(*, target, baho) -> Report | None:
+    """Evristika shubhali topgan kontentni NAVBATGA qo'yadi.
+
+    ⚠️⚠️ KONTENT YASHIRILMAYDI — mahsulot qarori (foydalanuvchi tanlagan).
+       Shubhali post e'lon qilinadi va odamlar uni ko'radi; faqat
+       moderator navbatiga qo'shimcha holat tushadi. Sabab
+       `apps/common/spam.py` docstring'ida: yolg'on ijobiy holatning
+       narxi bu yerda spamnikidan yuqori.
+
+    ⚠️ NEGA ALOHIDA "SpamSignal" MODELI EMAS
+       Navbat allaqachon `Report` ustiga qurilgan (D2-T2): guruhlash,
+       tartiblash, choralar, bekor qilish — hammasi tayyor. Tizim
+       shikoyati shu quvurga `reporter=None` bilan tushadi va butun
+       mexanizmni bepul oladi. Ikkinchi model ikkinchi navbat, ikkinchi
+       tartib mantig'i va ikkinchi unutiladigan joy degani bo'lardi.
+
+    `reporter=None` — "shikoyatchi" o'chirilgan hisob EMAS, TIZIM.
+    Navbat buni ajratib ko'rsatadi (`Holat.avtomatikmi`).
+    """
+    if not baho.shubhalimi:
+        return None
+
+    kwargs = _maqsad_kwargs(target)
+
+    # Bitta obyektga bitta OCHIQ tizim shikoyati yetarli: tahrirlash
+    # har safar yangi qator yaratsa, navbat bir xil holat bilan
+    # to'lib ketardi.
+    mavjud = Report.objects.ochiq().filter(reporter__isnull=True, **kwargs).first()
+    if mavjud is not None:
+        mavjud.comment = baho.izoh[:2000]
+        mavjud.save(update_fields=["comment", "updated_at"])
+        return mavjud
+
+    hisobot = Report.objects.create(
+        reporter=None,
+        reason=ReportReason.SPAM,
+        comment=baho.izoh[:2000],
+        **kwargs,
+    )
+    log.info("Avtomatik filtr: %s ball=%s", hisobot.target_nomi, baho.ball)
+    return hisobot

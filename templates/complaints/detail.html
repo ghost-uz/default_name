@@ -131,6 +131,8 @@
 
             <form method="post" action="{% url 'solution_create' complaint.slug %}" class="mt-3" data-validate data-draft novalidate>
               {% csrf_token %}
+              {% include "components/_spam_himoya.html" with form=solution_form %}
+
               {% include "components/_field.html" with field=solution_form.content counter=True helper="Kamida 30 ta belgi. Hurmatsiz javoblar o'chiriladi." %}
 
               <div class="mt-2.5 flex flex-wrap items-center gap-3">

@@ -1,0 +1,24 @@
+{% comment %}
+  Spam himoyasi — honeypot + forma ochilish vaqti (D2-T5).
+
+  Kontekst:
+    form -> `SpamHimoyaliForm` dan meros olgan forma
+
+  ⚠️ HAR BIR YOZISH FORMASIGA QO'SHILISHI SHART. Unutilsa forma
+     ishlashda davom etadi — lekin himoyasiz, va buni HECH NARSA
+     bildirmaydi. Shu sababli guard test bor:
+     `apps/common/tests/test_spam.py::test_barcha_yozish_formalarida_himoya_bor`.
+
+  ⚠️ Maydonlar `{{ form.<nom> }}` orqali chiqadi, qo'lda yozilmaydi:
+     nomlar va atributlar bir joyda (`apps/common/spam.py`) turishi
+     kerak. Shablonda takrorlansa, nom o'zgarganda jimgina uzilardi.
+
+  ⚠️ `<div aria-hidden="true">` — ichidagi maydon ekran o'quvchiga
+     umuman ko'rinmasin. Maydonning o'zida ham `tabindex="-1"` bor,
+     ya'ni klaviatura bilan ham unga tushib bo'lmaydi.
+{% endcomment %}
+<div aria-hidden="true">
+  <label for="{{ form.qoshimcha_izoh.id_for_label }}">{{ form.qoshimcha_izoh.label }}</label>
+  {{ form.qoshimcha_izoh }}
+</div>
+{{ form.forma_ochilgan }}
