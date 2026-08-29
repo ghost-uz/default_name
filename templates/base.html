@@ -7,6 +7,24 @@
     <title>{% block title %}Dard.uz — Nolima, yechim topamiz{% endblock %}</title>
     <meta name="description" content="{% block description %}Dard.uz — hayotiy muammolaringiz bilan o'rtoqlashing va real tajribaga asoslangan yechim toping.{% endblock %}" />
     <meta name="theme-color" content="#2563eb" />
+    {% comment %}
+      ⚠️⚠️ HTMX O'Z `<style>` BLOKINI KIRITMASIN (D2-T9).
+
+         Standart holatda HTMX `<head>` ga inline `<style>` qo'shadi
+         (`.htmx-indicator{opacity:0}` ...). CSP'da `style-src` da
+         `'unsafe-inline'` yo'q, ya'ni u BLOKLANADI va har sahifa
+         yuklanishida konsolda buzilish qoladi.
+
+         Uni nonce bilan o'tkazish ham mumkin edi
+         (`inlineStyleNonce`), lekin u holda `style-src` ga nonce
+         qo'shish kerak bo'lardi — ya'ni inline `<style>` bloklariga
+         umuman yo'l ochilardi. Uslublar bizning CSS'imizda tursa,
+         `style-src` butunlay qat'iy qoladi.
+
+         Uslublar: `tailwind/input.css` -> `.htmx-indicator`.
+    {% endcomment %}
+    <meta name="htmx-config" content='{"includeIndicatorStyles": false}' />
+
     {% block head_extra %}{% endblock %}
 
     {% comment %}

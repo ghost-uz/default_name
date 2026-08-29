@@ -12,7 +12,14 @@
      (D1-T6). Bu shablon reja 14-bo'limidagi tekshiruv ro'yxatiga kiradi.
 {% endcomment %}
 {% url 'dard_ovoz' complaint.pk as vote_url %}
-<article class="card card-hover stagger overflow-hidden" style="--i: {{ index|default:0 }}" data-vote-group>
+{% comment %}
+  ⚠️ Kechikish INLINE `style` bilan emas, SINF bilan beriladi
+     (D2-T9): inline `style` atributi CSP'da
+     `style-src 'unsafe-inline'` ni majburlardi va bitta
+     kosmetik animatsiya uchun butun uslub himoyasini
+     ochib qo'yardi. Sinflar `tailwind/input.css` da.
+{% endcomment %}
+<article class="card card-hover stagger stagger-{{ index|default:0 }} overflow-hidden" data-vote-group>
 
   {% if complaint.is_boosted %}
     <div class="flex items-center gap-1.5 border-b border-line bg-karma-bg px-4 py-1.5 text-[11px] font-bold uppercase tracking-wider text-karma">

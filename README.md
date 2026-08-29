@@ -420,6 +420,49 @@ Faqat **`CI holati`** tekshiruvini tanlang, alohida job'larni emas.
 | D2-T5 | Spam evristikasi — honeypot, forma vaqti, havola soni; shubhali kontent yashirilmaydi |
 | D2-T7 | O'zgarmas audit jurnali — to'rt qatlamli himoya, staff sahifasi |
 | D2-T6 | ⚠️ Inqirozli kontent — aniqlash, yordam bloki, moderator qo'llanmasi (**qisman**: rasmiy raqam ochiq) |
+| D2-T9 | CSP (nonce bilan) va xavfsizlik sarlavhalari — `unsafe-inline` siz |
+
+### CSP va xavfsizlik sarlavhalari (D2-T9)
+
+Yo'nalishlar `settings.CSP_YONALISHLARI` da. Nonce va sarlavha bitta
+middleware'da (`apps/common/middleware.py::CSPMiddleware`) — ikkiga
+bo'linsa ular uzilib ketishi va **barcha inline skript jimgina
+bloklanishi** mumkin.
+
+⚠️⚠️ **Telegram qatorlarini olib tashlamang.** Vidjet
+`https://telegram.org` dan skript yuklaydi va ichkarida
+`https://oauth.telegram.org` iframe'ini ochadi. Ikkalasi ham CSP'da
+ochiq bo'lmasa, «Telegram orqali kirish» tugmasi **umuman chiqmaydi** —
+sahifa esa xatosiz ko'rinadi va sabab faqat konsolda qoladi.
+
+⚠️ **`style-src` da `'unsafe-inline'` yo'q va shunday qolishi kerak.**
+Buning uchun uchta shart bajarilgan:
+
+1. Shablonlarda inline `style=` **yo'q** (ikkitasi D2-T9 da sinfga
+   ko'chirildi: `.stagger-1..19` va `.xavfsiz-past`). Guard test
+   taqiqlaydi.
+2. HTMX o'zining inline `<style>` blokini kiritmaydi —
+   `base.html` da `{"includeIndicatorStyles": false}`, uslublar esa
+   `input.css` da (`.htmx-indicator`).
+3. Barcha inline skriptlar `nonce` oladi.
+
+⚠️ **CSP hamma muhitda bir xil**, dev'da ham. Faqat prodda yoqilsa,
+buzilish faqat prodda ko'rinardi. Narxi: `DEBUG` dagi Django xato
+sahifasi uslubsiz ko'rinadi — traceback o'qilaveradi.
+
+---
+
+### ⚠️ Sozlamani ikki marta yozmang
+
+`base.py` da xavfsizlik bo'limi allaqachon bor. D2-T9 da beshta
+sozlama ikkinchi marta yozilgan edi va bu **jim xato**: Python'da
+oxirgi yozuv g'olib chiqadi, birinchisi esa vakolatli bo'lib
+ko'rinadi. Amalda u `SECURE_REFERRER_POLICY` ni `same-origin` dan
+bo'shroq qiymatga o'zgartirib yuborardi.
+
+Buni `test_csp.py::test_sozlamalarda_TAKROR_YOQ` (AST) qo'riqlaydi.
+
+---
 
 ### ⚠️ Inqirozli kontent (D2-T6)
 

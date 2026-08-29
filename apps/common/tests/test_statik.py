@@ -140,6 +140,13 @@ class TailwindBuildTests(SimpleTestCase):
         "yana-yuklash",
     }
 
+    # ⚠️ DINAMIK QO'SHIMCHA: `class="stagger-{{ index }}"` shablon
+    #    sintaksisi olib tashlangach `stagger-` bo'lib qoladi. Bunday
+    #    tokenni tekshirib bo'lmaydi — qiymat ish vaqtida ma'lum
+    #    bo'ladi. Cheklov bilib qo'yilgan: dinamik sinflar bu guard
+    #    qamrovidan tashqarida (ular `input.css` da qo'lda yoziladi).
+    DINAMIK_QOSHIMCHALAR = ("-", ":", "/")
+
     def sinflar(self) -> set[str]:
         from pathlib import Path
 
@@ -150,7 +157,11 @@ class TailwindBuildTests(SimpleTestCase):
             matn = self.SHABLON_SINTAKSISI.sub(" ", yol.read_text(encoding="utf-8"))
             for m in self.CLASS_ATRIBUTI.finditer(matn):
                 topilgan.update(m.group(1).split())
-        return topilgan - self.HOOK_SINFLARI
+        return {
+            s
+            for s in topilgan - self.HOOK_SINFLARI
+            if not s.endswith(self.DINAMIK_QOSHIMCHALAR)
+        }
 
     @staticmethod
     def eskeyp(sinf: str) -> str:

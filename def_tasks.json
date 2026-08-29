@@ -1718,11 +1718,64 @@
       "bogliq": [
         "D0-T6"
       ],
-      "holat": "todo",
+      "holat": "done",
       "qabul_mezoni": [
         "manage.py check --deploy toza",
         "CSP buzilishi konsolda yo'q"
-      ]
+      ],
+      "tugatilgan": "2026-08-29",
+      "eslatma": "CSP `style-src` da `'unsafe-inline'` YO'Q va shu holatda qolishi kerak. Buning uchun uchta narsa qilindi: shablonlardagi 2 ta inline `style=` sinfga ko'chirildi, HTMX ning inline `<style>` bloki o'chirildi (`includeIndicatorStyles: false`), va guard test inline `style=` ni taqiqlaydi. ⚠️ Telegram qatorlarini olib tashlamang — login buziladi.",
+      "natija": {
+        "yaratilgan": [
+          "apps/common/middleware.py — CSPMiddleware (nonce + sarlavha bitta joyda), csp_sarlavhasi()",
+          "config/settings/base.py — CSP_YONALISHLARI, PERMISSIONS_POLICY",
+          "templates/base.html — <meta name='htmx-config'> (includeIndicatorStyles: false)",
+          "tailwind/input.css — .stagger-1..19, .xavfsiz-past, .htmx-indicator",
+          "apps/common/tests/test_csp.py — 23 test"
+        ],
+        "tekshirilgan": [
+          "⭐ qabul mezoni: `manage.py check --deploy` TOZA (prod sozlamalari, uzun SECRET_KEY bilan)",
+          "⭐ qabul mezoni: konsolda CSP buzilishi YO'Q — 9 sahifa + HTMX ovoz berish + sahifalash",
+          "nonce sarlavhada va HTML'da BIR XIL (ikkalasi bitta middleware'da)",
+          "nonce har so'rovda yangi",
+          "⚠️ Telegram: script-src'da telegram.org, frame-src'da oauth.telegram.org",
+          "script-src va style-src da 'unsafe-inline' YO'Q",
+          "frame-ancestors/object-src 'none', base-uri/form-action 'self'",
+          "Permissions-Policy, X-Frame-Options DENY, nosniff, Referrer-Policy",
+          "CSRF_COOKIE_HTTPONLY=False ataylab (HTMX tokenni o'qiydi), SESSION_COOKIE_HTTPONLY=True",
+          "yo'nalishlar sozlamadan olinadi (override_settings bilan tekshirilgan)",
+          "mavjud CSP sarlavhasi qayta yozilmaydi",
+          "guard: shablonlarda inline `style=` YO'Q",
+          "guard: sozlama fayllarida TAKROR yo'q",
+          "🌐 JONLI: mavzu almashtirgich (nonce'li inline skript) ishlaydi, shrift va CSS yuklanadi"
+        ],
+        "qarorlar": [
+          "NONCE VA SARLAVHA BITTA MIDDLEWARE'DA: ikkiga bo'linsa ular uzilib ketishi mumkin — sarlavha bir qiymat, shablon boshqasini yozadi va BARCHA inline skript jimgina bloklanadi.",
+          "CSP HAMMA MUHITDA BIR XIL (dev'da ham): faqat prodda yoqilsa buzilish faqat prodda ko'rinardi. Narxi: DEBUG'dagi Django xato sahifasi uslubsiz ko'rinadi — traceback o'qilaveradi.",
+          "`style-src` da `'unsafe-inline'` YO'Q. Muqobili butun uslub himoyasini ochib qo'yardi (CSS orqali ma'lumot o'g'irlash haqiqiy usul). Buning narxi: shablonlarda inline `style=` bo'lmasligi kerak — guard test qo'riqlaydi.",
+          "Inline `style` o'rniga SINFLAR: `.stagger-1..19` (lentada 20 karta) va `.xavfsiz-past`. JavaScript'siz ham ishlaydi.",
+          "HTMX ning `<style>` bloki NONCE bilan emas, BUTUNLAY o'chirildi: nonce yo'li `style-src` ga nonce qo'shishni talab qilardi, ya'ni inline `<style>` bloklariga umuman yo'l ochilardi.",
+          "nonce FAQAT `script-src` ga qo'shiladi."
+        ],
+        "topilgan_xatolar": [
+          "⭐⭐ SOZLAMA TAKRORLANISHI. `base.py` da xavfsizlik bo'limi ALLAQACHON bor edi (D0-T1 dan); D2-T9 da beshta sozlama IKKINCHI marta yozildi. Python'da oxirgi yozuv g'olib chiqadi — yuqoridagi qiymat vakolatli ko'rinadi, amalda pastdagisi ishlaydi. Bu yerda u `SECURE_REFERRER_POLICY` ni 'same-origin' dan 'strict-origin-when-cross-origin' ga BO'SHASHTIRIB yuborardi va hech narsa xato bermasdi. Takrorlar olib tashlandi + AST guard qo'shildi (`test_sozlamalarda_TAKROR_YOQ`).",
+          "⭐ HTMX INLINE `<style>` BLOKI — jonli konsolda topildi. HTMX standart holatda `<head>` ga `.htmx-indicator{opacity:0}` uslubini inline qo'shadi va CSP uni bloklaydi: HAR sahifa yuklanishida buzilish, sayt esa xatosiz ko'rinadi. Testlar buni ushlay olmasdi — bu brauzer xulqi. `includeIndicatorStyles: false` + uslublar `input.css` ga.",
+          "`test_login_sahifasida_telegram_skripti_BOR` dastlab bot sozlanmagani uchun yiqildi — vidjet shablonda shart ostida. `override_settings` bilan bot yoqildi, aks holda test hech narsa tekshirmasdan yashil bo'lardi."
+        ],
+        "olchangan_holat": {
+          "testlar": 628,
+          "qamrov_foiz": 95.32,
+          "d2_t9_testlari": 23,
+          "csp_buzilishlari": 0,
+          "check_deploy": "toza"
+        },
+        "keyingi_uchun_eslatma": [
+          "⚠️ Yangi tashqi resurs (M6 to'lov vidjeti, xarita, analitika) qo'shilsa — `CSP_YONALISHLARI` ga qo'shing, middleware tegilmaydi.",
+          "⚠️ Inline `style=` qo'shmang: guard yiqiladi. Sinf yozing (`tailwind/input.css`).",
+          "⚠️ HTMX yangilanganda `includeIndicatorStyles` konfiguratsiyasi saqlanib qolganini tekshiring.",
+          "Kelajakda `report-uri`/`report-to` qo'shilsa, buzilishlarni prodda ham yig'ish mumkin bo'ladi."
+        ]
+      }
     },
     {
       "id": "D2-T10",

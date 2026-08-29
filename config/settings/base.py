@@ -89,7 +89,7 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     # Nonce javob yaratilishidan OLDIN kerak (shablon uni o'qiydi).
     # D2-T9 da CSP sarlavhasi shu qiymatdan foydalanadi.
-    "apps.common.middleware.CSPNonceMiddleware",
+    "apps.common.middleware.CSPMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -168,6 +168,57 @@ CACHES = {
         "LOCATION": REDIS_URL,
     }
 }
+
+
+# --------------------------------------------------------------------------
+# Xavfsizlik sarlavhalari va CSP (D2-T9)
+# --------------------------------------------------------------------------
+# ⚠️ YO'NALISHLAR SOZLAMADA, kodda emas: yangi tashqi resurs qo'shilganda
+#    (M6 to'lov vidjeti kabi) middleware tegilmaydi.
+#
+# ⚠️⚠️ TELEGRAM QATORLARINI OLIB TASHLAMANG — LOGIN BUTUNLAY BUZILADI.
+#    Vidjet `https://telegram.org/js/telegram-widget.js` skriptini
+#    yuklaydi va ichkarida `https://oauth.telegram.org` iframe'ini
+#    ochadi. Ikkalasi ham CSP'da ochiq bo'lmasa, "Telegram orqali
+#    kirish" tugmasi UMUMAN CHIQMAYDI va konsolda faqat CSP xatosi
+#    qoladi — sabab tashqaridan ko'rinmaydi.
+#    (templates/accounts/login.html da ham shu izoh bor.)
+CSP_YONALISHLARI: dict[str, list[str]] = {
+    "default-src": ["'self'"],
+    # ⚠️ `'unsafe-inline'` YO'Q va bo'lmasligi ham kerak: barcha inline
+    #    skriptlar `nonce` oladi (middleware qo'shadi).
+    "script-src": ["'self'", "https://telegram.org"],
+    # ⚠️ `'unsafe-inline'` bu yerda ham YO'Q. Shu sababli shablonlarda
+    #    inline `style=` atributi bo'lmasligi shart — guard test
+    #    tekshiradi (D2-T9 da ikkitasi olib tashlandi).
+    "style-src": ["'self'", "https://fonts.googleapis.com"],
+    "font-src": ["'self'", "https://fonts.gstatic.com"],
+    "img-src": ["'self'", "data:"],
+    "connect-src": ["'self'"],
+    "frame-src": ["https://oauth.telegram.org"],
+    # Bizni boshqa saytga ramka qilib qo'yib bo'lmaydi (clickjacking).
+    "frame-ancestors": ["'none'"],
+    "base-uri": ["'self'"],
+    "form-action": ["'self'"],
+    "object-src": ["'none'"],
+}
+
+# Kerak bo'lmagan brauzer imkoniyatlari o'chiriladi.
+PERMISSIONS_POLICY = (
+    "accelerometer=(), camera=(), geolocation=(), gyroscope=(), "
+    "magnetometer=(), microphone=(), payment=(), usb=()"
+)
+
+# ⚠️ Qolgan xavfsizlik sarlavhalari (`X_FRAME_OPTIONS`,
+#    `SECURE_REFERRER_POLICY`, cookie bayroqlari) SHU FAYLNING PASTIDA,
+#    "Xavfsizlik" bo'limida — ular D0-T1 dan beri turibdi.
+#
+# ⚠️⚠️ D2-T9 da ular BU YERGA HAM yozilgan edi va bu JIM XATO bo'lardi:
+#    Python'da oxirgi yozuv g'olib chiqadi, ya'ni yuqoridagi qiymat
+#    vakolatli ko'rinadi-yu, amalda pastdagisi ishlaydi. Aynan shu
+#    holatda `SECURE_REFERRER_POLICY` "same-origin" dan
+#    "strict-origin-when-cross-origin" ga BO'SHASHIB ketardi.
+#    Takrorlarni `test_csp.py::test_sozlamalarda_TAKROR_YOQ` qo'riqlaydi.
 
 
 # --------------------------------------------------------------------------

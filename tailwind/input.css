@@ -519,3 +519,54 @@
   animation: slide-up-fade 260ms var(--ease-out-soft) both;
   animation-delay: calc(var(--i, 0) * 40ms);
 }
+
+/* ⚠️ D2-T9: `--i` OLDIN `style="--i: {{ index }}"` bilan berilardi.
+   Inline `style` atributi esa CSP'da `style-src 'unsafe-inline'` ni
+   MAJBURLAYDI — ya'ni bitta kosmetik animatsiya uchun butun uslub
+   himoyasi ochib qo'yilardi. Sinflar bilan berilganda `style-src`
+   qat'iy qoladi va animatsiya JavaScript'siz ham ishlaydi.
+
+   Lentada bir sahifada 20 ta karta bor (`selectors.SAHIFA_HAJMI`);
+   undan ortig'i 0 kechikish oladi va bu ko'rinmaydi. */
+@layer components {
+  .stagger-1 { --i: 1; }
+  .stagger-2 { --i: 2; }
+  .stagger-3 { --i: 3; }
+  .stagger-4 { --i: 4; }
+  .stagger-5 { --i: 5; }
+  .stagger-6 { --i: 6; }
+  .stagger-7 { --i: 7; }
+  .stagger-8 { --i: 8; }
+  .stagger-9 { --i: 9; }
+  .stagger-10 { --i: 10; }
+  .stagger-11 { --i: 11; }
+  .stagger-12 { --i: 12; }
+  .stagger-13 { --i: 13; }
+  .stagger-14 { --i: 14; }
+  .stagger-15 { --i: 15; }
+  .stagger-16 { --i: 16; }
+  .stagger-17 { --i: 17; }
+  .stagger-18 { --i: 18; }
+  .stagger-19 { --i: 19; }
+
+  /* Mobil navigatsiya — telefon "iyagi" ostida qolmasin.
+     Bu ham inline `style` edi (D2-T9 dan oldin). */
+  .xavfsiz-past {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* ⚠️ HTMX yuklanish indikatori (D2-T9).
+     HTMX bularni O'ZI inline `<style>` bilan qo'shardi, lekin CSP
+     uni bloklaydi (`style-src` da `'unsafe-inline'` yo'q). Shuning
+     uchun `base.html` da `includeIndicatorStyles: false` qo'yilgan
+     va uslublar shu yerda — sinf nomlari HTMX standartiga MOS
+     bo'lishi shart. */
+  .htmx-indicator {
+    opacity: 0;
+  }
+  .htmx-request .htmx-indicator,
+  .htmx-request.htmx-indicator {
+    opacity: 1;
+    transition: opacity 200ms ease-in;
+  }
+}
