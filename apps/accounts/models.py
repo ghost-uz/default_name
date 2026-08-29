@@ -312,3 +312,62 @@ class MalumotEksporti(models.Model):
     @property
     def yuklab_olsa_boladimi(self) -> bool:
         return self.holat == EksportHolati.TAYYOR and self.muddat > timezone.now()
+
+
+# ===========================================================================
+# Foydalanuvchilar o'zaro bloklashi (D2-T11)
+# ===========================================================================
+class UserBlock(models.Model):
+    """Bir foydalanuvchi ikkinchisini ko'rmaslikni tanlagan.
+
+    ⚠️ MODERATOR BLOKIDAN BUTUNLAY BOSHQA NARSA.
+       `User.is_banned` — platformaning qarori: odam YOZA olmaydi.
+       `UserBlock` — foydalanuvchining o'z qarori: u boshqa odamning
+       kontentini KO'RMAYDI. Bloklangan odam bundan xabardor emas va
+       hech qanday cheklov olmaydi.
+
+    ⚠️ BIR TOMONLAMA. A B ni bloklasa, B A ni ko'raverali. Ikki
+       tomonlama qilish "meni bloklashdi" degan signalni beradi va
+       bu tortishuvni kuchaytiradi — bloklashdan maqsad esa aksincha.
+
+    ⚠️ Bu MUAMMOLARNI YO'QOTMAYDI: bloklangan odamning posti lentadan
+       chiqadi, lekin muhokamada uning javobi bo'lgan post baribir
+       ko'rinadi (javobning o'zi yashiriladi). To'liq "yo'q qilish"
+       muhokamani tushunarsiz qilardi.
+    """
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        verbose_name="kim bloklagan",
+        on_delete=models.CASCADE,
+        related_name="bloklaganlari",
+    )
+    blocked = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        verbose_name="kim bloklangan",
+        on_delete=models.CASCADE,
+        related_name="bloklanganlari",
+    )
+    created_at = models.DateTimeField("bloklangan vaqt", auto_now_add=True)
+
+    class Meta:
+        verbose_name = "foydalanuvchi bloki"
+        verbose_name_plural = "foydalanuvchi bloklari"
+        ordering = ("-created_at",)
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "blocked"],
+                name="userblock_uniq",
+                violation_error_message="Bu foydalanuvchi allaqachon bloklangan.",
+            ),
+            # ⚠️ O'zini bloklash — mantiqsiz va interfeysda tushunarsiz
+            #    holat yaratardi (o'z postlari lentadan yo'qolardi).
+            models.CheckConstraint(
+                condition=~models.Q(user=models.F("blocked")),
+                name="userblock_ozini_bloklamaydi",
+                violation_error_message="O'zingizni bloklay olmaysiz.",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.user_id} -> {self.blocked_id}"

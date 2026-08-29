@@ -63,6 +63,24 @@
         {% if holat.target.is_anonymous %}
           <span class="badge">anonim chiqadi</span>
         {% endif %}
+        {% comment %}
+          ⚠️ TARIX — KONTEKST, JAZO EMAS (D2-T11). "Birinchi marta xato
+             qilgan odam" va "beshinchi marta bir xil narsani qilayotgan
+             odam" bir xil ko'rinsa, moderator ikkalasiga ham bir xil
+             muomala qiladi — bu ikkalasiga ham noto'g'ri.
+
+          ⚠️ "Avval N ta chora" deb yozilgan, "N-chi qoidabuzarlik" deb
+             emas: ikkinchisi bu holatning O'ZI sanoqqa kirganmi degan
+             savolni ochiq qoldirardi va moderator noto'g'ri sanardi.
+        {% endcomment %}
+        {% if holat.takroriymi %}
+          <span class="badge-boom" title="Bekor qilingan qarorlar sanalmaydi">
+            avval {{ holat.qoidabuzarliklar }} ta chora
+          </span>
+        {% endif %}
+        {% if holat.cheklanganmi %}
+          <span class="badge bg-danger-bg text-danger">hozir cheklangan</span>
+        {% endif %}
       {% else %}
         <span class="text-fg-muted">muallif o'chirilgan</span>
       {% endif %}
@@ -165,5 +183,92 @@
         >{{ yorliq }}</button>
       {% endfor %}
     </div>
+
+    {% comment %}
+      ⚠️⚠️ OQIBAT TUGMANI BOSISHDAN OLDIN AYTILADI (D2-T11).
+
+         `eskalatsiyani_tekshirish()` chora ko'rilgandan keyin
+         avtomatik ishlaydi — sanash mashinaning ishi va bu to'g'ri.
+         Lekin "ogohlantirish" tugmasini bosgan moderator odamni
+         bloklab qo'yganini KEYIN bilib olishi noto'g'ri: u
+         ogohlantirmoqchi edi, bloklamoqchi emas.
+
+         Bu qator "rad etish" ga taalluqli emas — u qoidabuzarlik
+         sanalmaydi va eskalatsiyani ishga tushirmaydi.
+    {% endcomment %}
+    {% if holat.keyingisi_cheklaydimi %}
+      <p class="mt-2 text-[13px] font-semibold text-boom">
+        ⚠ Keyingi chora (rad etishdan tashqari) muallifni AVTOMATIK
+        {% if holat.keyingisi_cheklaydimi == 'doimiy' %}DOIMIY bloklaydi{% else %}{{ cheklov_kun }} kunga cheklaydi{% endif %}.
+      </p>
+    {% endif %}
   </form>
+
+  {% comment %}
+    ⚠️ ODAM USTIDAN QAROR — KONTENT QARORIDAN ALOHIDA FORMADA.
+
+       Texnik sabab: HTML ichma-ich forma qo'llab-quvvatlamaydi.
+       Mahsulot sababi esa muhimroq: "postni yashirish" va "odamni
+       cheklash" bir bosishda tasodifan birga ketmasligi kerak.
+
+    ⚠️ `<details>` ichida — xavfli harakat bitta ONGLI ochish
+       narida. Bu maketdagi "xavfli/qaytarilmas harakat ataylab
+       ajratilgan" qoidasining davomi (`complaints/detail.html`).
+       JavaScript talab qilmaydi: CSP `script-src` da
+       `'unsafe-inline'` yo'q (D2-T9), ichki `onclick` baribir
+       ishlamasdi.
+  {% endcomment %}
+  {% if holat.muallif %}
+    <div class="border-t border-line bg-surface-2 px-4 py-3">
+      {% if holat.cheklanganmi %}
+        <form method="post" action="{% url 'moderatsiya_cheklov_yechish' holat.muallif.pk %}"
+              class="flex flex-wrap items-center gap-2">
+          {% csrf_token %}
+          <span class="text-[13px] text-fg-muted">
+            @{{ holat.muallif.username }} hozir cheklangan
+            {% if holat.muallif.banned_until %}
+              — {{ holat.muallif.banned_until|date:"j-F, H:i" }} gacha
+            {% else %}
+              — doimiy
+            {% endif %}
+          </span>
+          <label class="sr-only" for="yechish-sabab-{{ holat.kalit }}">Yechish sababi</label>
+          <input class="input ml-auto !w-auto !py-1.5 text-[13px]" type="text" maxlength="200"
+                 id="yechish-sabab-{{ holat.kalit }}" name="sabab" placeholder="Nega yechilyapti" />
+          <button type="submit" class="btn-outline btn-sm">Cheklovni yechish</button>
+        </form>
+      {% else %}
+        <details>
+          <summary class="cursor-pointer text-[13px] font-semibold text-fg-muted marker:text-fg-muted">
+            Foydalanuvchini cheklash
+          </summary>
+          <form method="post" action="{% url 'moderatsiya_cheklash' holat.muallif.pk %}" class="mt-2.5">
+            {% csrf_token %}
+            {% comment %}
+              ⚠️ Sabab MAYDONI bor va u jurnalga tushadi (D2-T7).
+                 Sababsiz cheklov bir oydan keyin "nega bu odam
+                 bloklangan?" degan javobsiz savolga aylanadi —
+                 va apellyatsiyada javob berib bo'lmaydi.
+            {% endcomment %}
+            <label class="sr-only" for="cheklov-sabab-{{ holat.kalit }}">Cheklov sababi</label>
+            <input class="input mb-2 !py-2 text-sm" type="text" maxlength="200"
+                   id="cheklov-sabab-{{ holat.kalit }}" name="sabab"
+                   placeholder="Sabab — jurnalga yoziladi va apellyatsiyada shu o'qiladi" />
+            <div class="flex flex-wrap gap-2">
+              <button type="submit" name="doimiy" value="0" class="btn-outline btn-sm !border-boom/60 !text-boom">
+                {{ cheklov_kun }} kunga cheklash
+              </button>
+              <button type="submit" name="doimiy" value="1" class="btn-outline btn-sm !border-danger/50 !text-danger">
+                Doimiy bloklash
+              </button>
+            </div>
+            <p class="mt-2 text-[12px] text-fg-muted">
+              Cheklangan odam saytni O'QIY OLADI, lekin yoza olmaydi — u o'ziga
+              kelgan javoblarni ko'rishi va sababni bilishi kerak.
+            </p>
+          </form>
+        </details>
+      {% endif %}
+    </div>
+  {% endif %}
 </article>

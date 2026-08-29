@@ -422,6 +422,93 @@ Faqat **`CI holati`** tekshiruvini tanlang, alohida job'larni emas.
 | D2-T6 | ⚠️ Inqirozli kontent — aniqlash, yordam bloki, moderator qo'llanmasi (**qisman**: rasmiy raqam ochiq) |
 | D2-T9 | CSP (nonce bilan) va xavfsizlik sarlavhalari — `unsafe-inline` siz |
 | D2-T8 | Hisobni o'chirish (anonimlashtirish) va ma'lumot eksporti (JSON, fon vazifasi) |
+| D2-T10 | ⚠️ Huquqiy sahifalar va rozilik — sana **va versiya** saqlanadi (**qisman**: matnlar yuristsiz) |
+| D2-T11 | Bloklash va uch ogohlantirish — foydalanuvchi bloki + moderator cheklovi, ikkalasi **boshqa-boshqa narsa** |
+
+**M2 (xavfsizlik va moderatsiya) KOD BO'YICHA TUGADI** — 11/11 task yozildi.
+Ikkitasi `qisman` bo'lib qoladi va ularning ochiq qismi **koddan tashqarida**:
+D2-T6 rasmiy ishonch telefonini talab qiladi, D2-T10 — yurist xulosasini.
+
+### Bloklash: ikki xil "blok" (D2-T11)
+
+⚠️⚠️ **Bitta so'z, ikki butunlay boshqa tushuncha.** Ular ataylab
+ajratilgan — bitta jadvalga qo'shilsa "bloklangan odam nega yoza
+olmayapti?" degan buglar chiqardi.
+
+| | `User.is_banned` | `UserBlock` |
+|---|---|---|
+| Kimning qarori | **Platformaning** | **Foydalanuvchining** |
+| Oqibati | Odam **yoza olmaydi** | Odam boshqasini **ko'rmaydi** |
+| Bloklangan biladimi | Ha — sayt bo'ylab banner | **Yo'q**, hech qanday signal yo'q |
+| Yo'nalishi | — | **Bir tomonlama** |
+| Kim qo'yadi | Moderator yoki avtomatika | Foydalanuvchining o'zi |
+
+**Nega bir tomonlama:** ikki tomonlama qilish "meni bloklashdi" degan
+signalni berardi va tortishuvni kuchaytirardi — bloklashdan maqsad esa
+aksincha.
+
+**Nega bloklangan odamga aytilmaydi:** u hech qanday cheklov olmaydi va
+xabardor ham emas. Bu jazo emas, bu o'z lentangizni tozalash.
+
+### Uch ogohlantirish — sanash mashinaning ishi
+
+```
+1-2 chora  ->  hech narsa
+3-chora    ->  7 kunga cheklov   (CHEKLOV_CHEGARASI)
+5-chora    ->  doimiy blok       (DOIMIY_BLOK_CHEGARASI)
+```
+
+Chegaralar `config/settings/base.py` da — kod tegilmaydi (D2-T4 bilan bir xil qoida).
+
+⚠️ **`RAD_ETISH` sanalmaydi** — u "qoidabuzarlik yo'q" degani.
+⚠️ **Bekor qilingan chora sanalmaydi** — moderatorning xatosi
+foydalanuvchining "jinoyat tarixiga" aylanmasin.
+
+⚠️⚠️ **Oqibat tugmani bosishdan OLDIN aytiladi.** Navbatda "keyingi chora
+muallifni AVTOMATIK cheklaydi" degan qator chiqadi. Moderator
+ogohlantirmoqchi edi, bloklamoqchi emas — buni keyin bilib olishi
+noto'g'ri.
+
+### ⚠️ Cheklov muddati QISQARMAYDI
+
+`apps/moderation/services.py::yangi_muddat()` — `max(mavjud, so'ralgan)`.
+
+Sodda `now + kun` yozuvi **jim yumshatish** berardi: moderator odamni 30
+kunga cheklagan bo'lsa-yu, ikki kundan keyin standart 7 kunlik cheklov
+tushsa, muddat **21 kunga qisqarardi**. Ya'ni yangi jazo jazoni
+yengillashtirardi.
+
+Muddatlar **qo'shilmaydi** ham (30 + 7 + 7 → yashirin doimiy blok
+bo'lardi, lekin "doimiy" deb atalmagan holda — bunday blokni
+tushuntirib ham, apellyatsiya qilib ham bo'lmaydi).
+
+### ⚠️⚠️ Anonimlik blokdan ustun
+
+Bloklangan muallif **lentadan chiqadi**, muhokamada esa javobi
+`<details>` ichida yig'iladi ("Bloklangan foydalanuvchi javobi —
+ko'rsatish"). Javob **o'chirilmaydi**: olib tashlansa "3 yechim" yozilgan
+joyda 2 tasi ko'rinardi va javoblar zanjiri uzilardi.
+
+**Lekin anonim javob HECH QACHON yig'ilmaydi**, muallifi bloklangan
+bo'lsa ham. "Bloklangan foydalanuvchi javobi" yozuvi o'quvchiga muallif
+KIM ekanini aytib qo'yardi — u o'z bloklaganlari ro'yxatini biladi.
+Ya'ni blok anonimlikni ochadigan asbobga aylanardi.
+
+Lentada bunday xavf yo'q: u yerda post shunchaki **yo'q** bo'ladi va
+yo'qlik signal bermaydi.
+
+### ⚠️ `Meta.ordering` + `values().annotate()` = jim buzilgan GROUP BY
+
+`_qoidabuzarlik_sonlari()` dagi **`.order_by()` ni olib tashlamang**.
+
+`ModerationAction.Meta.ordering = ("-created_at",)`. Django
+`values(...).annotate(...)` da standart tartibni **GROUP BY ga qo'shib
+yuboradi** — guruhlash `(muallif, created_at)` bo'yicha ketardi va har
+chora o'ziga alohida guruh bo'lardi. Natijada **hamma sanoq `1`**
+chiqardi va **hech qanday xato bermasdi**.
+
+Qo'riqchi: `test_navbat_sanogi_META_ORDERING_dan_BUZILMAYDI` — u
+so'rovlar sonini emas, aynan **raqamni** tekshiradi.
 
 ### Hisobni o'chirish va eksport (D2-T8) — `/hisob/`
 
@@ -540,7 +627,7 @@ ataylab: alohida hujjatda turgani tungi soat 2 da topilmaydi.
 ### ⚠️⚠️ `ISHONCH_TELEFONI` ataylab bo'sh
 
 ```python
-ISHONCH_TELEFONI = None   # config/settings/base.py
+ISHONCH_TELEFONI = None  # config/settings/base.py
 ```
 
 Task eslatmasi: **«noto'g'ri inqiroz raqami raqam yo'qligidan
@@ -746,9 +833,9 @@ element; undan chapdagilarni mijoz o'zi yozgan bo'lishi mumkin va ular
 e'tiborga olinmaydi.
 
 ```python
-ISHONCHLI_PROKSILAR_SONI = 0   # dev/test — REMOTE_ADDR
-ISHONCHLI_PROKSILAR_SONI = 1   # prod — nginx
-ISHONCHLI_PROKSILAR_SONI = 2   # CDN (Cloudflare) + nginx
+ISHONCHLI_PROKSILAR_SONI = 0  # dev/test — REMOTE_ADDR
+ISHONCHLI_PROKSILAR_SONI = 1  # prod — nginx
+ISHONCHLI_PROKSILAR_SONI = 2  # CDN (Cloudflare) + nginx
 ```
 
 ⚠️ Bu son proksilar sonidan **katta bo'lmasligi** kerak: har bir
@@ -954,22 +1041,36 @@ Istisno taqiqlanmaydi — u **ko'rinadigan va izohlangan** bo'lishi kerak.
 **D0-T10 qisman:** barcha fayllar tayyor va lokal repetitsiyada tekshirilgan;
 server hali olinmagan. Ketma-ketlik: [`DEPLOY.md`](DEPLOY.md).
 
-Keyingi: **M2 — xavfsizlik va moderatsiya.** Reja uni ommaviy ishga
-tushirishdan **OLDIN majburiy** deb belgilagan: shikoyat oqimi (D2-T1),
-moderatsiya navbati (D2-T2), tezlik cheklovi (D2-T4), inqirozli kontent
-siyosati (D2-T6), huquqiy sahifalar (D2-T10).
+**M2 — xavfsizlik va moderatsiya: kod bo'yicha tugadi.** Reja uni ommaviy
+ishga tushirishdan **OLDIN majburiy** deb belgilagan va o'n bir taskning
+hammasi yozildi. Ikkitasining ochiq qismi koddan tashqarida:
+
+- **D2-T6** — rasmiy ishonch telefoni topilishi kerak (hozir `ISHONCH_TELEFONI = None`,
+  103/112 ko'rsatiladi). Egasining shaxsiy raqami tashkilot liniyasi emas.
+- **D2-T10** — matnlarni yurist ko'rishi kerak (`HUQUQIY_KORILDI = False`,
+  har sahifada ochiq belgi turadi).
+
+Keyingi: **M3 — gamifikatsiya va profil** (karma ledgeri D3-T1 qisman
+tayyor, keyin nishonlar, reyting, profil sahifasi, ekspert oqimi).
 
 ### So'rov sonlari (D1-T14 da o'lchangan)
 
 | Sahifa | Mehmon | Kirgan |
 |---|---|---|
-| Lenta (20 karta) | 2 | 6 |
-| Lenta, 2-sahifa | — | 7 |
-| Batafsil (15 yechim) | 3 | 8 |
+| Lenta (20 karta) | 2 | 7 |
+| Lenta, 2-sahifa | — | 8 |
+| Batafsil (15 yechim) | 3 | 9 |
 | Saqlanganlar | — | 4 |
 
 Sonlar **element soniga bog'liq emas** — `test_n_plus_1.py` buni
 qotirgan (5 va 50 element bir xil son berishi shart).
+
+⚠️ Kirgan foydalanuvchida **D2-T11 da bittadan so'rov qo'shildi**
+(bloklangan mualliflar ro'yxati) va bu **ongli** qaror. Ro'yxat bir
+marta olinadi va so'rovga **qiymat** sifatida tushadi — ichma-ich
+`QuerySet` bo'lsa PostgreSQL uni har sahifada qayta bajarardi.
+Cheklov banneri esa so'rov **qo'shmaydi**: u `request.user` dagi
+maydonlarni o'qiydi.
 
 ### ⚠️ Telegram login uchun sozlash
 

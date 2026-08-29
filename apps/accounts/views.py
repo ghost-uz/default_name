@@ -11,6 +11,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ValidationError
 from django.http import (
     HttpRequest,
     HttpResponse,
@@ -25,6 +26,8 @@ from django.views.decorators.http import require_POST
 
 from .models import MalumotEksporti, User
 from .services import (
+    bloklash,
+    blokni_yechish,
     eksport_soralgan,
     hisobni_ochirish,
     rozilikni_yozish,
@@ -189,6 +192,9 @@ def hisob(request: HttpRequest) -> HttpResponse:
             "eksportlar": MalumotEksporti.objects.filter(user=foydalanuvchi)[:5],
             "dardlar_soni": foydalanuvchi.complaints.count(),
             "yechimlar_soni": foydalanuvchi.solutions.count(),
+            # ⚠️ Blokni YECHISH yo'li bo'lishi shart: bloklash oson,
+            #    qaytarish esa topib bo'lmaydigan bo'lsa — bu tuzoq.
+            "bloklanganlar": foydalanuvchi.bloklaganlari.select_related("blocked"),
         },
     )
 
@@ -299,3 +305,36 @@ def rozilik(request: HttpRequest) -> HttpResponse:
         "accounts/rozilik.html",
         {"next": request.GET.get("next", "")},
     )
+
+
+# ===========================================================================
+# Foydalanuvchilar o'zaro bloklashi (D2-T11)
+# ===========================================================================
+@login_required
+@require_POST
+def foydalanuvchini_bloklash(request: HttpRequest, username: str) -> HttpResponse:
+    """Foydalanuvchini bloklaydi — uning kontenti lentadan chiqadi.
+
+    ⚠️ Bloklangan odamga HECH NARSA bildirilmaydi va u hech qanday
+       cheklov olmaydi. "Sizni bloklashdi" degan signal tortishuvni
+       kuchaytirardi, bloklashdan maqsad esa aksincha.
+    """
+    kim = get_object_or_404(User, username=username, ochirilgan_at__isnull=True)
+    try:
+        bloklash(user=cast("User", request.user), kim=kim)
+    except ValidationError as exc:
+        messages.error(request, exc.messages[0])
+    else:
+        messages.info(
+            request, f"{kim.display_name} bloklandi — postlari lentangizda chiqmaydi."
+        )
+    return redirect(_xavfsiz_next(request, request.POST.get("next", "")))
+
+
+@login_required
+@require_POST
+def blokni_bekor_qilish(request: HttpRequest, username: str) -> HttpResponse:
+    kim = get_object_or_404(User, username=username)
+    blokni_yechish(user=cast("User", request.user), kim=kim)
+    messages.info(request, f"{kim.display_name} blokdan chiqarildi.")
+    return redirect(_xavfsiz_next(request, request.POST.get("next", "")))

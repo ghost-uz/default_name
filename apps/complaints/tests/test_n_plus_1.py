@@ -248,19 +248,25 @@ def test_QATIY_sonlar(user, django_assert_num_queries):
     har relizda bittadan so'rov qo'shilsa, bir yildan keyin lenta
     ikki barobar sekin bo'ladi va hech kim buni payqamaydi.
 
-    Joriy holat (2026-08-28):
-      lenta (kirgan) — 6 ta:
+    Joriy holat (2026-08-29):
+      lenta (kirgan) — 7 ta:
         1. muammolar (select_related: author, category)
         2. sessiya
         3. foydalanuvchi
         4. ovozlar (bitta to'plamli so'rov)
         5. saqlanganlar (bitta to'plamli so'rov)
         6. yon panel kategoriyalari (annotate)
+        7. bloklangan mualliflar ro'yxati (D2-T11)
+
+    ⚠️ 7-so'rov D2-T11 da qo'shildi va ONGLI qaror: bloklangan
+       mualliflarni lentadan chiqarish uchun ro'yxat kerak. U BIR
+       MARTA olinadi va so'rovga qiymat sifatida tushadi — ichma-ich
+       `QuerySet` bo'lsa PostgreSQL uni har sahifada qayta bajarardi.
     """
     c = Client()
     c.force_login(user)
     lenta_toldirish(soni=20, user=user)
     c.get("/")  # sessiyani ilitamiz
 
-    with django_assert_num_queries(6):
+    with django_assert_num_queries(7):
         c.get("/")

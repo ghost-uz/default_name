@@ -5,6 +5,7 @@ from __future__ import annotations
 import functools
 from collections.abc import Callable
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
@@ -14,6 +15,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
+from apps.accounts.models import User
 from apps.common.inqiroz import inqiroz_konteksti
 from apps.common.ratelimit import tezlik_cheklovi
 from apps.complaints.models import Complaint
@@ -31,6 +33,8 @@ from .selectors import navbat as navbat_holatlari
 from .services import (
     AllaqachonShikoyatQilingan,
     BekorQilibBolmaydi,
+    cheklovni_yechish,
+    foydalanuvchini_cheklash,
     qaror_qabul_qilish,
     qarorni_bekor_qilish,
     shikoyat_yuborish,
@@ -196,6 +200,11 @@ def navbat(request: HttpRequest) -> HttpResponse:
                 for t in ModerationActionType
                 if t != ModerationActionType.BEKOR_QILISH
             ],
+            # ⚠️ Tugmadagi "7 kunga cheklash" yozuvi SOZLAMADAN keladi
+            #    (D2-T11). Shablonga qo'lda yozilsa, sozlama
+            #    o'zgarganda interfeys yolg'on gapirib qolardi va buni
+            #    hech kim payqamasdi.
+            "cheklov_kun": settings.CHEKLOV_MUDDATI_KUN,
         },
     )
 
@@ -309,3 +318,83 @@ def qollanma(request: HttpRequest) -> HttpResponse:
        siyosat bo'lmasa qaror tungi soat 2 da shoshib qabul qilinadi".
     """
     return render(request, "moderation/qollanma.html", inqiroz_konteksti())
+
+
+# ===========================================================================
+# Foydalanuvchini cheklash — navbatdan (D2-T11)
+# ===========================================================================
+# ⚠️ NEGA NAVBATDA, ADMINDA EMAS.
+#    Django admin `is_banned` maydonini tahrirlash imkonini beradi,
+#    lekin u AUDIT JURNALIGA HECH NARSA YOZMAYDI (D2-T7): kim, qachon,
+#    nega chekladi — iz qolmasdi. Bu yerdagi yo'l `services` orqali
+#    o'tadi, ya'ni har cheklov jurnalda ko'rinadi.
+#
+# ⚠️ Cheklov qarori KONTENT qarori bilan BITTA ekranda, lekin ALOHIDA
+#    formada: HTML ichma-ich forma qo'llab-quvvatlamaydi, va bu ajratish
+#    to'g'ri ham — "postni yashirish" va "odamni cheklash" bir bosishda
+#    tasodifan birga ketmasligi kerak.
+def _cheklov_maqsadi(pk: int) -> User:
+    """Cheklanadigan foydalanuvchi.
+
+    ⚠️ O'chirilgan hisob CHEKLANMAYDI: uning kontenti allaqachon
+       anonimlashtirilgan (D2-T8) va cheklash hech narsani
+       o'zgartirmaydi — faqat jurnalni ma'nosiz yozuv bilan to'ldirardi.
+    """
+    return get_object_or_404(User, pk=pk, ochirilgan_at__isnull=True)
+
+
+@moderator_kerak
+@require_POST
+def foydalanuvchini_cheklash_view(request: HttpRequest, pk: int) -> HttpResponse:
+    """Moderator foydalanuvchini QO'LDA cheklaydi.
+
+    ⚠️ QO'LDA CHEKLOV AVTOMATIKANI KUTMAYDI. Uch ogohlantirish —
+       o'rtacha holat uchun; og'ir holat (masalan, uyushtirilgan
+       hujum yoki tahdid) uchun moderator birinchi chorada ham
+       to'xtata olishi kerak. Aks holda task tavsifidagi muammo
+       teskari tomondan qaytardi: yagona qurol AVTOMATIKA bo'lsa,
+       moderator uchta qoidabuzarlik "yig'ilishini" kutib o'tirardi.
+
+    ⚠️ MODERATOR O'ZINI CHEKLAY OLMAYDI — bu xato bosish, qasd emas;
+       lekin oqibati bir xil: moderator o'z hisobini yopib qo'yardi.
+    """
+    kim = _cheklov_maqsadi(pk)
+    sabab = request.POST.get("sabab", "").strip()
+    doimiy = request.POST.get("doimiy") == "1"
+
+    if kim.pk == request.user.pk:
+        messages.error(request, "O'zingizni cheklay olmaysiz.")
+        return redirect(_xavfsiz_next(request, "moderatsiya_navbat"))
+
+    foydalanuvchini_cheklash(
+        moderator=request.user,
+        user=kim,
+        sabab=sabab or "Moderator qarori (sabab ko'rsatilmagan).",
+        doimiy=doimiy,
+    )
+    messages.success(
+        request,
+        f"@{kim.username} "
+        + ("doimiy bloklandi." if doimiy else "vaqtinchalik cheklandi."),
+    )
+    return redirect(_xavfsiz_next(request, "moderatsiya_navbat"))
+
+
+@moderator_kerak
+@require_POST
+def cheklovni_yechish_view(request: HttpRequest, pk: int) -> HttpResponse:
+    """Cheklovni orqaga qaytaradi.
+
+    ⚠️ QAYTARISH YO'LI SHU YERDA BO'LISHI SHART. Cheklash bir bosish,
+       yechish esa faqat adminda bo'lsa — moderator xatosini
+       tuzatmaydi, chunki tuzatish yo'li ko'rinmaydi. Bu qoida
+       foydalanuvchi bloklari uchun ham amal qiladi (`/hisob/`).
+    """
+    kim = get_object_or_404(User, pk=pk)
+    cheklovni_yechish(
+        moderator=request.user,
+        user=kim,
+        sabab=request.POST.get("sabab", "").strip(),
+    )
+    messages.info(request, f"@{kim.username} cheklovi yechildi.")
+    return redirect(_xavfsiz_next(request, "moderatsiya_navbat"))

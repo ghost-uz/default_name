@@ -1,0 +1,58 @@
+{% comment %}
+  Cheklangan foydalanuvchiga ko'rsatiladigan banner (D2-T11).
+
+  ⚠️ NEGA SAYT BO'YLAB, faqat yozish sahifasida emas.
+     `foydalanuvchini_cheklash()` docstring'i cheklovning butun
+     mantiqini shunga qurgan: odam saytni O'QIY OLADI, chunki u
+     "nima uchun cheklanganini tushunishi kerak". Xabar faqat
+     `/yozish/` da tursa, bu va'da bajarilmasdi: odam yozmoqchi
+     bo'lgunicha (ehtimol bir necha kun) hech narsa bilmasdi va
+     sayt unga jimgina buzilgandek ko'rinardi.
+
+  ⚠️ SO'ROV QO'SHMAYDI. `request.user` allaqachon sessiya bilan
+     yuklangan, `ban_reason`/`banned_until` esa o'sha qatorda.
+     Kontekst protsessori qo'shilganda lenta so'rov-sanog'i
+     (`test_QATIY_sonlar`) o'zgarardi — bu yerda o'zgarmaydi.
+
+  ⚠️ `is_currently_banned`, `is_banned` EMAS. Muddati o'tgan
+     cheklovda bayroq hali `True` turadi (uni tozalaydigan fon
+     vazifasi yo'q) — bayroqqa qarasak, odam muddat tugagandan
+     keyin ham "cheklangansiz" degan xabarni ko'raverardi.
+
+  ⚠️ Mehmonda `request.user.is_currently_banned` bo'sh satrga
+     aylanadi (`AnonymousUser` da bunday xossa yo'q) — Django
+     shablonlari buni jim yutadi va shart yolg'on bo'ladi.
+{% endcomment %}
+{% if request.user.is_currently_banned %}
+  {% if request.user.banned_until %}
+    {% url 'qoidalar' as batafsil_url %}
+    <div class="border-b border-boom/40 bg-boom-bg px-4 py-3 text-boom" role="status">
+      <div class="mx-auto flex max-w-[900px] flex-wrap items-center gap-x-3 gap-y-1 text-[14px]">
+        <svg class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 9v4m0 4h.01"/><circle cx="12" cy="12" r="9"/></svg>
+        <span>
+          <strong class="font-bold">Hisobingiz {{ request.user.banned_until|date:"j-F, H:i" }} gacha cheklangan.</strong>
+          {% if request.user.ban_reason %}Sabab: {{ request.user.ban_reason }}.{% endif %}
+          Siz saytni o'qiy olasiz, lekin yoza olmaysiz.
+        </span>
+        <a href="{{ batafsil_url }}" class="ml-auto shrink-0 font-semibold underline underline-offset-2 hover:no-underline">Batafsil</a>
+      </div>
+    </div>
+  {% else %}
+    {% comment %}
+      ⚠️ DOIMIY blok boshqa rangda: vaqtinchalik cheklov "kuting"
+         degani, doimiysi esa "bu tugadi". Bir xil ko'rinsa, odam
+         muddat tugashini kutib o'tirardi.
+    {% endcomment %}
+    <div class="border-b border-danger/40 bg-danger-bg px-4 py-3 text-danger" role="status">
+      <div class="mx-auto flex max-w-[900px] flex-wrap items-center gap-x-3 gap-y-1 text-[14px]">
+        <svg class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 9v4m0 4h.01"/><circle cx="12" cy="12" r="9"/></svg>
+        <span>
+          <strong class="font-bold">Hisobingiz doimiy bloklangan.</strong>
+          {% if request.user.ban_reason %}Sabab: {{ request.user.ban_reason }}.{% endif %}
+          Siz saytni o'qiy olasiz, lekin yoza olmaysiz.
+        </span>
+        <a href="{% url 'boglanish' %}" class="ml-auto shrink-0 font-semibold underline underline-offset-2 hover:no-underline">Bog'lanish</a>
+      </div>
+    </div>
+  {% endif %}
+{% endif %}

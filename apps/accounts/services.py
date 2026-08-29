@@ -371,3 +371,45 @@ def rozilikni_yozish(*, user, yosh_tasdiqlandi: bool) -> None:
 
     user.save(update_fields=["rozilik_at", "rozilik_versiyasi", "yosh_tasdigi_at"])
     log.info("Rozilik yozildi: user=%s versiya=%s", user.pk, user.rozilik_versiyasi)
+
+
+# ===========================================================================
+# Foydalanuvchilar o'zaro bloklashi (D2-T11)
+# ===========================================================================
+def bloklangan_idlar(*, user) -> list[int]:
+    """Foydalanuvchi bloklaganlarning `pk` ro'yxati.
+
+    ⚠️ BITTA SO'ROV va u ro'yxatga aylantiriladi. `QuerySet` qaytarilsa
+       u har ishlatilganda qayta bajarilardi — lentada bu bir necha
+       marta takrorlanardi.
+
+    ⚠️ Mehmon uchun bo'sh ro'yxat: bloklash faqat kirganlarda bor,
+       lekin chaqiruvchi buni tekshirishi shart emas.
+    """
+    from .models import UserBlock
+
+    if not getattr(user, "is_authenticated", False):
+        return []
+    return list(
+        UserBlock.objects.filter(user=user).values_list("blocked_id", flat=True)
+    )
+
+
+def bloklash(*, user, kim):
+    """`user` `kim` ni bloklaydi. Takroriy chaqiruv xato bermaydi."""
+    from django.core.exceptions import ValidationError
+
+    from .models import UserBlock
+
+    if user.pk == kim.pk:
+        raise ValidationError("O'zingizni bloklay olmaysiz.")
+
+    blok, _ = UserBlock.objects.get_or_create(user=user, blocked=kim)
+    log.info("Blok: %s -> %s", user.pk, kim.pk)
+    return blok
+
+
+def blokni_yechish(*, user, kim) -> None:
+    from .models import UserBlock
+
+    UserBlock.objects.filter(user=user, blocked=kim).delete()

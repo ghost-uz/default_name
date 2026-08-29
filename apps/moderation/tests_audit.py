@@ -218,6 +218,10 @@ JURNALGA_YOZADIGAN_XIZMATLAR = {
     "shikoyatni_yopish",
     "qaror_qabul_qilish",
     "qarorni_bekor_qilish",
+    # D2-T11 da qo'shilgan — guard ularni AVTOMATIK topdi va shu
+    # ro'yxatga qo'shishga majbur qildi (testlari `tests_bloklash.py` da).
+    "foydalanuvchini_cheklash",
+    "cheklovni_yechish",
 }
 
 

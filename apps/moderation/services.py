@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import logging
+from datetime import datetime, timedelta
 
+from django.conf import settings
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import IntegrityError, transaction
+from django.utils import timezone
 
 from .audit import audit
 from .models import (
@@ -105,8 +108,6 @@ def shikoyatni_yopish(
        alohida qaror va D2-T2/D2-T7 da audit jurnaliga tushadi.
        Shikoyatni yopish faqat "ko'rib chiqildi" degani.
     """
-    from django.utils import timezone
-
     if not getattr(moderator, "is_staff", False):
         raise PermissionDenied("Faqat moderator shikoyatni yopa oladi.")
 
@@ -183,8 +184,6 @@ def qaror_qabul_qilish(
        (spam evristikasi) shikoyatchining aniqligini shu farqdan
        o'lchaydi.
     """
-    from django.utils import timezone
-
     _moderatorni_tekshirish(moderator)
 
     if action == ModerationActionType.BEKOR_QILISH:
@@ -239,6 +238,12 @@ def qaror_qabul_qilish(
         izoh[:60],
         yopildi,
     )
+
+    # ⚠️ UCH OGOHLANTIRISH (D2-T11) — moderator sanab o'tirmasin.
+    #    Chora yozilgandan KEYIN chaqiriladi: sanoq shu chorani ham
+    #    hisobga olishi kerak.
+    eskalatsiyani_tekshirish(moderator=moderator, user=target.author)
+
     return chora
 
 
@@ -418,3 +423,177 @@ def inqirozni_belgilash(*, target, matnlar: list[str]) -> Report | None:
     )
     log.warning("INQIROZ BELGISI: %s (%s)", hisobot.target_nomi, len(belgilar))
     return hisobot
+
+
+# ===========================================================================
+# Foydalanuvchini cheklash — uch ogohlantirish (D2-T11)
+# ===========================================================================
+# ⚠️ QOIDABUZARLIK choralari: shular sanaladi.
+#    `RAD_ETISH` yo'q — u "qoidabuzarlik yo'q" degani.
+#    `BEKOR_QILISH` ham yo'q — u chora emas, chorani qaytarish.
+QOIDABUZARLIK_CHORALARI = (
+    ModerationActionType.OGOHLANTIRISH,
+    ModerationActionType.YASHIRISH,
+    ModerationActionType.OLIB_TASHLASH,
+)
+
+
+def qoidabuzarliklar_soni(*, user) -> int:
+    """Foydalanuvchiga nisbatan ko'rilgan choralar soni.
+
+    ⚠️ BEKOR QILINGAN chora SANALMAYDI. Moderator xato qilib, keyin
+       qaytarib olgan bo'lsa, u odamni jazolashda hisobga olinmasligi
+       kerak — aks holda moderatorning xatosi foydalanuvchining
+       "jinoyat tarixiga" aylanardi.
+    """
+    return (
+        ModerationAction.objects.filter(
+            target_author=user, action__in=QOIDABUZARLIK_CHORALARI
+        )
+        .filter(bekor_qilishlar__isnull=True)
+        .count()
+    )
+
+
+def yangi_muddat(*, user, kun: int) -> datetime:
+    """Cheklov muddati: mavjud cheklov USTIGA yangisi qo'yilganda nima bo'ladi.
+
+    ⚠️⚠️ BU FUNKSIYA MAVJUDLIGINING SABABI — JIM YUMSHATISH XAVFI.
+
+       Sodda yozuv `timezone.now() + kun` bo'lardi va u KAMAYTIRISHI
+       mumkin: moderator odamni 30 kunga cheklagan bo'lsa-yu, ikki
+       kundan keyin unga standart 7 kunlik cheklov tushsa, muddat
+       28 kunga QISQARARDI. Ya'ni YANGI JAZO jazoni yengillashtirardi.
+
+       Kod boshqa joyda bu xavfdan allaqachon himoyalangan:
+       `eskalatsiyani_tekshirish()` doimiy blokni vaqtinchalikka
+       TUSHIRMAYDI. Bu yerda esa o'sha qoidaning vaqtinchalik
+       cheklovlar orasidagi ko'rinishi.
+
+    Kirish:
+      `user` — cheklanayotgan foydalanuvchi. `user.banned_until`
+               `None` (cheklov yo'q yoki doimiy) yoki `datetime`
+               bo'lishi mumkin, va u O'TIB KETGAN ham bo'lishi
+               mumkin (muddati tugagan cheklov bayrog'i tozalanmaydi).
+      `kun`   — so'ralayotgan yangi cheklov uzunligi, kunlarda.
+
+    Qaytaradi: yangi `banned_until` (aware `datetime`).
+    """
+    hozir = timezone.now()
+    soralgan = hozir + timedelta(days=kun)
+    mavjud = user.banned_until
+
+    # ⚠️ MUDDAT HECH QACHON QISQARMAYDI, lekin QO'SHILMAYDI ham.
+    #
+    #    Uch yo'l bor edi va uchalasi ham asosli:
+    #      1. `max(mavjud, soralgan)` — TANLANGAN.
+    #      2. Qolgan vaqt USTIGA qo'shish: muddatlar tez o'sib
+    #         ketardi (30 + 7 + 7 + 7) va amalda doimiy blokka
+    #         aylanardi — lekin "doimiy" deb ATALMAGAN holda.
+    #         Yashirin doimiy blok esa apellyatsiyani ham,
+    #         tushuntirishni ham imkonsiz qiladi.
+    #      3. Doimiyga ko'tarish: eng qattiq va `CHEKLOV_MUDDATI_KUN`
+    #         sozlamasini ma'nosiz qilardi.
+    #
+    #    `max` eng kam ajablantiradi: muddat FAQAT uzayadi, va
+    #    "doimiy" degan qaror ochiq qabul qilinadi (`doimiy=True`),
+    #    jimgina yig'ilib qolmaydi.
+    #
+    # ⚠️ O'TIB KETGAN muddat `max` da o'z-o'zidan chetlab o'tiladi:
+    #    u `hozir` dan kichik, `soralgan` esa doim kattaroq.
+    #    Alohida shart yozish shart emas — lekin bu tasodif emas,
+    #    testda qotirilgan (`test_MUDDATI_TUGAGAN_cheklov_...`).
+    if mavjud is None:
+        return soralgan
+    return max(mavjud, soralgan)
+
+
+@transaction.atomic
+def foydalanuvchini_cheklash(
+    *, moderator, user, sabab: str, doimiy: bool = False, kun: int | None = None
+):
+    """Foydalanuvchini vaqtinchalik yoki doimiy cheklaydi.
+
+    ⚠️⚠️ QABUL MEZONI: "bloklangan foydalanuvchi YOZA OLMAYDI, lekin
+       O'QIY OLADI". Shuning uchun `is_active` TEGILMAYDI — u kirishni
+       butunlay yopadi (D0-T2 dagi farq). Faqat `is_banned` qo'yiladi.
+
+    ⚠️ Cheklangan odam saytni o'qiy olishi ataylab: u o'ziga kelgan
+       javoblarni ko'rishi va nima uchun cheklanganini tushunishi
+       kerak. Eshikni butunlay yopish odamni tushuntirishsiz
+       qoldiradi.
+    """
+    _moderatorni_tekshirish(moderator)
+
+    user.is_banned = True
+    user.banned_until = (
+        None
+        if doimiy
+        else yangi_muddat(user=user, kun=kun or settings.CHEKLOV_MUDDATI_KUN)
+    )
+    user.ban_reason = sabab[:200]
+    user.save(update_fields=["is_banned", "banned_until", "ban_reason"])
+
+    audit(
+        action=AuditAction.FOYDALANUVCHI_CHEKLANDI,
+        obyekt=f"foydalanuvchi #{user.pk}",
+        actor=moderator,
+        izoh=sabab,
+        doimiy=doimiy,
+        muddat=user.banned_until.isoformat() if user.banned_until else None,
+    )
+    log.warning(
+        "Foydalanuvchi cheklandi: #%s doimiy=%s sabab=%r", user.pk, doimiy, sabab[:60]
+    )
+    return user
+
+
+@transaction.atomic
+def cheklovni_yechish(*, moderator, user, sabab: str = ""):
+    """Cheklovni olib tashlaydi (moderator xato qilgan bo'lsa)."""
+    _moderatorni_tekshirish(moderator)
+
+    user.is_banned = False
+    user.banned_until = None
+    user.ban_reason = ""
+    user.save(update_fields=["is_banned", "banned_until", "ban_reason"])
+
+    audit(
+        action=AuditAction.CHEKLOV_YECHILDI,
+        obyekt=f"foydalanuvchi #{user.pk}",
+        actor=moderator,
+        izoh=sabab,
+    )
+    return user
+
+
+def eskalatsiyani_tekshirish(*, moderator, user):
+    """Chora ko'rilgandan keyin avtomatik bosqichni qo'llaydi.
+
+    ⚠️ AVTOMATIK, LEKIN MODERATOR NOMIDAN. Chora qo'lda ko'rilgan
+       bo'lsa-yu, uchinchi marta bo'lsa — cheklov o'z-o'zidan qo'yiladi.
+       Moderator har safar "nechanchi marta edi?" deb sanab
+       o'tirmasligi kerak; sanash mashinaning ishi.
+
+    ⚠️ Mavjud DOIMIY blok QAYTA YOZILMAYDI: doimiy blokdan
+       vaqtinchalikka "tushirish" jim yumshatish bo'lardi.
+    """
+    if user is None or (user.is_banned and user.banned_until is None):
+        return None
+
+    soni = qoidabuzarliklar_soni(user=user)
+
+    if soni >= settings.DOIMIY_BLOK_CHEGARASI:
+        return foydalanuvchini_cheklash(
+            moderator=moderator,
+            user=user,
+            sabab=f"Avtomatik: {soni} ta qoidabuzarlik (doimiy).",
+            doimiy=True,
+        )
+    if soni >= settings.CHEKLOV_CHEGARASI:
+        return foydalanuvchini_cheklash(
+            moderator=moderator,
+            user=user,
+            sabab=f"Avtomatik: {soni} ta qoidabuzarlik.",
+        )
+    return None

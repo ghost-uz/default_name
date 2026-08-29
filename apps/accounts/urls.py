@@ -13,6 +13,17 @@ urlpatterns = [
     path("chiqish/", views.logout_view, name="logout"),
     # Shartlarga rozilik (D2-T10)
     path("rozilik/", views.rozilik, name="rozilik"),
+    # Foydalanuvchilar o'zaro bloklashi (D2-T11)
+    path(
+        "bloklash/@<str:username>/",
+        views.foydalanuvchini_bloklash,
+        name="foydalanuvchini_bloklash",
+    ),
+    path(
+        "blokni-yechish/@<str:username>/",
+        views.blokni_bekor_qilish,
+        name="blokni_bekor_qilish",
+    ),
     # Hisob sozlamalari (D2-T8)
     path("hisob/", views.hisob, name="hisob"),
     path("hisob/eksport/", views.hisob_eksport, name="hisob_eksport"),

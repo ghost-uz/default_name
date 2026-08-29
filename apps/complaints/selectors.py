@@ -111,7 +111,9 @@ def filtrni_oqish(GET) -> LentaFiltri:  # noqa: N803 — Django uslubi
     )
 
 
-def lenta_queryset(filtr: LentaFiltri) -> models.QuerySet[Complaint]:
+def lenta_queryset(
+    filtr: LentaFiltri, *, bloklanganlar: Sequence[int] = ()
+) -> models.QuerySet[Complaint]:
     """Lentaning asosiy so'rovi.
 
     ⚠️ `visible()` — D2-T3 dagi "yagona kirish nuqtasi" qoidasi.
@@ -123,6 +125,23 @@ def lenta_queryset(filtr: LentaFiltri) -> models.QuerySet[Complaint]:
        kategoriya alohida so'raladi: 20 karta = 40 qo'shimcha so'rov.
     """
     qs = Complaint.objects.visible().select_related("author", "category")
+
+    # ⚠️ BLOKLANGAN MUALLIFLAR LENTADAN CHIQADI (D2-T11).
+    #    Bu foydalanuvchining O'Z qarori — moderator bloki emas.
+    #    Bloklangan odam bundan xabardor emas va hech qanday cheklov
+    #    olmaydi (`apps/accounts/models.py::UserBlock`).
+    #
+    # ⚠️ Ro'yxat ALOHIDA PARAMETR, `LentaFiltri` ichida EMAS:
+    #    `LentaFiltri` — URL'dan o'qilgan holat (D1-T7), blok esa
+    #    foydalanuvchining holati. Ularni aralashtirish "filtr URL'da"
+    #    qoidasini buzardi va bloklangan odamlar ro'yxati manzilga
+    #    tushib qolishi mumkin bo'lardi.
+    #
+    # ⚠️ Ro'yxat BIR MARTA olinadi (`accounts.services.bloklangan_idlar`)
+    #    va so'rovga QIYMAT sifatida tushadi: ichma-ich `QuerySet` bo'lsa
+    #    PostgreSQL uni har safar qayta bajarardi.
+    if bloklanganlar:
+        qs = qs.exclude(author_id__in=bloklanganlar)
 
     if filtr.category:
         qs = qs.filter(category__slug=filtr.category)
@@ -226,7 +245,10 @@ def kursor_filtri(*, sort: str, oxirgi: Complaint) -> models.Q:
 
 
 def lenta_sahifasi(
-    filtr: LentaFiltri, *, after_pk: int | None = None
+    filtr: LentaFiltri,
+    *,
+    after_pk: int | None = None,
+    bloklanganlar: Sequence[int] = (),
 ) -> tuple[list[Complaint], int | None]:
     """Bir sahifa muammo + keyingi kursor (`None` bo'lsa oxiri).
 
@@ -251,7 +273,7 @@ def lenta_sahifasi(
        ham shunday); "Yangi" saralashida bunday bo'lmaydi, chunki
        `created_at` o'zgarmaydi.
     """
-    qs = lenta_queryset(filtr)
+    qs = lenta_queryset(filtr, bloklanganlar=bloklanganlar)
 
     if after_pk is not None:
         # ⚠️ Kursor posti o'chirilgan/yashirilgan bo'lishi mumkin — o'shanda

@@ -67,6 +67,31 @@
           bo'lmaydi — xizmat ham buni rad etadi (`PermissionDenied`),
           bu yerdagi shart faqat ko'rinish qulayligi.
         {% endcomment %}
+        {% comment %}
+          ⚠️ BLOK va SHIKOYAT boshqa-boshqa narsa (D2-T11):
+             shikoyat — moderatorga signal, blok — o'z lentangizni
+             tozalash. Ular yonma-yon turadi, chunki odam ko'pincha
+             ikkalasini ham xohlaydi, lekin natijasi butunlay boshqa.
+        {% endcomment %}
+        {% comment %}
+          ⚠️ Bloklangan muallifda tugma YECHISHGA aylanadi. Yig'ilgan
+             blokni ochgan odam ichkarida yana "Bloklash" ni ko'rsa,
+             interfeys o'zi bilan ziddiyatga tushardi — u odam
+             allaqachon bloklangan (`views.py::complaint_detail` da
+             `solution.bloklangan` qo'yiladi).
+        {% endcomment %}
+        {% if request.user.is_authenticated and solution.public_author and solution.author_id != request.user.pk %}
+          <form method="post" class="inline"
+                action="{% if solution.bloklangan %}{% url 'blokni_bekor_qilish' solution.public_author.username %}{% else %}{% url 'foydalanuvchini_bloklash' solution.public_author.username %}{% endif %}">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.path }}" />
+            <button type="submit" class="btn-ghost btn-sm !text-fg-muted hover:!text-fg"
+                    title="{% if solution.bloklangan %}Bu foydalanuvchi postlari yana lentangizda chiqadi{% else %}Bu foydalanuvchining postlari lentangizda chiqmaydi{% endif %}">
+              {% if solution.bloklangan %}Blokdan chiqarish{% else %}Bloklash{% endif %}
+            </button>
+          </form>
+        {% endif %}
+
         {% if request.user.is_authenticated and solution.author_id != request.user.pk %}
           <a href="{% url 'yechim_shikoyat' solution.pk %}?next={{ request.path|urlencode }}"
              class="btn-ghost btn-sm !text-fg-muted hover:!text-danger"

@@ -223,6 +223,25 @@ PERMISSIONS_POLICY = (
 
 
 # --------------------------------------------------------------------------
+# Bloklash va uch ogohlantirish (D2-T11)
+# --------------------------------------------------------------------------
+# ⚠️ QIYMATLAR SOZLAMADA, kodda emas — D2-T4 dagi tezlik cheklovi bilan
+#    bir xil sabab: chegarani o'zgartirish uchun kod tegilmaydi.
+#
+# ⚠️ NEGA BOSQICHLI. Task tavsifi: "moderator uchun yagona qurol
+#    'o'chirish' bo'lsa, u yo hech narsa qilmaydi yo ortiqcha jazolaydi".
+#    Bosqichlilik moderatorga o'rtacha javob beradi.
+#
+# ⚠️ HISOB QANDAY YURITILADI: `ModerationAction` dagi QOIDABUZARLIK
+#    choralari sanaladi (ogohlantirish, yashirish, olib tashlash).
+#    `RAD_ETISH` sanalmaydi — u "qoidabuzarlik yo'q" degani. Bekor
+#    qilingan chora ham sanalmaydi.
+CHEKLOV_CHEGARASI = 3  # shu sondan boshlab vaqtinchalik cheklov
+DOIMIY_BLOK_CHEGARASI = 5  # shu sondan boshlab doimiy blok
+CHEKLOV_MUDDATI_KUN = 7
+
+
+# --------------------------------------------------------------------------
 # Huquqiy sahifalar va rozilik (D2-T10)
 # --------------------------------------------------------------------------
 # ⚠️ VERSIYA — SANA. Shartlar yoki maxfiylik siyosati MAZMUNAN

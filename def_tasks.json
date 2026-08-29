@@ -1920,10 +1920,77 @@
       "bogliq": [
         "D2-T7"
       ],
-      "holat": "todo",
+      "holat": "done",
       "qabul_mezoni": [
         "bloklangan foydalanuvchi yoza olmaydi, lekin o'qiy oladi"
-      ]
+      ],
+      "tugatilgan": "2026-08-29",
+      "natija": {
+        "yaratilgan": [
+          "apps/accounts/models.py — UserBlock (bir tomonlama, o'zini bloklashga CheckConstraint)",
+          "apps/accounts/migrations/0005_userblock.py",
+          "apps/accounts/services.py — bloklangan_idlar(), bloklash(), blokni_yechish()",
+          "apps/accounts/views.py + urls.py — bloklash / blokni yechish ko'rinishlari",
+          "apps/moderation/services.py — foydalanuvchini_cheklash(), cheklovni_yechish(), eskalatsiyani_tekshirish(), qoidabuzarliklar_soni(), yangi_muddat()",
+          "apps/moderation/selectors.py — Holat.qoidabuzarliklar/takroriymi/cheklanganmi/keyingisi_cheklaydimi + _qoidabuzarlik_sonlari() (bitta so'rov)",
+          "apps/moderation/views.py + urls.py — navbatdan qo'lda cheklash va yechish",
+          "apps/moderation/models.py — AuditAction.FOYDALANUVCHI_CHEKLANDI / CHEKLOV_YECHILDI",
+          "apps/moderation/migrations/0006_alter_auditlog_action.py",
+          "templates/components/_cheklov_banner.html — sayt bo'ylab cheklov xabari",
+          "templates/base.html — banner ulanishi",
+          "templates/complaints/detail.html — bloklangan javob <details> ichida, dard kartasida blok tugmasi",
+          "templates/components/_solution.html — yechim kartasida blok tugmasi",
+          "templates/accounts/hisob.html — bloklanganlar ro'yxati + yechish",
+          "templates/moderation/_holat.html — 'avval N ta chora', oqibat ogohlantirishi, cheklash bloki",
+          "config/settings/base.py — CHEKLOV_CHEGARASI, DOIMIY_BLOK_CHEGARASI, CHEKLOV_MUDDATI_KUN",
+          "apps/moderation/tests_bloklash.py — 61 test"
+        ],
+        "qabul_mezonlari": {
+          "bloklangan_yozolmaydi_lekin_oqiydi": "✅ `is_active` TEGILMAYDI (u kirishni butunlay yopardi) — faqat `is_banned`. Test: `test_QABUL_MEZONI_bloklangan_YOZA_OLMAYDI_lekin_OQIY_OLADI`."
+        },
+        "tekshirilgan": [
+          "ogohlantirish -> vaqtinchalik cheklov (3-chora) -> doimiy blok (5-chora), chegaralar sozlamada",
+          "RAD ETISH qoidabuzarlik sanalmaydi; BEKOR QILINGAN chora ham sanalmaydi",
+          "doimiy blok vaqtinchalikka TUSHIRILMAYDI",
+          "cheklov muddati QISQARMAYDI (30 kunlik ustiga 7 kunlik tushsa 30 qoladi) va QO'SHILMAYDI ham",
+          "muddati tugagan cheklov o'z-o'zidan tugaydi (bayroq tozalanmaydi, `is_currently_banned` tekshiradi)",
+          "cheklash va yechish AUDIT JURNALIGA tushadi (admin tushirmasdi — shuning uchun bu yo'l bor)",
+          "moderator o'zini chekla olmaydi; staff bo'lmaganga 404 (403 emas)",
+          "navbatda 'avval N ta chora' + keyingi choraning OQIBATI oldindan aytiladi",
+          "navbat sanog'i BITTA so'rovda (so'rov soni navbat uzunligiga bog'liq emas)",
+          "blok BIR TOMONLAMA; bloklangan odam xabardor emas va cheklov olmaydi",
+          "bloklangan muallif lentadan chiqadi; muhokamada javobi <details> ichida yig'iladi",
+          "ANONIM javob bloklangan muallifda HAM yig'ilmaydi (anonimlikni ochardi)",
+          "anonim kontentda blok tugmasi YO'Q",
+          "banner: vaqtinchalik/doimiy alohida, mahalliy vaqtda, muddat o'tgach yo'qoladi",
+          "banner QO'SHIMCHA SO'ROV qilmaydi (`request.user` allaqachon yuklangan)",
+          "hisob sahifasida blokni yechish yo'li bor"
+        ],
+        "qarorlar": [
+          "IKKI XIL 'BLOKLASH' ATAYLAB AJRATILGAN: `User.is_banned` — platformaning qarori (odam YOZA olmaydi), `UserBlock` — foydalanuvchining qarori (u boshqa odamni KO'RMAYDI). Bitta jadvalga qo'shilsa 'bloklangan odam nega yoza olmayapti?' degan buglar chiqardi.",
+          "BLOK BIR TOMONLAMA: ikki tomonlama qilish 'meni bloklashdi' signalini berardi va tortishuvni kuchaytirardi — bloklashdan maqsad esa aksincha.",
+          "ESKALATSIYA AVTOMATIK, LEKIN MODERATOR NOMIDAN: sanash mashinaning ishi. Lekin OQIBAT tugmani bosishdan OLDIN aytiladi — moderator ogohlantirmoqchi edi, bloklamoqchi emas.",
+          "BEKOR QILINGAN CHORA SANALMAYDI: moderatorning xatosi foydalanuvchining 'jinoyat tarixiga' aylanmasin. Navbatdagi raqam va avtomatika bir xil mantiqqa tayanadi.",
+          "CHEKLOV MUDDATI: `max(mavjud, so'ralgan)` — foydalanuvchi qarori. Qo'shish (30+7+7) yashirin doimiy blok berardi, doimiyga ko'tarish esa `CHEKLOV_MUDDATI_KUN` ni ma'nosiz qilardi.",
+          "BANNER SAYT BO'YLAB, faqat yozish sahifasida emas: cheklovning butun mantiqi 'odam sababni bilishi kerak' degan asosga qurilgan. Faqat /yozish/ da tursa, odam yozmoqchi bo'lgunicha sayt unga jimgina buzilgandek ko'rinardi.",
+          "BLOKLANGAN JAVOB YIG'ILADI, O'CHIRILMAYDI: olib tashlansa '3 yechim' yozilgan joyda 2 tasi ko'rinardi va javoblar zanjiri uzilardi.",
+          "ANONIMLIK BLOKDAN USTUN: anonim javobda 'bloklangan foydalanuvchi javobi' yozuvi muallif KIM ekanini aytib qo'yardi. Lentada bunday xavf yo'q — u yerda post shunchaki YO'Q.",
+          "QO'LDA CHEKLASH NAVBATDA, ADMINDA EMAS: admin `is_banned` ni o'zgartira oladi, lekin AUDIT JURNALIGA hech narsa yozmaydi (D2-T7).",
+          "<details> ishlatilgan (JS emas): CSP `script-src` da 'unsafe-inline' yo'q (D2-T9), ichki `onclick` baribir ishlamasdi; brauzer elementi a11y'ni bepul beradi."
+        ],
+        "olchangan_holat": {
+          "testlar": 763,
+          "qamrov_foiz": 95.63,
+          "d2_t11_testlari": 61
+        },
+        "keyingi_uchun_eslatma": [
+          "⚠️ `_qoidabuzarlik_sonlari()` dagi `.order_by()` NI OLIB TASHLAMANG: `ModerationAction.Meta.ordering` GROUP BY ga tushib, HAMMA sanoqni 1 qilardi — va hech qanday xato bermasdi. `test_navbat_sanogi_META_ORDERING_dan_BUZILMAYDI` qo'riqlaydi.",
+          "⚠️ Yangi blok/cheklash tugmasi qo'shsangiz ANONIM kontentda ko'rinmasin: `test_ANONIM_kontentda_blok_tugmasi_YOQ` butun sahifada `/bloklash/@` ni qidiradi.",
+          "⚠️ Shablonga yangi Tailwind sinfi qo'shsangiz `npm run build` ishlating — aks holda sinf HTML'da turadi, lekin CSS'da yo'q va hech qanday ta'sir qilmaydi (`test_shablondagi_HAR_BIR_sinf_qurilgan_CSS_da_BOR`).",
+          "Cheklov muddati tugaganda `is_banned` bayrog'i TOZALANMAYDI — `is_currently_banned` muddatni tekshiradi. Tozalaydigan fon vazifasi kerak bo'lsa, u M5/M7 da qo'shiladi.",
+          "Apellyatsiya oqimi hozircha yo'q: doimiy blokda banner 'Bog'lanish' sahifasiga olib boradi."
+        ]
+      }
     },
     {
       "id": "D3-T1",

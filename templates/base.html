@@ -80,6 +80,14 @@
     {% endcomment %}
     {% include "components/_messages.html" %}
 
+    {% comment %}
+      ⚠️ Cheklov banneri XABARLARDAN KEYIN, kontentdan OLDIN (D2-T11).
+         Xabar — bir martalik ("Dardingiz e'lon qilindi"), banner esa
+         HOLAT: u cheklov tugaguncha turadi. Ularni almashtirsak,
+         cheklov xabari har navigatsiyada yangi xabardek ko'rinardi.
+    {% endcomment %}
+    {% include "components/_cheklov_banner.html" %}
+
     {% block content %}{% endblock %}
 
     {% block footer %}{% include "components/_footer.html" %}{% endblock %}

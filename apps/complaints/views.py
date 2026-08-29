@@ -18,6 +18,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
 from apps.accounts.models import User
+from apps.accounts.services import bloklangan_idlar
 from apps.common.inqiroz import inqiroz_konteksti
 from apps.common.ratelimit import tezlik_cheklovi
 from apps.common.vote_views import (
@@ -59,8 +60,14 @@ def feed(request: HttpRequest) -> HttpResponse:
     # ⚠️ `list(...)` ATAYLAB: quyida `user_votes_for` shu ro'yxatni oladi.
     #    QuerySet bo'lsa u ikki marta bajarilardi (biri ovozlar uchun,
     #    biri shablon uchun) — bu jim ikkilanish, xato bermaydi.
+    # ⚠️ Bloklanganlar ro'yxati BIR MARTA olinadi va lentaga
+    #    parametr sifatida beriladi (D2-T11).
+    bloklanganlar = bloklangan_idlar(user=request.user)
+
     muammolar, keyingi_kursor = lenta_sahifasi(
-        filtr, after_pk=kursorni_oqish(request.GET)
+        filtr,
+        after_pk=kursorni_oqish(request.GET),
+        bloklanganlar=bloklanganlar,
     )
 
     # ⚠️ Ovozlar BITTA so'rovda olinadi va obyektlarga YOPISHTIRILADI.
@@ -208,6 +215,32 @@ def complaint_detail(
         # ⚠️ Qabul qilingan yechim DOIM birinchi (maket ham shunday).
         #    `-is_accepted` bo'yicha saralash aynan shuni beradi.
         .order_by("-is_accepted", "-score_cached", "created_at")
+    )
+
+    # ⚠️ BLOKLANGAN MUALLIF JAVOBI YIG'ILGAN HOLDA CHIQADI (D2-T11) —
+    #    ro'yxatdan OLIB TASHLANMAYDI. Olib tashlansa "3 yechim" deb
+    #    yozilgan joyda 2 tasi ko'rinardi va javoblar zanjiri uzilardi
+    #    ("yuqoridagi javobga qo'shilaman" — kimga?).
+    #
+    # ⚠️⚠️ ANONIM JAVOB HECH QACHON YIG'ILMAYDI, garchi muallifi
+    #    bloklangan bo'lsa ham. "Bloklangan foydalanuvchi javobi"
+    #    yozuvi anonim postda o'quvchiga muallif KIM ekanini aytib
+    #    qo'yardi (u bloklaganlari ro'yxatini biladi) — ya'ni blok
+    #    anonimlikni ochadigan asbobga aylanardi. Lentada bunday
+    #    xavf yo'q: u yerda post shunchaki YO'Q bo'ladi va yo'qlik
+    #    signal bermaydi.
+    bloklanganlar = set(bloklangan_idlar(user=request.user))
+    for yechim in yechimlar:
+        yechim.bloklangan = (
+            yechim.public_author is not None and yechim.author_id in bloklanganlar
+        )
+    # ⚠️ Muammoning O'ZI yig'ilmaydi: odam bu sahifaga ataylab kelgan,
+    #    ya'ni aynan shu postni ko'rmoqchi. Bayroq faqat tugmani
+    #    almashtirish uchun — "Bloklash" o'rniga "Blokdan chiqarish",
+    #    aks holda allaqachon bloklangan odamni yana bloklashni
+    #    taklif qilardik.
+    muammo.bloklangan = (
+        muammo.public_author is not None and muammo.author_id in bloklanganlar
     )
 
     muammo.user_vote = user_votes_for(

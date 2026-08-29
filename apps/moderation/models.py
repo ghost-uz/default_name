@@ -432,6 +432,8 @@ class AuditAction(models.TextChoices):
     AVTOMATIK_BELGI = "avtomatik_belgi", "Avtomatik filtr belgiladi"
     INQIROZ_ANIQLANDI = "inqiroz_aniqlandi", "Inqiroz belgisi aniqlandi"
     HISOB_OCHIRILDI = "hisob_ochirildi", "Hisob o'chirildi"
+    FOYDALANUVCHI_CHEKLANDI = "foydalanuvchi_cheklandi", "Foydalanuvchi cheklandi"
+    CHEKLOV_YECHILDI = "cheklov_yechildi", "Cheklov yechildi"
 
 
 class AuditQuerySet(models.QuerySet):

@@ -32,4 +32,17 @@ urlpatterns = [
         views.qarorni_bekor,
         name="moderatsiya_bekor",
     ),
+    # ⚠️ Foydalanuvchini cheklash (D2-T11) — `pk` FOYDALANUVCHINIKI,
+    #    kontentniki emas. Chora kontent ustidan, cheklov esa ODAM
+    #    ustidan: manzil ham shu farqni ko'rsatib turishi kerak.
+    path(
+        "moderatsiya/cheklash/<int:pk>/",
+        views.foydalanuvchini_cheklash_view,
+        name="moderatsiya_cheklash",
+    ),
+    path(
+        "moderatsiya/cheklov-yechish/<int:pk>/",
+        views.cheklovni_yechish_view,
+        name="moderatsiya_cheklov_yechish",
+    ),
 ]

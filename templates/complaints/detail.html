@@ -114,6 +114,31 @@
                   ⚠️ Xavfli/qaytarilmas harakat ATAYLAB o'ngga ajratilgan
                      (`ml-auto`) va so'nuq rangda: u tasodifan bosilmasin.
                 {% endcomment %}
+                {% comment %}
+                  ⚠️ BLOKLASH va SHIKOYAT yonma-yon, lekin BOSHQA-BOSHQA
+                     narsa (D2-T11): shikoyat — moderatorga signal
+                     ("bu qoidani buzdi"), blok — o'z lentangizni
+                     tozalash ("menga bu odam kerak emas"). Odam
+                     ko'pincha ikkalasini ham xohlaydi, shuning uchun
+                     ikkalasi ham shu yerda; lekin natijasi butunlay
+                     boshqa va matnlari buni aytib turishi kerak.
+
+                  ⚠️ Anonim postda tugma YO'Q: `public_author` `None`
+                     bo'ladi. Anonim muallifni bloklash tugmasi
+                     bloklangandan keyin uni FOSH QILARDI.
+                {% endcomment %}
+                {% if request.user.is_authenticated and complaint.public_author and not muallifmi %}
+                  <form method="post" class="ml-auto inline"
+                        action="{% if complaint.bloklangan %}{% url 'blokni_bekor_qilish' complaint.public_author.username %}{% else %}{% url 'foydalanuvchini_bloklash' complaint.public_author.username %}{% endif %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.path }}" />
+                    <button type="submit" class="btn-ghost btn-sm !text-fg-muted hover:!text-fg"
+                            title="{% if complaint.bloklangan %}Bu foydalanuvchi postlari yana lentangizda chiqadi{% else %}Bu foydalanuvchining postlari lentangizda chiqmaydi{% endif %}">
+                      {% if complaint.bloklangan %}Blokdan chiqarish{% else %}Bloklash{% endif %}
+                    </button>
+                  </form>
+                {% endif %}
+
                 {% if request.user.is_authenticated and not muallifmi %}
                   <a href="{% url 'dard_shikoyat' complaint.pk %}?next={{ request.path|urlencode }}"
                      class="btn-ghost btn-sm ml-auto !text-fg-muted hover:!text-danger">
@@ -171,7 +196,37 @@
 
           <div class="flex flex-col gap-3">
             {% for solution in solutions %}
-              {% include "components/_solution.html" with solution=solution muallifmi=muallifmi %}
+              {% if solution.bloklangan %}
+                {% comment %}
+                  ⚠️ BLOKLANGAN MUALLIF JAVOBI — YIG'ILGAN, lekin
+                     O'CHIRILMAGAN (D2-T11). Sabab `views.py` da:
+                     olib tashlash sanoqni va javoblar zanjirini
+                     buzardi.
+
+                  ⚠️ `<details>` — JavaScript'siz ochiladi. Bu yerda
+                     bu shunchaki qulaylik emas: CSP `script-src` da
+                     `'unsafe-inline'` YO'Q (D2-T9), ya'ni ichki
+                     `onclick` baribir ishlamasdi. Brauzerning o'z
+                     elementi esa klaviatura va skrin-riderda ham
+                     to'g'ri ishlaydi — bepul a11y.
+                {% endcomment %}
+                {% comment %}
+                  ⚠️ `card` EMAS, uzuq chegara: bu joy — kartaning
+                     O'RNI, kartaning o'zi emas. Ochilganda ichidan
+                     haqiqiy `card` chiqadi; ikkalasi ham `card`
+                     bo'lsa karta ichida karta ko'rinardi.
+                {% endcomment %}
+                <details class="rounded-[var(--radius-card)] border border-dashed border-line px-4 py-3" data-bloklangan>
+                  <summary class="cursor-pointer text-[14px] text-fg-muted marker:text-fg-muted">
+                    Bloklangan foydalanuvchi javobi — <span class="font-semibold text-primary">ko'rsatish</span>
+                  </summary>
+                  <div class="mt-3">
+                    {% include "components/_solution.html" with solution=solution muallifmi=muallifmi %}
+                  </div>
+                </details>
+              {% else %}
+                {% include "components/_solution.html" with solution=solution muallifmi=muallifmi %}
+              {% endif %}
             {% empty %}
               {% include "components/_empty_state.html" with title="Hali yechim yo'q" text="Birinchi bo'lib javob bering — shu holatdan o'tgan bo'lsangiz, tajribangiz kimgadir juda kerak." %}
             {% endfor %}
