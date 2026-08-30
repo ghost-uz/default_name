@@ -2132,10 +2132,55 @@
       "bogliq": [
         "D3-T1"
       ],
-      "holat": "todo",
+      "holat": "done",
       "qabul_mezoni": [
         "reyting so'rovi keshdan keladi"
-      ]
+      ],
+      "tugatilgan": "2026-08-30",
+      "natija": {
+        "yaratilgan": [
+          "apps/gamification/services.py — reyting_kaliti(), _oy_oraligi(), oylik_reytingni_hisoblash(), oylik_reyting(), oylik_reytingni_yangilash()",
+          "apps/gamification/tasks.py — reytingni_yangilash() (Celery beat, soatiga bir)",
+          "config/settings/base.py — beat jadvaliga qo'shildi",
+          "apps/complaints/views.py — feed() ga reyting (KESHDAN)",
+          "templates/complaints/feed.html — maket o'rniga haqiqiy ro'yxat",
+          "apps/gamification/tests_reyting.py — 17 test"
+        ],
+        "qabul_mezonlari": {
+          "reyting_sorovi_keshdan_keladi": "✅ `oylik_reyting()` BAZAGA UMUMAN BORMAYDI — test 0 ta so'rovni talab qiladi. Lenta ham reyting uchun qo'shimcha so'rov qilmaydi. Guard ataylab buzib tekshirilgan: 'kesh bo'sh bo'lsa hisoblab yuborish' qo'shilsa 3 ta test yiqiladi."
+        },
+        "tekshirilgan": [
+          "⭐⭐ `oylik_reyting()` 0 ta so'rov qiladi; lenta so'rov soni o'zgarmaydi",
+          "kesh bo'sh bo'lsa BO'SH ro'yxat — hisoblab YUBORMAYDI (thundering herd)",
+          "kesh bo'sh bo'lsa blok umuman chizilmaydi (bo'sh quti chalkash bo'lardi)",
+          "joriy oy yig'indisi to'g'ri; o'tgan oy hodisalari hisoblanmaydi",
+          "manfiy/nol yig'indi ro'yxatga tushmaydi",
+          "o'chirilgan va HOZIR CHEKLANGAN hisoblar chiqariladi; muddati o'tgan cheklov to'smaydi",
+          "chiqarilganlar o'rnini zaxira (soni*3) to'ldiradi",
+          "kesh kaliti OY bilan — oy almashganda eski reyting sizmaydi",
+          "Celery vazifasi keshni to'ldiradi va idempotent",
+          "🌐 JONLI (Redis bilan): yon panelda '1. Oquvchi 17, 2. yurist_aziz 15'"
+        ],
+        "qarorlar": [
+          "⭐⭐ KESH BO'SH BO'LSA HISOBLAB YUBORILMAYDI. 'Yo'q bo'lsa hisoblab, keshga solamiz' jozibali ko'rinadi, lekin Redis qayta ishga tushgan paytda BARCHA so'rovlar bir vaqtda hisoblashga kirishardi (thundering herd) — kesh eng kerak bo'lgan payt eng katta yukni berardi. Bo'sh yon panel bir soatga zararsiz.",
+          "⭐ REYTING — TAVSIYA, TARIX EMAS: cheklangan hisob ro'yxatga TUSHMAYDI. Nishon (D3-T2) va ekspert tasdig'i (D3-T5) cheklovda ham QOLADI, chunki ular odamning YOZUVI; reyting esa platformaning 'mana bu odamga qarang' degan gapi. Karma va tarix TEGILMAYDI.",
+          "KESH KALITIDA OY BOR: aks holda oy almashganda eski reyting TTL tugagunicha ko'rinib turardi va 'oyning maslahatchilari' o'tgan oyniki bo'lardi — xatosiz.",
+          "TTL (2 soat) beat oralig'idan (1 soat) UZUNROQ: bitta o'tkazib yuborilgan ish reytingni BO'SHATMASLIGI kerak — eskiroq reyting bo'sh paneldan yaxshiroq.",
+          "OY CHEGARASI MAHALLIY VAQTDA (`localdate`), UTC emas: Toshkentda 1-sentabr 02:00 da yozilgan hodisa UTC'da hali avgust va sentabr reytingiga tushmasdi (D3-T4 dagi bir xil tuzoq).",
+          "`karma_cached` EMAS, `KarmaEvent` yig'indisi: kesh UMUMIY karmani saqlaydi, reyting esa SHU OYNIKINI so'raydi. D3-T1 ledgeri aynan shuning uchun bor.",
+          "Soatiga bir marta yetarli: reyting sekin o'zgaradigan ko'rsatkich, jonli hisoblagich emas."
+        ],
+        "olchangan_holat": {
+          "testlar": 884,
+          "qamrov_foiz": 95.4,
+          "d3_t3_testlari": 17
+        },
+        "keyingi_uchun_eslatma": [
+          "⚠️ DEPLOY: birinchi reyting beat ishga tushgunicha (≤1 soat) bo'sh bo'ladi. Kerak bo'lsa `reytingni_yangilash` vazifasini qo'lda bir marta chaqiring.",
+          "⚠️ DEV'da kesh locmem: Celery va veb ALOHIDA jarayonlar, ya'ni kesh bo'linmaydi va reyting ko'rinmaydi. Jonli ko'rish uchun `USE_REDIS_IN_DEV=1`.",
+          "Reyting soni `REYTING_SONI` (5) — sozlama emas, konstanta; kerak bo'lsa sozlamaga chiqariladi."
+        ]
+      }
     },
     {
       "id": "D3-T4",

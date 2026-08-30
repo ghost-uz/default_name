@@ -10,7 +10,7 @@ from django.contrib.auth import get_user_model
 from django.utils import timezone
 
 from .models import KarmaEvent
-from .services import nishonlarni_tekshirish
+from .services import nishonlarni_tekshirish, oylik_reytingni_yangilash
 
 log = logging.getLogger(__name__)
 
@@ -55,3 +55,18 @@ def nishonlarni_yangilash() -> int:
         "Nishon tekshiruvi: %s foydalanuvchi, %s yangi nishon", len(idlar), berilgan
     )
     return berilgan
+
+
+@shared_task(name="apps.gamification.tasks.reytingni_yangilash")
+def reytingni_yangilash() -> int:
+    """Oylik reytingni hisoblab keshga soladi (D3-T3).
+
+    ⚠️ Reyting lentaning YON PANELIDA, ya'ni HAR SAHIFADA ko'rinadi.
+       Hisoblashni so'rov ichida qilsak, har ko'rish ikkita agregat
+       so'rov qilardi — task `nega` bo'limi aynan shundan ogohlantiradi.
+
+    ⚠️ Soatiga bir marta yetarli: reyting — "kim yaxshi javob
+       beryapti" degan sekin o'zgaradigan ko'rsatkich, jonli hisoblagich
+       emas. Tez-tez yangilash yukni oshiradi, foydani esa oshirmaydi.
+    """
+    return len(oylik_reytingni_yangilash())

@@ -478,6 +478,15 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": 86400.0,
         "options": {"expires": 43200},
     },
+    # ⚠️ Reyting lentaning yon panelida — HAR SAHIFADA. So'rov ichida
+    #    hisoblansa, har ko'rish ikkita agregat so'rov qilardi (D3-T3).
+    #    Kesh TTL (2 soat) bu oraliqdan uzunroq: bitta o'tkazib
+    #    yuborilgan ish reytingni bo'shatmaydi.
+    "reytingni-yangilash": {
+        "task": "apps.gamification.tasks.reytingni_yangilash",
+        "schedule": 3600.0,
+        "options": {"expires": 3000},
+    },
 }
 
 

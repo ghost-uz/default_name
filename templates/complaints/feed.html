@@ -100,42 +100,36 @@
           </div>
         </section>
 
-        <!-- Karma reytingi (gamifikatsiya) -->
-        <section class="card overflow-hidden" aria-labelledby="karma-h">
-          <div class="flex items-center justify-between border-b border-line px-4 py-3">
-            <h2 id="karma-h" class="text-sm font-bold">Oyning maslahatchilari</h2>
-            <span class="badge-pro">Karma</span>
-          </div>
-          <ol class="divide-y divide-line">
-            <li class="flex items-center gap-3 px-4 py-2.5">
-              <span class="tnum w-4 text-sm font-bold text-karma">1</span>
-              <span class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary text-xs font-bold text-on-primary" aria-hidden="true">D</span>
-              <a href="{% url 'profile' 'sardor92' %}" class="min-w-0 flex-1 truncate py-1.5 text-sm font-semibold hover:text-primary">Dilshod_Psixolog</a>
-              <span class="tnum shrink-0 text-sm font-bold text-karma">8 420</span>
-            </li>
-            <li class="flex items-center gap-3 px-4 py-2.5">
-              <span class="tnum w-4 text-sm font-bold text-fg-muted">2</span>
-              <span class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-surface-2 text-xs font-bold text-fg-muted" aria-hidden="true">N</span>
-              <a href="{% url 'profile' 'sardor92' %}" class="min-w-0 flex-1 truncate py-1.5 text-sm font-semibold hover:text-primary">Nodira_HR</a>
-              <span class="tnum shrink-0 text-sm font-bold text-fg-muted">6 130</span>
-            </li>
-            <li class="flex items-center gap-3 px-4 py-2.5">
-              <span class="tnum w-4 text-sm font-bold text-fg-muted">3</span>
-              <span class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-surface-2 text-xs font-bold text-fg-muted" aria-hidden="true">A</span>
-              <a href="{% url 'profile' 'sardor92' %}" class="min-w-0 flex-1 truncate py-1.5 text-sm font-semibold hover:text-primary">Aziz_Yurist</a>
-              <span class="tnum shrink-0 text-sm font-bold text-fg-muted">5 902</span>
-            </li>
-            <li class="flex items-center gap-3 px-4 py-2.5">
-              <span class="tnum w-4 text-sm font-bold text-fg-muted">4</span>
-              <span class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-surface-2 text-xs font-bold text-fg-muted" aria-hidden="true">K</span>
-              <a href="{% url 'profile' 'sardor92' %}" class="min-w-0 flex-1 truncate py-1.5 text-sm font-semibold hover:text-primary">Kamola_R</a>
-              <span class="tnum shrink-0 text-sm font-bold text-fg-muted">4 471</span>
-            </li>
-          </ol>
-          <a href="{% url 'expert_list' %}" class="block border-t border-line px-4 py-2.5 text-sm font-semibold text-primary hover:bg-surface-2">
-            Butun reyting →
-          </a>
-        </section>
+        {% comment %}
+          Oylik reyting (D3-T3) — maket o'rniga haqiqiy ma'lumot.
+
+          ⚠️⚠️ RO'YXAT KESHDAN KELADI, bu yerda hech qanday so'rov YO'Q.
+             Blok HAR SAHIFADA ko'rinadi: hisoblashni so'rov ichida
+             qilsak, har ko'rish ikkita agregat so'rov qilardi. Kesh
+             bo'sh bo'lsa blok UMUMAN chizilmaydi (bir soatda beat
+             to'ldiradi) — bo'sh ro'yxatli quti chalkash bo'lardi.
+
+          ⚠️ Cheklangan va o'chirilgan hisoblar ro'yxatga TUSHMAYDI:
+             reyting — TAVSIYA, tarix emas (`services` izohiga qarang).
+        {% endcomment %}
+        {% if reyting %}
+          <section class="card overflow-hidden" aria-labelledby="karma-h">
+            <div class="flex items-center justify-between border-b border-line px-4 py-3">
+              <h2 id="karma-h" class="text-sm font-bold">Oyning maslahatchilari</h2>
+              <span class="badge-pro">Karma</span>
+            </div>
+            <ol class="divide-y divide-line">
+              {% for qator in reyting %}
+                <li class="flex items-center gap-3 px-4 py-2.5">
+                  <span class="tnum w-4 text-sm font-bold {% if forloop.first %}text-karma{% else %}text-fg-muted{% endif %}">{{ forloop.counter }}</span>
+                  <span class="grid h-8 w-8 shrink-0 place-items-center rounded-full {% if forloop.first %}bg-primary text-on-primary{% else %}bg-surface-2 text-fg-muted{% endif %} text-xs font-bold" aria-hidden="true">{{ qator.initial }}</span>
+                  <a href="{% url 'profile' qator.username %}" class="min-w-0 flex-1 truncate py-1.5 text-sm font-semibold hover:text-primary">{{ qator.nom }}</a>
+                  <span class="tnum shrink-0 text-sm font-bold {% if forloop.first %}text-karma{% else %}text-fg-muted{% endif %}">{{ qator.karma }}</span>
+                </li>
+              {% endfor %}
+            </ol>
+          </section>
+        {% endif %}
 
         <!-- PRO Ekspert CTA (monetizatsiya) -->
         <section class="card border-primary/30 bg-primary/5 p-4">

@@ -429,6 +429,47 @@ Faqat **`CI holati`** tekshiruvini tanlang, alohida job'larni emas.
 Ikkitasi `qisman` bo'lib qoladi va ularning ochiq qismi **koddan tashqarida**:
 D2-T6 rasmiy ishonch telefonini talab qiladi, D2-T10 — yurist xulosasini.
 
+| Task | Nima |
+|---|---|
+| D3-T1 | Karma ledgeri — ovoz karmasi (+2), qabul (+15), kompensatsiya (idempotent) |
+| D3-T4 | Profil sahifasi — tablar MANZILDA, anonim postlar begonaga ko'rinmaydi |
+| D3-T5 | ExpertProfile va tasdiqlash — hujjat `MAXFIY_ROOT` da, qaror bilan o'chadi |
+| D3-T2 | Nishonlar — shart = METRIKA + CHEGARA (ma'lumotda), qulf faqat egasiga |
+| D3-T3 | Oylik reyting — KESHDAN keladi, Celery soatiga bir hisoblaydi |
+
+**M3 (gamifikatsiya va profil) TO'LIQ TUGADI** — 5/5 task.
+
+### ⚠️⚠️ Uch marta qaytgan bitta teshik: ANONIMLIK va SANOQLAR
+
+M3 ning uchta taskida BIR XIL muammo boshqa shaklda qaytdi. Har safar
+qoida bitta: **ko'rsatilgan raqam ko'rsatilgan ro'yxatga teng bo'lsin.**
+
+| Qayerda | Teshik | Yechim |
+|---|---|---|
+| **D3-T4** profil sanoqlari | "18 dard" desa-yu 12 tasi ko'rinsa → 6 ta anonim post borligi chiqadi | Begonaga sanoq ham anonimsiz |
+| **D3-T4** karma tarixi | `KarmaEvent` yechimga FK — tarix "shu anonim yechim shu odamniki" xaritasini berardi | Faqat egasiga |
+| **D3-T2** nishon progressi | Progress ommaviy bo'lsa, ayirma anonim ishning ANIQ sonini berardi | Qulf va progress faqat egasiga |
+
+⚠️ **D3-T2 da qoldiq teshik ONGLI qabul qilindi**: olingan nishon
+ommaviy va chegarasi ma'lum, ya'ni *"kamida N ta anonim ish bor"* degan
+**noaniq** xulosa mumkin. To'liq yopish uchun nishon faqat ochiq ishni
+sanashi kerak edi — bu esa anonim javobni jazolardi va D3-T1 dagi karma
+qaroriga zid bo'lardi.
+
+### ⚠️ Uchta tizim, uchta xil "cheklangan odam" qarori
+
+Bir xil savolga (moderator cheklovi nimaga ta'sir qiladi?) uchta
+boshqa javob — va ular ziddiyat emas:
+
+| | Cheklovda nima bo'ladi | Nega |
+|---|---|---|
+| **Ekspert nishoni** (D3-T5) | **Qoladi** | Tasdiq — MALAKA haqida, cheklov — XULQ haqida |
+| **Yutuq nishonlari** (D3-T2) | **Qoladi** | Yutuq — TARIX, joriy holat emas |
+| **Oylik reyting** (D3-T3) | **Chiqariladi** | Reyting — TAVSIYA: platformaning "bu odamga qarang" degan gapi |
+
+Chegara: odamning **yozuvi** tegilmaydi, platformaning **tavsiyasi**
+esa to'xtatiladi.
+
 ### Bloklash: ikki xil "blok" (D2-T11)
 
 ⚠️⚠️ **Bitta so'z, ikki butunlay boshqa tushuncha.** Ular ataylab
@@ -1066,8 +1107,8 @@ hammasi yozildi. Ikkitasining ochiq qismi koddan tashqarida:
 - **D2-T10** — matnlarni yurist ko'rishi kerak (`HUQUQIY_KORILDI = False`,
   har sahifada ochiq belgi turadi).
 
-Keyingi: **M3 — gamifikatsiya va profil** (karma ledgeri D3-T1 qisman
-tayyor, keyin nishonlar, reyting, profil sahifasi, ekspert oqimi).
+Keyingi: **M4 — qidiruv va SEO** (PostgreSQL FTS, lotin/kiril
+normalizatsiyasi, slug URL, sitemap, Schema.org).
 
 ### So'rov sonlari (D1-T14 da o'lchangan)
 

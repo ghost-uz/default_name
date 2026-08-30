@@ -1,11 +1,14 @@
-"""Gamifikatsiya — xizmat funksiyalari (D1-T10, D3-T1, D3-T2)."""
+"""Gamifikatsiya — xizmat funksiyalari (D1-T10, D3-T1, D3-T2, D3-T3)."""
 
 from __future__ import annotations
 
 import logging
+from datetime import date, datetime
 
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from django.db import models, transaction
+from django.utils import timezone
 
 from .models import (
     KARMA_QIYMATLARI,
@@ -381,4 +384,138 @@ def nishon_holati(*, profil, ozimi: bool) -> list[dict]:
                 else min(olchovlar.get(b.metrika, 0), b.chegara),
             }
         )
+    return natija
+
+
+# ===========================================================================
+# Oylik reyting (D3-T3)
+# ===========================================================================
+REYTING_SONI = 5
+
+# ⚠️ TTL beat oralig'idan (1 soat) UZUNROQ — ataylab. Bitta o'tkazib
+#    yuborilgan ishga tushish (worker qayta joylashdi, navbat band edi)
+#    reytingni BO'SHATMASLIGI kerak: eskiroq reyting bo'sh paneldan
+#    yaxshiroq.
+REYTING_TTL = 2 * 60 * 60
+
+
+def reyting_kaliti(oy: date | None = None) -> str:
+    """Kesh kaliti — OY bilan birga.
+
+    ⚠️ Oy kalitda bo'lishi SHART. Aks holda oy almashganda eski
+       reyting TTL tugagunicha ko'rinib turardi va "oyning
+       maslahatchilari" o'tgan oyniki bo'lardi — hech qanday xato
+       bermasdan.
+    """
+    oy = oy or timezone.localdate()
+    return f"reyting:{oy:%Y-%m}"
+
+
+def _oy_oraligi(oy: date) -> tuple[datetime, datetime]:
+    """Oyning boshi va oxiri — MAHALLIY vaqt bo'yicha.
+
+    ⚠️ `localdate`/`localtime`, UTC EMAS. Baza UTC'da saqlaydi, lekin
+       "oy" — foydalanuvchi tushunchasi: Toshkentda 1-sentabr soat
+       02:00 da yozilgan hodisa UTC'da hali avgust bo'ladi va
+       sentabr reytingiga TUSHMASDI (D3-T4 dagi bir xil tuzoq).
+    """
+    boshi = timezone.make_aware(
+        datetime(oy.year, oy.month, 1), timezone.get_current_timezone()
+    )
+    keyingi = date(oy.year + (oy.month // 12), (oy.month % 12) + 1, 1)
+    oxiri = timezone.make_aware(
+        datetime(keyingi.year, keyingi.month, 1), timezone.get_current_timezone()
+    )
+    return boshi, oxiri
+
+
+def oylik_reytingni_hisoblash(*, oy: date | None = None, soni: int = REYTING_SONI):
+    """Reytingni JURNALDAN hisoblaydi — IKKI so'rovda.
+
+    ⚠️ `karma_cached` EMAS, `KarmaEvent` yig'indisi: kesh UMUMIY karmani
+       saqlaydi, reyting esa SHU OYNIKINI so'raydi. D3-T1 ledgeri
+       aynan shuning uchun bor ("ledger oylik reytingni ham arzon
+       qiladi" — task tavsifidan).
+
+    ⚠️⚠️ O'CHIRILGAN va HOZIR CHEKLANGAN hisoblar CHIQARILADI.
+       · O'chirilgan (D2-T8) — hisob anonimlashtirilgan, uni
+         ko'rsatish ma'nosiz.
+       · Cheklangan (D2-T11) — REYTING TAVSIYA, tarix emas. Nishon
+         (D3-T2) va ekspert tasdig'i (D3-T5) cheklovda ham QOLADI,
+         chunki ular odamning YOZUVI. Reyting esa platformaning
+         "mana bu odamga qarang" degan gapi — cheklangan odamni
+         ko'rsatish platformaning o'z qaroriga zid bo'lardi.
+
+    ⚠️ Faqat MUSBAT yig'indi: nol yoki manfiy natija bilan "oyning
+       maslahatchisi" ro'yxatiga tushish ma'nosiz.
+    """
+    from apps.accounts.models import User
+
+    oy = oy or timezone.localdate()
+    boshi, oxiri = _oy_oraligi(oy)
+
+    juftlar = list(
+        KarmaEvent.objects.filter(created_at__gte=boshi, created_at__lt=oxiri)
+        .values("user_id")
+        .annotate(jami=models.Sum("points"))
+        .filter(jami__gt=0)
+        .order_by("-jami", "user_id")[: soni * 3]
+    )
+    if not juftlar:
+        return []
+
+    # ⚠️ `soni * 3` yuqorida: chiqarib tashlanadiganlar (o'chirilgan,
+    #    cheklangan) o'rnini to'ldirish uchun zaxira. Ikkinchi so'rov
+    #    yuborib "yana kerak" deyishdan arzonroq.
+    foydalanuvchilar = {
+        u.pk: u
+        for u in User.objects.filter(
+            pk__in=[j["user_id"] for j in juftlar], ochirilgan_at__isnull=True
+        )
+    }
+
+    natija = []
+    for j in juftlar:
+        user = foydalanuvchilar.get(j["user_id"])
+        if user is None or user.is_currently_banned:
+            continue
+        natija.append(
+            {
+                "username": user.username,
+                "nom": user.display_name,
+                "initial": user.initial,
+                "karma": j["jami"],
+            }
+        )
+        if len(natija) >= soni:
+            break
+    return natija
+
+
+def oylik_reyting(oy: date | None = None) -> list[dict]:
+    """⭐⭐ QABUL MEZONI: "reyting so'rovi KESHDAN keladi".
+
+    Bu funksiya BAZAGA UMUMAN BORMAYDI. U lentaning yon panelida, ya'ni
+    HAR SAHIFADA chaqiriladi — hisoblash u yerda bo'lsa, har ko'rish
+    ikkita agregat so'rov qilardi.
+
+    ⚠️ Kesh BO'SH bo'lsa BO'SH RO'YXAT qaytadi, hisoblab yubormaydi.
+       "Yo'q bo'lsa hisoblab, keshga solamiz" jozibali ko'rinadi, lekin
+       Redis qayta ishga tushgan paytda BARCHA so'rovlar bir vaqtda
+       hisoblashga kirishardi (thundering herd) — ya'ni kesh eng kerak
+       bo'lgan payt eng katta yukni berardi. Bo'sh yon panel esa bir
+       soatga (beat oralig'i) zararsiz.
+
+    ⚠️ DEPLOY'DA: `nishonlarni_yangilash` kabi, birinchi reyting beat
+       ishga tushgunicha bo'sh bo'ladi. Kerak bo'lsa vazifani qo'lda
+       bir marta chaqiring.
+    """
+    return cache.get(reyting_kaliti(oy)) or []
+
+
+def oylik_reytingni_yangilash(*, oy: date | None = None) -> list[dict]:
+    """Hisoblab, keshga soladi. Celery vazifasi shuni chaqiradi."""
+    natija = oylik_reytingni_hisoblash(oy=oy)
+    cache.set(reyting_kaliti(oy), natija, REYTING_TTL)
+    log.info("Oylik reyting yangilandi: %s ta", len(natija))
     return natija

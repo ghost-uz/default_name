@@ -28,6 +28,7 @@ from apps.common.vote_views import (
     ovozdan_keyingi_manzil,
 )
 from apps.common.voting import cast_vote, user_votes_for
+from apps.gamification.services import oylik_reyting
 from apps.moderation.services import avtomatik_belgilash, inqirozni_belgilash
 from apps.solutions.forms import SolutionForm
 from apps.solutions.models import Solution, SolutionVote
@@ -64,6 +65,11 @@ def feed(request: HttpRequest) -> HttpResponse:
     #    parametr sifatida beriladi (D2-T11).
     bloklanganlar = bloklangan_idlar(user=request.user)
 
+    # ⚠️ Reyting KESHDAN keladi va bazaga bormaydi (D3-T3 qabul
+    #    mezoni). Kesh bo'sh bo'lsa bo'sh ro'yxat — hisoblab
+    #    yubormaydi (thundering herd sababi `services` da).
+    reyting = oylik_reyting()
+
     muammolar, keyingi_kursor = lenta_sahifasi(
         filtr,
         after_pk=kursorni_oqish(request.GET),
@@ -97,6 +103,7 @@ def feed(request: HttpRequest) -> HttpResponse:
         "tablar": SARALASH_TABI.items(),
         "kategoriyalar": yon_panel_kategoriyalari(),
         "avlodlar": Generation.choices,
+        "reyting": reyting,
     }
 
     # ⚠️ HTMX "Yana yuklash" faqat KARTALARNI so'raydi.
