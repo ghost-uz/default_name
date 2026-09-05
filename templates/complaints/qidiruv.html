@@ -1,0 +1,190 @@
+{% extends 'base.html' %}
+{% load lenta %}
+
+{% comment %}
+  Qidiruv natijalari (D4-T3).
+
+  Kontekst:
+    q          -> so'rov (normallashtirilmagan, foydalanuvchi yozgani)
+    complaints -> shu sahifadagi natijalar (ajratilgan_* atributlari bilan)
+    sahifa     -> Django `Page` (offset sahifalash — sabab `views.py` da)
+    jami       -> topilgan natijalar soni
+    takliflar  -> FAQAT bo'sh natijada: trigram bo'yicha yaqin sarlavhalar
+    filtr      -> LentaFiltri (kategoriya / avlod / holat)
+
+  ⚠️ Sahifa `noindex` DA (`head_extra`): qidiruv natijalari cheksiz
+     kombinatsiya beradi (`?q=` × kategoriya × avlod × holat × sahifa) va
+     ularning hammasi indekslansa sayt o'z-o'zi bilan raqobatlashadigan
+     minglab bo'sh sahifa hosil qilardi. D4-T5 (sitemap) ham bu yerga
+     kirmaydi.
+{% endcomment %}
+
+{% block title %}{% if q %}«{{ q }}» — qidiruv{% else %}Qidiruv{% endif %} — Dard.uz{% endblock %}
+{% block description %}Dard.uz ichidan muammo va yechim qidiring.{% endblock %}
+
+{% block head_extra %}
+  <meta name="robots" content="noindex, follow" />
+{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-3xl px-4 py-6 lg:px-6">
+  <main id="main">
+
+    {% comment %}
+      ⚠️ Sahifaning O'ZIDA forma bor, garchi sarlavhada ham bo'lsa.
+         Sarlavhadagi maydon `hidden md:block` — telefonda u YO'Q va
+         qidiruvni aniqlashtirishning yagona yo'li orqaga qaytish
+         bo'lardi. Bundan tashqari natijalar sahifasi — so'rovni
+         o'zgartirish uchun eng tabiiy joy.
+    {% endcomment %}
+    <form role="search" action="{% url 'qidiruv' %}" method="get" class="relative mb-5">
+      <label for="qidiruv-q" class="sr-only">Muammolar ichidan qidirish</label>
+      <svg class="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-fg-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      <input
+        id="qidiruv-q"
+        type="search"
+        name="q"
+        value="{{ q }}"
+        autofocus
+        class="input !pl-11 w-full text-base"
+        placeholder="Masalan: ipoteka, ish topish, ajrashish…"
+      />
+      {% comment %}
+        ⚠️ Filtrlar YASHIRIN maydon sifatida uzatiladi: aks holda
+           foydalanuvchi so'rovni o'zgartirganda tanlangan kategoriya
+           va avlod JIMGINA tushib ketardi (`lenta_url` bilan bir xil
+           sabab — D1-T7).
+      {% endcomment %}
+      {% if filtr.category %}<input type="hidden" name="category" value="{{ filtr.category }}" />{% endif %}
+      {% if filtr.generation %}<input type="hidden" name="generation" value="{{ filtr.generation }}" />{% endif %}
+      {% if filtr.status %}<input type="hidden" name="status" value="{{ filtr.status }}" />{% endif %}
+    </form>
+
+    {% if q %}
+      <div class="mb-4">
+        <h1 class="text-xl font-extrabold sm:text-2xl">
+          «{{ q }}» bo'yicha natijalar
+        </h1>
+        <p class="tnum mt-1 text-sm text-fg-muted">
+          {% if jami %}{{ jami }} ta natija topildi{% else %}Hech narsa topilmadi{% endif %}
+        </p>
+      </div>
+
+      {% comment %} ---------- Filtrlar ---------- {% endcomment %}
+      <div class="mb-5 space-y-2 rounded-xl border border-line bg-surface-2/40 p-3">
+        <div class="chip-qatori flex items-center gap-2" role="group" aria-label="Kategoriya bo'yicha filtr">
+          <span class="w-16 shrink-0 text-[11px] font-bold uppercase tracking-wider text-fg-muted">Soha</span>
+          <a href="{% lenta_url category='' %}" class="chip shrink-0 {% if not filtr.category %}chip-active{% endif %}" {% if not filtr.category %}aria-current="page"{% endif %}>Hammasi</a>
+          {% for kategoriya in kategoriyalar %}
+            <a href="{% lenta_url category=kategoriya.slug %}" class="chip shrink-0 {% if filtr.category == kategoriya.slug %}chip-active{% endif %}" {% if filtr.category == kategoriya.slug %}aria-current="page"{% endif %}>{{ kategoriya.name }}</a>
+          {% endfor %}
+        </div>
+
+        <div class="chip-qatori flex items-center gap-2" role="group" aria-label="Avlod bo'yicha filtr">
+          <span class="w-16 shrink-0 text-[11px] font-bold uppercase tracking-wider text-fg-muted">Avlod</span>
+          <a href="{% lenta_url generation='' %}" class="chip shrink-0 {% if not filtr.generation %}chip-active{% endif %}" {% if not filtr.generation %}aria-current="page"{% endif %}>Hammasi</a>
+          {% for kalit, yorliq in avlodlar %}
+            <a href="{% lenta_url generation=kalit %}" class="chip shrink-0 {% if filtr.generation == kalit %}chip-active{% endif %}" {% if filtr.generation == kalit %}aria-current="page"{% endif %}>{{ yorliq }}</a>
+          {% endfor %}
+        </div>
+
+        <div class="chip-qatori flex items-center gap-2" role="group" aria-label="Holat bo'yicha filtr">
+          <span class="w-16 shrink-0 text-[11px] font-bold uppercase tracking-wider text-fg-muted">Holat</span>
+          <a href="{% lenta_url status='' %}" class="chip shrink-0 {% if not filtr.status %}chip-active{% endif %}" {% if not filtr.status %}aria-current="page"{% endif %}>Hammasi</a>
+          {% for kalit, yorliq in holatlar %}
+            <a href="{% lenta_url status=kalit %}" class="chip shrink-0 {% if filtr.status == kalit %}chip-active{% endif %}" {% if filtr.status == kalit %}aria-current="page"{% endif %}>{{ yorliq }}</a>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+
+    {% comment %} ---------- Natijalar ---------- {% endcomment %}
+    <div class="flex flex-col gap-3">
+      {% for complaint in complaints %}
+        {% include "components/_complaint_card.html" with complaint=complaint index=forloop.counter0 %}
+      {% empty %}
+        {% comment %}
+          ⚠️ TAKLIF BOR BO'LSA — KATTA BO'SH HOLAT KO'RSATILMAYDI.
+
+             Jonli sinovda ko'rindi: "Hech narsa topilmadi" kartochkasi
+             butun ekranni egallab, takliflar uning OSTIDA qolardi.
+             Xato yozilgan so'rovda esa aynan taklif — javobning o'zi,
+             bo'sh holat esa shovqin. Sanoq qatorida ("Hech narsa
+             topilmadi") xabar allaqachon berilgan.
+        {% endcomment %}
+        {% if not q %}
+          {% include "components/_empty_state.html" with icon="search" title="Nimani qidiryapsiz?" text="Savolingizni yozing — kimdir aynan shu holatdan o'tgan va yechimini yozib qoldirgan bo'lishi mumkin." %}
+        {% elif filtr.faolmi %}
+          {% include "components/_empty_state.html" with icon="search" title="Bu filtrda hech nima yo'q" text="So'rov bo'yicha natija bor, lekin tanlangan soha, avlod yoki holat bo'yicha emas. Filtrni kengaytirib ko'ring." %}
+        {% elif not takliflar %}
+          {% include "components/_empty_state.html" with icon="search" title="Hech narsa topilmadi" text="Boshqacha so'z bilan urinib ko'ring yoki savolingizni o'zingiz yozing." action_url="/yozish/" action="Dard yozish" %}
+        {% endif %}
+      {% endfor %}
+    </div>
+
+    {% comment %}
+      ---------- Yaqin so'zlar (D4-T3 qabul mezoni) ----------
+
+      ⚠️ FAQAT bo'sh natijada ko'rsatiladi. Bu — "bunday narsa yo'q" va
+         "bitta harf xato yozdingiz" holatlarini ajratadigan yagona
+         narsa: tsvector aniq lexemaga tayanadi va "ipotaka" so'rovi
+         "ipoteka" ni HECH QACHON topmaydi.
+    {% endcomment %}
+    {% if takliflar %}
+      <section class="mt-4 rounded-xl border border-line bg-surface-2/40 p-4" aria-labelledby="taklif-h">
+        <h2 id="taklif-h" class="text-sm font-bold">Balki shuni qidirgandirsiz?</h2>
+        <ul class="mt-2.5 divide-y divide-line">
+          {% for taklif in takliflar %}
+            <li>
+              <a href="{% url 'qidiruv' %}?q={{ taklif.title|urlencode }}" class="block py-2 text-[15px] font-medium text-primary hover:underline">
+                {{ taklif.title }}
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+
+        {% comment %}
+          ⚠️ Chiqish yo'li SHU YERDA ham bo'lishi kerak: taklif bo'sh
+             holat o'rnini egallagani uchun "Dard yozish" tugmasi u
+             bilan birga yo'qolardi — ya'ni takliflar mos kelmagan
+             foydalanuvchi boshi berk ko'chaga tushardi.
+        {% endcomment %}
+        <p class="mt-3 border-t border-line pt-3 text-[13px] text-fg-muted">
+          Bularning hech biri emasmi?
+          <a href="{% url 'complaint_create' %}" class="font-semibold text-primary hover:underline">Savolingizni o'zingiz yozing →</a>
+        </p>
+      </section>
+    {% endif %}
+
+    {% comment %}
+      ---------- Sahifalash ----------
+
+      ⚠️ Lentadagi "Yana yuklash" (HTMX, kursor) EMAS — sabab `views.py`
+         da: qidiruv dolzarblik bo'yicha saralanadi va u model maydoni
+         emas, ya'ni kursor qurib bo'lmaydi.
+    {% endcomment %}
+    {% if sahifa.has_other_pages %}
+      <nav class="mt-5 flex items-center justify-between gap-3" aria-label="Sahifalar">
+        {% if sahifa.has_previous %}
+          <a href="{% lenta_url sahifa=sahifa.previous_page_number %}" class="btn-outline btn-sm" rel="prev">← Oldingi</a>
+        {% else %}
+          <span></span>
+        {% endif %}
+
+        <span class="tnum text-sm text-fg-muted">
+          {{ sahifa.number }} / {{ sahifa.paginator.num_pages }}
+        </span>
+
+        {% if sahifa.has_next %}
+          <a href="{% lenta_url sahifa=sahifa.next_page_number %}" class="btn-outline btn-sm" rel="next">Keyingi →</a>
+        {% else %}
+          <span></span>
+        {% endif %}
+      </nav>
+    {% endif %}
+
+  </main>
+</div>
+
+<div class="h-16 lg:hidden" aria-hidden="true"></div>
+{% endblock %}

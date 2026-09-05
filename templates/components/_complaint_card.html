@@ -64,14 +64,25 @@
         <time datetime="{{ complaint.created_at|date:'c' }}">{{ complaint.created_at|timesince }} oldin</time>
       </div>
 
-      {# --- Sarlavha --- #}
+      {% comment %}
+        --- Sarlavha va parcha ---
+
+        ⚠️ `ajratilgan_*` — QIDIRUV ko'rinishi to'ldiradigan atributlar
+           (D4-T3), lentada ular BO'SH va karta asl matnga qaytadi.
+           Bitta shablon ikkala sahifaga xizmat qiladi.
+
+        ⚠️⚠️ ULAR HTML: ichida `<mark>` teglari bor va shuning uchun
+           ekranlanmasdan chiqadi. Matnning O'ZI
+           `apps/common/ajratish.py` da `escape()` dan o'tgan —
+           bu yerga XOM foydalanuvchi matnini QO'YMANG.
+      {% endcomment %}
       <h2 class="text-[17px] font-bold leading-snug sm:text-lg">
         <a href="{{ complaint.get_absolute_url }}" class="transition-colors hover:text-primary">
-          {{ complaint.title }}
+          {% if complaint.ajratilgan_sarlavha %}{{ complaint.ajratilgan_sarlavha }}{% else %}{{ complaint.title }}{% endif %}
         </a>
       </h2>
 
-      <p class="clamp-2 mt-1.5 text-[15px] text-fg-muted">{{ complaint.description|truncatewords:32 }}</p>
+      <p class="clamp-2 mt-1.5 text-[15px] text-fg-muted">{% if complaint.ajratilgan_parcha %}{{ complaint.ajratilgan_parcha }}{% else %}{{ complaint.description|truncatewords:32 }}{% endif %}</p>
 
       {# --- Harakatlar --- #}
       <div class="mt-3 flex flex-wrap items-center gap-1">

@@ -46,5 +46,12 @@ def lenta_url(context: dict, **kwargs: object) -> str:
     if "after" not in kwargs:
         params.pop("after", None)
 
+    # ⚠️ Xuddi shu sabab qidiruvning offset sahifalashiga ham tegishli
+    #    (D4-T3): 3-sahifada turib kategoriyani almashtirgan foydalanuvchi
+    #    yangi filtrning 3-sahifasiga tushardi — ko'pincha bo'sh sahifaga,
+    #    va "natija yo'q" degan xulosaga kelardi.
+    if "sahifa" not in kwargs:
+        params.pop("sahifa", None)
+
     sorov = params.urlencode()
     return f"{request.path}?{sorov}" if sorov else request.path

@@ -39,7 +39,14 @@
     </a>
 
     {% if show_search %}
-      <form class="relative ml-2 hidden flex-1 md:block" role="search" action="{% url 'feed' %}" method="get">
+      {% comment %}
+        ⚠️ D4-T3 gacha bu forma `{% url 'feed' %}` ga yuborardi va lenta
+           `q` ni JIMGINA e'tiborsiz qoldirardi: foydalanuvchi Enter
+           bosardi, sahifa yangilanardi va o'sha lenta qaytardi —
+           "qidiruv ishlamayapti" degan eng yomon shakl, hech qanday
+           belgi bermaydigan.
+      {% endcomment %}
+      <form class="relative ml-2 hidden flex-1 md:block" role="search" action="{% url 'qidiruv' %}" method="get">
         <label for="q" class="sr-only">Muammolar ichidan qidirish</label>
         <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-fg-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
         <input

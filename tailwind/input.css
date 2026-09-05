@@ -246,6 +246,23 @@
   .tnum {
     font-variant-numeric: tabular-nums;
   }
+
+  /* Qidiruvda topilgan so'z (D4-T3).
+     ⚠️ Brauzerning standart `mark` uslubi — sariq fon va QORA matn.
+        Qorong'i mavzuda u ko'zni qamashtiradi va butun kartani buzadi;
+        bundan tashqari sariq loyihaning palitrasida umuman yo'q.
+     ⚠️ Fon EMAS, ostiga chizish + og'irlik: natijalar ro'yxatida
+        o'nlab ajratilgan so'z bo'lishi mumkin va fon bilan sahifa
+        "chipor" bo'lib ketadi. */
+  mark {
+    background: transparent;
+    color: inherit;
+    font-weight: 700;
+    text-decoration: underline;
+    text-decoration-color: var(--c-primary);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 2px;
+  }
 }
 
 /* --------------------------------------------------------------------------
@@ -325,6 +342,31 @@
     button.chip::after,
     a.chip::after {
       display: none;
+    }
+  }
+
+  /* Gorizontal aylantiriladigan chip qatori (lenta va qidiruv filtrlari).
+
+     ⚠️⚠️ NEGA ALOHIDA SINF, `overflow-x-auto` YETARLI EMAS
+        CSS spetsifikatsiyasi: bir o'q `visible` dan boshqa qiymat olsa,
+        IKKINCHISI ham avtomatik `auto` bo'ladi. Yuqoridagi bosish
+        maydoni (`inset: -9px 0`) qatordan 9px chiqib turadi va natijada
+        mobilda KERAKSIZ VERTIKAL AYLANTIRGICH paydo bo'ladi — qatorning
+        o'ng chetida kichkina strelkalar (jonli sinovda topilgan, D4-T3).
+
+     ⚠️ `overflow-y: hidden` YARAMAYDI: u bosish maydonini ham kesadi va
+        44px talabi buziladi — ya'ni kosmetik nuqsonni tuzatib,
+        foydalanishga oid haqiqiy muammo yaratardi. Shuning uchun
+        qatorga JOY beriladi.
+
+     Desktopda `::after` o'chiriladi, ya'ni qo'shimcha joy ham kerak emas. */
+  .chip-qatori {
+    overflow-x: auto;
+    padding-block: 9px;
+  }
+  @media (min-width: 640px) {
+    .chip-qatori {
+      padding-block: 0;
     }
   }
 

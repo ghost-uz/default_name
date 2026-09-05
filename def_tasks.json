@@ -2487,10 +2487,72 @@
       "bogliq": [
         "D4-T2"
       ],
-      "holat": "todo",
+      "holat": "done",
       "qabul_mezoni": [
         "natija topilmasa taklif beriladi (yaqin so'zlar)"
-      ]
+      ],
+      "tugatilgan": "2026-09-05",
+      "natija": {
+        "yaratilgan": [
+          "apps/common/ajratish.py — so'z darajasida ajratish (ajratib_korsat, qidiruv_sozlari); SearchHeadline RAD ETILDI",
+          "apps/complaints/views.py — qidiruv() ko'rinishi (offset sahifalash, so'rov uzunligi chegarasi, takliflar faqat bo'sh natijada)",
+          "apps/complaints/urls.py — /qidiruv/",
+          "templates/complaints/qidiruv.html — natijalar, 3 ta filtr qatori, bo'sh holatlar, takliflar, sahifalash, noindex",
+          "apps/complaints/selectors.py — LentaFiltri.status + HOLAT_FILTRI",
+          "templates/components/_complaint_card.html — ajratilgan matn (bo'lsa)",
+          "templates/components/_header.html — forma endi /qidiruv/ ga",
+          "apps/complaints/templatetags/lenta.py — filtr o'zgarganda `sahifa` tozalanadi",
+          "tailwind/input.css — `mark` uslubi + `.chip-qatori`",
+          "apps/common/tests/test_ajratish.py (26 test) + apps/complaints/tests/test_qidiruv_sahifasi.py (31 test)"
+        ],
+        "qabul_mezonlari": {
+          "natija_topilmasa_taklif_beriladi": "✅ Trigram bo'yicha yaqin sarlavhalar (`taxminiy_natijalar`). FAQAT bo'sh natijada — natija bor bo'lsa taklif chalg'itardi. 🌐 JONLI TASDIQLANDI: «ipotaka» -> «Ipoteka to'lovini kechiktirsam...» va yana bittasi."
+        },
+        "tekshirilgan": [
+          "🌐 JONLI (desktop + mobil + qorong'i): natijalar, ajratish, filtrlar, takliflar, bo'sh holatlar",
+          "⭐ ajratish KIRILCHA postda LOTINCHA so'rov bilan ham ishlaydi",
+          "ajratish lentada YO'Q (bitta karta shabloni, ikki sahifa)",
+          "⭐ XSS: sarlavhadagi HTML ekranlanadi, `<mark>` dan boshqa teg yo'q (uchidan-uchiga ham)",
+          "kategoriya / avlod / holat filtrlari; noto'g'ri holat TASHLANADI",
+          "filtr havolasi `q` ni saqlaydi; filtr o'zgarganda sahifa BOSHIDAN",
+          "sahifalash (1/2, oldingi/keyingi); `?sahifa=abc|0|-1|999|1e5` 500 bermaydi",
+          "juda uzun so'rov chegaralanadi",
+          "yashirilgan post natijalarda ham, TAKLIFLARDA ham yo'q",
+          "bloklangan muallif (D2-T11) qidiruvda chiqmaydi",
+          "qidiruv sahifasi `noindex`",
+          "⭐ so'z bo'yicha normallashtirish butun matnnikiga TENG (guard test) — ajratishning butun asosi shu farazda"
+        ],
+        "qarorlar": [
+          "⭐⭐ `SearchHeadline` RAD ETILDI. D4-T2 dan keyin indekslanadigan matn asl matndan sezilarli farq qiladi («Ипотека олиш» -> \"ipoteka olish\"). Normal ustundan headline — ekranda transliteratsiya qilingan, bosh harfsiz matn chiqardi; asl ustundan — kirilcha postda HECH NARSA ajratilmasdi. Yechim: so'z darajasida ajratish — har so'z AYNAN `qidiruv_uchun()` bilan normallashtiriladi, ekranda esa ASL so'z qoladi. Ikkinchi normallashtirish implementatsiyasi paydo bo'lmaydi.",
+          "⭐ SAHIFALASH OFFSET (`?sahifa=2`), kursor EMAS: qidiruv DOLZARBLIK bo'yicha saralanadi va u model maydoni emas — `kursor_filtri()` uni qura olmaydi. Chuqur sahifada sekinlashish bu yerda amaliy emas (foydalanuvchi so'rovni aniqlashtiradi, 10-sahifaga o'tmaydi).",
+          "⭐ `COUNT(*)` qidiruvda ATAYLAB BOR (lentada ataylab YO'Q): \"12 ta natija\" — so'rov qanchalik aniq bo'lganini ko'rsatadigan asosiy signal. Natija to'plami filtrlangan.",
+          "TAKLIF faqat bo'sh natijada: natija bor bo'lsa u foydalanuvchini topilgan javobdan uzoqlashtirardi. Ikkinchi so'rov ham FAQAT shu holatda ketadi.",
+          "⭐ Taklif bor bo'lsa KATTA bo'sh holat KO'RSATILMAYDI (jonli sinovda topildi: taklif ekran ostida qolib ketardi). Taklif blokida \"o'zingiz yozing\" chiqish yo'li bor — aks holda boshi berk ko'cha.",
+          "Uch xil bo'sh holat: so'rovsiz / filtr tufayli / umuman topilmadi. \"Hech narsa topilmadi\" filtr holatida YOLG'ON bo'lardi.",
+          "`LentaFiltri.status` LENTAGA HAM tegadi (`?status=solved`): filtr URL'da bo'lgani uchun uni faqat qidiruvga cheklash sun'iy bo'lardi.",
+          "Sahifaning O'ZIDA forma bor: sarlavhadagi maydon `hidden md:block` — telefonda u yo'q va so'rovni aniqlashtirishning yagona yo'li orqaga qaytish bo'lardi. Filtrlar yashirin maydon sifatida uzatiladi.",
+          "Qidiruv sahifasi `noindex, follow`: `q` × filtr × sahifa cheksiz kombinatsiya beradi va indekslansa sayt o'z-o'zi bilan raqobatlashadigan minglab sifatsiz sahifa hosil qilardi (D4-T5 uchun ham muhim).",
+          "`mark` uslubi: fon EMAS, ostiga chizish. Brauzer standarti sariq fon + qora matn — qorong'i mavzuda ko'zni qamashtiradi va palitrada sariq yo'q; bundan tashqari o'nlab ajratilgan so'z bo'lsa fon sahifani chipor qiladi."
+        ],
+        "topilgan_xatolar": [
+          "⭐⭐ D4-T3 GACHA SARLAVHADAGI QIDIRUV FORMASI `{% url 'feed' %}` GA YUBORARDI va lenta `q` ni JIMGINA e'tiborsiz qoldirardi: foydalanuvchi Enter bosardi, sahifa yangilanardi va o'sha lenta qaytardi. \"Qidiruv ishlamayapti\" ning eng yomon shakli — hech qanday belgi bermaydigani. Guard test qo'shildi.",
+          "⭐ MAVJUD NUQSON (lentada D1-T7 dan beri): chipning bosish maydoni (`::after { inset: -9px 0 }`) qatordan chiqib turadi, `overflow-x: auto` esa CSS spetsifikatsiyasi bo'yicha ikkinchi o'qni ham `auto` qiladi -> MOBILDA keraksiz vertikal aylantirgich. `overflow-y: hidden` yaramaydi (bosish maydonini kesardi) -> `.chip-qatori` sinfi joy beradi. Ikkala sahifada ham tuzatildi.",
+          "⚠️ `runserver --noreload` SHABLON TAHRIRINI KO'RSATMAYDI (DEBUG=True bo'lsa ham): o'zgarish uchun serverni qayta ishga tushirish SHART. Ikki marta chalg'itdi.",
+          "Test yozishda: ajratilgan sarlavha javobda BUTUN satr sifatida bo'lmaydi (`<mark>` uni bo'ladi) — tekshiruv mos kelmagan qism bo'yicha.",
+          "`UserBlock` maydonlari `user`/`blocked` (`blocker` emas).",
+          "ruff S308 `mark_safe` da: `noqa` ifodaning O'Z qatorida bo'lishi shart, yuqoridagi izoh qatorida emas."
+        ],
+        "olchangan_holat": {
+          "testlar": 1041,
+          "qamrov_foiz": 95.44,
+          "d4_t3_testlari": 57
+        },
+        "keyingi_uchun_eslatma": [
+          "⚠️ D4-T4 (SEO): qidiruv sahifasi `noindex` — sitemap'ga ham kirmaydi.",
+          "⚠️ `qidiruv_uchun()` ga KONTEKSTGA BOG'LIQ yangi qoida qo'shilsa (masalan \"so'z oxirida\"), ajratish JIMGINA to'xtaydi: u har so'zni ALOHIDA normallashtiradi. Guard: `test_SOZ_boyicha_normallashtirish_BUTUN_MATNNIKI_bilan_bir_xil`.",
+          "⚠️ `.chip-qatori` — gorizontal aylantiriladigan chip qatorlari uchun yagona to'g'ri sinf. `overflow-x-auto` ni yolg'iz ishlatmang."
+        ]
+      }
     },
     {
       "id": "D4-T4",

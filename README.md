@@ -443,6 +443,7 @@ D2-T6 rasmiy ishonch telefonini talab qiladi, D2-T10 — yurist xulosasini.
 |---|---|
 | D4-T1 | PostgreSQL FTS — GENERATED `tsvector`, GIN + trigram indeks, qayta indekslash buyrug'i |
 | D4-T2 | Lotin/kiril transliteratsiyasi va apostrof — to'qqiz yozuv usuli, bitta lexema |
+| D4-T3 | Qidiruv sahifasi `/qidiruv/` — ajratish, uch filtr, yaqin so'zlar takliflari |
 
 ---
 
@@ -520,6 +521,52 @@ Ikkalasi ham `ComplaintQuerySet` da yopildi. Bu teshik tanlangan dizayndan
 kelib chiqadi: `search_vector` GENERATED ustun bo'lgani uchun uni unutish
 mumkin emas, lekin **normallashtirish baribir Python'da qoladi** — trigger
 bermaydigan bo'shliq aynan shu yerda.
+
+### Qidiruv sahifasi (D4-T3) — `/qidiruv/?q=…`
+
+Natijalar dolzarblik bo'yicha, uch filtr (soha / avlod / holat), topilgan
+so'zlar ajratilgan, bo'sh natijada — yaqin so'zlar takliflari.
+
+### ⚠️⚠️ `SearchHeadline` bu loyihada ISHLAMAYDI
+
+Ajratib ko'rsatishning tabiiy yo'li — Postgres'ning `SearchHeadline` i.
+D4-T2 dan keyin u ikkala shaklda ham buzuq:
+
+| Manba | Nima bo'ladi |
+|---|---|
+| `SearchHeadline("qidiruv_sarlavha", …)` | ekranda **normallashtirilgan** matn: bosh harfsiz, apostrofsiz, kirilcha post lotinchaga aylangan holda |
+| `SearchHeadline("title", …)` | so'rov normallashtirilgan, matn xom → **kirilcha postda hech narsa ajratilmaydi** |
+
+Yechim — **so'z darajasida ajratish** (`apps/common/ajratish.py`): asl matn
+so'zlarga bo'linadi, har bir so'z **aynan o'sha** `qidiruv_uchun()` bilan
+normallashtiriladi va so'rov so'zlari bilan solishtiriladi. Ekranda esa
+**asl** so'z qoladi:
+
+```
+"Ипотека олиш"  +  q="ipoteka"   ->   <mark>Ипотека</mark> олиш
+```
+
+⚠️ Ikkinchi normallashtirish implementatsiyasi paydo bo'lmaydi — qoidalar
+o'zgarsa ajratish avtomatik ergashadi. Buning sharti guard test bilan
+qotirilgan: **so'z bo'yicha normallashtirish butun matnnikiga teng
+bo'lishi kerak**. `qidiruv_uchun()` ga kontekstga bog'liq yangi qoida
+qo'shilsa, o'sha test darhol yiqiladi.
+
+### ⚠️ Qidiruvda sahifalash — offset, kursor emas
+
+Lentada kursor ishlatiladi (D1-T12), qidiruvda esa **`?sahifa=2`**. Sabab
+texnik va majburiy: kursor saralash **maydonlariga** tayanadi
+(`hot_score`, `created_at`, `id`), qidiruv esa **dolzarblik** bo'yicha
+saralanadi — u hisoblanadi va model maydoni emas.
+
+Xuddi shunday, `COUNT(*)` lentada ataylab yo'q, qidiruvda ataylab bor:
+«12 ta natija» — so'rov qanchalik aniq bo'lganini ko'rsatadigan signal.
+
+### ⚠️ Qidiruv sahifasi `noindex`
+
+`q` × soha × avlod × holat × sahifa — cheksiz kombinatsiya. Indekslansa
+sayt o'z-o'zi bilan raqobatlashadigan minglab sifatsiz sahifa hosil
+qilardi. D4-T5 sitemap'i ham bu yerga kirmaydi.
 
 ### To'qqiz yozuv usuli — bitta so'z (D4-T2)
 

@@ -63,6 +63,16 @@ SARALASH_SARLAVHASI: dict[str, str] = {
     "solved": "Yechilgan dardlar",
 }
 
+# Qidiruv sahifasidagi holat filtri uchun yorliqlar (D4-T3).
+# ⚠️ `ComplaintStatus.choices` dan foydalanilmadi: u "Ochiq / Yechilgan /
+#    Yopilgan" beradi, filtr chipida esa "Ochiq savollar" tushunarliroq —
+#    chip yolg'iz turadi va nimaning holati ekani kontekstdan ko'rinmaydi.
+HOLAT_FILTRI: dict[str, str] = {
+    ComplaintStatus.OPEN: "Ochiq savollar",
+    ComplaintStatus.SOLVED: "Yechilgan",
+    ComplaintStatus.CLOSED: "Yopilgan",
+}
+
 # ⚠️ "Yechilgan" — maketda saralash tabi, amalda esa FILTR.
 #    Shuning uchun u alohida ro'yxatda: tab bosilganda `status=solved`
 #    ham qo'shiladi.
@@ -84,11 +94,21 @@ class LentaFiltri:
     sort: str = STANDART_SARALASH
     category: str = ""
     generation: str = ""
+    # ⚠️ D4-T3 da QO'SHILDI va lentaga ham tegadi (`?status=solved`).
+    #    Bu ataylab: filtr URL'da bo'lgani uchun uni faqat qidiruvga
+    #    cheklash sun'iy bo'lardi — lentada ham ishlagani zarar qilmaydi.
+    #
+    #    ⚠️ `sort="solved"` bilan CHALKASHTIRMANG: u maketdan kelgan tab
+    #       va o'zi ham holat filtri qo'shadi (`FILTRLI_SARALASH`).
+    #       Ikkalasi birga berilsa IKKALASI ham qo'llanadi — ya'ni
+    #       `?sort=solved&status=open` bo'sh natija beradi. Bu to'g'ri
+    #       xulq: foydalanuvchi bir-biriga zid ikki shart so'radi.
+    status: str = ""
 
     @property
     def faolmi(self) -> bool:
         """Biror filtr qo'llanganmi (bo'sh holatda matnni tanlash uchun)."""
-        return bool(self.category or self.generation)
+        return bool(self.category or self.generation or self.status)
 
 
 def filtrni_oqish(GET) -> LentaFiltri:  # noqa: N803 — Django uslubi
@@ -112,10 +132,18 @@ def filtrni_oqish(GET) -> LentaFiltri:  # noqa: N803 — Django uslubi
     if generation not in Generation.values:
         generation = ""
 
+    # ⚠️ Holat `generation` bilan bir xil ishlanadi (noma'lum qiymat
+    #    TASHLANADI), `category` bilan emas: kategoriya slug'i erkin
+    #    matn va uni tekshirib bo'lmaydi, holat esa yopiq ro'yxat.
+    status = GET.get("status") or ""
+    if status not in ComplaintStatus.values:
+        status = ""
+
     return LentaFiltri(
         sort=sort,
         category=(GET.get("category") or "").strip(),
         generation=generation,
+        status=status,
     )
 
 
@@ -155,6 +183,8 @@ def lenta_queryset(
         qs = qs.filter(category__slug=filtr.category)
     if filtr.generation:
         qs = qs.filter(generation_tag=filtr.generation)
+    if filtr.status:
+        qs = qs.filter(status=filtr.status)
 
     holat = FILTRLI_SARALASH.get(filtr.sort)
     if holat:

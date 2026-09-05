@@ -13,6 +13,9 @@ from . import views
 urlpatterns = [
     path("", views.feed, name="feed"),
     path("yozish/", views.complaint_create, name="complaint_create"),
+    # ⚠️ Manzil o'zbekcha va SEO uchun barqaror (`/search/` emas) —
+    #    config/urls.py dagi qoida.
+    path("qidiruv/", views.qidiruv, name="qidiruv"),
     path("dard/<slug:slug>/", views.complaint_detail, name="complaint_detail"),
     path("dard/<slug:slug>/tahrirlash/", views.complaint_edit, name="complaint_edit"),
     # ⚠️ Yo'nalish URL'da emas, POST tanasida (`qiymat=+1|-1`).

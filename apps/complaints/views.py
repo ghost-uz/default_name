@@ -6,6 +6,7 @@ from typing import cast
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
 from django.db import models
 from django.http import (
     Http404,
@@ -19,6 +20,7 @@ from django.views.decorators.http import require_POST
 
 from apps.accounts.models import User
 from apps.accounts.services import bloklangan_idlar
+from apps.common.ajratish import ajratib_korsat, qidiruv_sozlari
 from apps.common.inqiroz import inqiroz_konteksti
 from apps.common.ratelimit import tezlik_cheklovi
 from apps.common.vote_views import (
@@ -36,14 +38,17 @@ from apps.solutions.models import Solution, SolutionVote
 from .forms import ComplaintForm
 from .models import Complaint, ComplaintVote, Generation, SavedComplaint
 from .selectors import (
+    HOLAT_FILTRI,
     SAHIFA_HAJMI,
     SARALASH_SARLAVHASI,
     SARALASH_TABI,
     filtrni_oqish,
     kursorni_oqish,
     lenta_sahifasi,
+    qidiruv_queryset,
     saqlangan_idlari,
     saqlanganlar_queryset,
+    taxminiy_natijalar,
     yon_panel_kategoriyalari,
 )
 
@@ -115,6 +120,112 @@ def feed(request: HttpRequest) -> HttpResponse:
         return render(request, "complaints/_feed_sahifa.html", kontekst)
 
     return render(request, "complaints/feed.html", kontekst)
+
+
+# ===========================================================================
+# Qidiruv (D4-T3)
+# ===========================================================================
+# ⚠️ SO'ROV UZUNLIGI CHEGARALANADI. Cheksiz so'rov `websearch_to_tsquery`
+#    ni ham, trigram taqqoslashini ham sekinlashtiradi va bunday so'rovlar
+#    odamdan emas — skript va botlardan keladi. 200 belgi haqiqiy savol
+#    uchun ortig'i bilan yetadi.
+QIDIRUV_CHEGARASI = 200
+
+# Tavsif parchasining uzunligi. Kartada ikki qatorga sig'adi; uzunroq
+# parcha natijalar ro'yxatini o'qib bo'lmaydigan qiladi.
+PARCHA_UZUNLIGI = 220
+
+
+def qidiruv(request: HttpRequest) -> HttpResponse:
+    """Qidiruv natijalari sahifasi.
+
+    ⚠️ NEGA ALOHIDA MANZIL (`/qidiruv/`), LENTANING PARAMETRI EMAS
+       Sarlavhadagi forma ilgari `/?q=...` ga yuborardi va lenta uni
+       jimgina E'TIBORSIZ QOLDIRARDI: foydalanuvchi Enter bosardi,
+       sahifa yangilanardi va o'sha lenta qaytardi. Bu "qidiruv
+       ishlamayapti" degan eng yomon shakl — hech qanday belgi yo'q.
+
+    ⚠️ SAHIFALASH — OFFSET (`?sahifa=2`), KURSOR EMAS (D1-T12 dan farqli).
+       Kursor saralash MAYDONLARIGA tayanadi (`hot_score`, `created_at`,
+       `id`), qidiruv esa DOLZARBLIK bo'yicha saralanadi — u hisoblanadi
+       va model maydoni emas, ya'ni `kursor_filtri()` uni qura olmaydi.
+
+       Offset'ning ma'lum kamchiligi (chuqur sahifada sekinlashish) bu
+       yerda amaliy emas: qidiruv natijasi filtrlangan va foydalanuvchi
+       uchinchi sahifadan nariga deyarli o'tmaydi — o'rniga so'rovni
+       aniqlashtiradi.
+
+    ⚠️ `COUNT(*)` BU YERDA ATAYLAB BOR (lentada ataylab YO'Q).
+       Lentada "nechta post bor" savolining ma'nosi yo'q, qidiruvda esa
+       "12 ta natija" — foydalanuvchi so'rovi qanchalik aniq bo'lganini
+       ko'rsatadigan asosiy signal. Natija to'plami filtrlangan, ya'ni
+       sanoq butun jadval bo'ylab ketmaydi.
+    """
+    filtr = filtrni_oqish(request.GET)
+    xom = (request.GET.get("q") or "").strip()[:QIDIRUV_CHEGARASI]
+    bloklanganlar = bloklangan_idlar(user=request.user)
+
+    # ⚠️ `get_page()`, `page()` EMAS: noto'g'ri raqam (`?sahifa=abc`,
+    #    `?sahifa=999`) 500 yoki 404 bermasin — bunday havolalar
+    #    botlardan va qo'lda tahrirlangan URL'lardan doim keladi (D1-T7
+    #    dagi `filtrni_oqish` bilan bir xil mantiq).
+    sahifalovchi = Paginator(
+        qidiruv_queryset(xom, filtr=filtr, bloklanganlar=bloklanganlar),
+        SAHIFA_HAJMI,
+    )
+    sahifa = sahifalovchi.get_page(request.GET.get("sahifa"))
+    muammolar = list(sahifa.object_list)
+
+    ovozlar = user_votes_for(
+        vote_model=ComplaintVote,
+        target_field="complaint",
+        user=request.user,
+        targets=muammolar,
+    )
+    saqlanganlar_toplami = saqlangan_idlari(user=request.user, targets=muammolar)
+
+    # ⚠️ Ajratish SO'ZLARI bir marta hisoblanadi va har karta uchun qayta
+    #    ishlatiladi — aks holda har natija uchun so'rov qaytadan
+    #    normallashtirilardi.
+    sozlar = qidiruv_sozlari(xom)
+
+    for muammo in muammolar:
+        muammo.user_vote = ovozlar.get(muammo.pk)
+        muammo.saqlangan = muammo.pk in saqlanganlar_toplami
+        muammo.ajratilgan_sarlavha = ajratib_korsat(muammo.title, sozlar)
+        muammo.ajratilgan_parcha = ajratib_korsat(
+            muammo.description, sozlar, oyna=PARCHA_UZUNLIGI
+        )
+
+    # ⚠️ TAKLIF FAQAT BO'SH NATIJADA (D4-T3 qabul mezoni). Natija bor
+    #    bo'lsa taklif ko'rsatish foydalanuvchini chalg'itardi: u
+    #    topilgan javobdan uzoqlashtiradi.
+    #
+    # ⚠️ Bu ikkinchi so'rov, lekin u FAQAT shu holatda ketadi — ya'ni
+    #    muvaffaqiyatli qidiruvning narxi o'zgarmaydi.
+    takliflar = (
+        list(taxminiy_natijalar(xom, bloklanganlar=bloklanganlar))
+        if xom and not muammolar
+        else []
+    )
+
+    return render(
+        request,
+        "complaints/qidiruv.html",
+        {
+            "active_nav": "feed",
+            "show_search": True,
+            "q": xom,
+            "complaints": muammolar,
+            "sahifa": sahifa,
+            "jami": sahifalovchi.count,
+            "takliflar": takliflar,
+            "filtr": filtr,
+            "kategoriyalar": yon_panel_kategoriyalari(),
+            "avlodlar": Generation.choices,
+            "holatlar": HOLAT_FILTRI.items(),
+        },
+    )
 
 
 # ===========================================================================

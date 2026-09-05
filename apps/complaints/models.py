@@ -248,6 +248,16 @@ class Complaint(ContentModel, VotableModel):
     #    avto-post, D5-T3) shablon "saqlangan" deb ko'rsatib qo'ymasin.
     saqlangan: bool = False
 
+    # ⚠️ MAYDON EMAS — qidiruv ko'rinishi to'ldiradigan vaqtinchalik
+    #    atributlar (D4-T3), `user_vote` va `saqlangan` bilan bir xil
+    #    naqsh. Ichida `<mark>` teglari bo'lgan XAVFSIZ HTML: matn
+    #    `apps/common/ajratish.py` da escape qilinadi.
+    #
+    #    Standart bo'sh satr ATAYLAB: karta shabloni bo'sh bo'lsa asl
+    #    sarlavhaga qaytadi, ya'ni lentada hech narsa o'zgarmaydi.
+    ajratilgan_sarlavha: str = ""
+    ajratilgan_parcha: str = ""
+
     # ⚠️ Menejerlar QAYTA belgilanadi (`ContentModel` dagi umumiylar
     #    o'rniga): ommaviy yozuvda qidiruv ustunlari to'ldirilishi uchun —
     #    sabab `ComplaintQuerySet` docstring'ida.

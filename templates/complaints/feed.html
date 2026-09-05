@@ -62,7 +62,7 @@
           Avlod filtri. Maketda `<button>` edi — endi `<a>`: holat URL'da
           bo'lishi kerak (D1-T7), tugma esa manzilni o'zgartirmaydi.
         {% endcomment %}
-        <div class="mb-5 flex items-center gap-2 overflow-x-auto pb-1" role="group" aria-label="Avlod bo'yicha filtr">
+        <div class="chip-qatori mb-5 flex items-center gap-2" role="group" aria-label="Avlod bo'yicha filtr">
           <span class="shrink-0 pr-1 text-xs font-semibold uppercase tracking-wider text-fg-muted">Avlod</span>
           <a href="{% lenta_url generation='' %}" class="chip shrink-0 {% if not filtr.generation %}chip-active{% endif %}" {% if not filtr.generation %}aria-current="page"{% endif %}>Hammasi</a>
           {% for kalit, yorliq in avlodlar %}
