@@ -439,6 +439,107 @@ D2-T6 rasmiy ishonch telefonini talab qiladi, D2-T10 — yurist xulosasini.
 
 **M3 (gamifikatsiya va profil) TO'LIQ TUGADI** — 5/5 task.
 
+| Task | Nima |
+|---|---|
+| D4-T1 | PostgreSQL FTS — GENERATED `tsvector`, GIN + trigram indeks, qayta indekslash buyrug'i |
+
+---
+
+### To'liq matnli qidiruv (D4-T1)
+
+Uch qatlam, har biri o'zi eng ishonchli bo'lgan joyda:
+
+| Qatlam | Nima qiladi | Qayerda |
+|---|---|---|
+| Normallashtirish | kichik harf, diakritika olib tashlanadi | Python (`apps/common/matn.py`) |
+| `tsvector` | lexemalar + vaznlar (sarlavha `A`, tavsif `B`) | PostgreSQL (GENERATED ustun) |
+| Chegara | "qanchalik yaqin — yetarli yaqin" | sozlama (`QIDIRUV_OXSHASHLIK_CHEGARASI`) |
+
+```bash
+python manage.py qidiruvni_yangilash            # qayta indekslaydi
+python manage.py qidiruvni_yangilash --tekshir  # faqat sanaydi, yozmaydi
+```
+
+O'lchangan (10 041 post): FTS **6.8 ms**, trigram zaxira yo'li **43 ms** —
+qabul mezoni 200 ms.
+
+### ⚠️⚠️ Normallashtirish Python'da, `unaccent` kengaytmasida EMAS
+
+Task tavsifi `'simple' + unaccent` degan va uni bazada qilish tabiiy
+ko'rinadi. Lekin **`unaccent()` PostgreSQL'da `IMMUTABLE` emas** — u lug'at
+faylini o'qiydi. Ya'ni uni GENERATED ustun ifodasiga qo'yib bo'lmaydi:
+Postgres ochiq rad etadi.
+
+Odatdagi chetlab o'tish — o'zining `IMMUTABLE` deb e'lon qilingan o'ram
+funksiyasi — **yolg'on va'da**: lug'at almashsa indeks jimgina noto'g'ri
+bo'lib qoladi va buni hech narsa bildirmaydi.
+
+Python'da qilish bu tuzoqni butunlay yo'q qiladi va bitta qo'shimcha foyda
+beradi: **indekslash va qidiruv aynan bir kod yo'lidan o'tadi**. Baza
+tomonda esa faqat immutable `to_tsvector('simple', …)` qoladi.
+
+### ⚠️ `simple` tokenizatori apostrofda so'zni BO'LADI
+
+Bu D4-T2 ning sababi va u jonli bazada o'lchangan:
+
+```sql
+to_tsvector('simple', 'ko''chmas mulk')  ->  'ko':1 'chmas':2 'mulk':3
+to_tsvector('simple', 'kochmas mulk')    ->  'kochmas':1 'mulk':2
+```
+
+Ikkinchisi bilan birinchisini qidirsangiz — **topilmaydi**. Ya'ni apostrofni
+qanday ishlash "chiroyli qo'shimcha" emas, indeksning asosiy qarori.
+
+D4-T2 da apostrof **o'chiriladi** (bir shaklga keltirilmaydi): shunda
+`ko'chmas`, `koʻchmas`, `kochmas` va `кўчмас` — hammasi bitta lexemaga
+tushadi. Bu foydalanuvchilarning apostrofsiz yozish odatini ham qamrab
+oladi.
+
+### ⚠️⚠️ `bulk_create` IKKI narsani chetlab o'tadi
+
+`bulk_create` va `bulk_update` `save()` ni chaqirmaydi **va signal ham
+yubormaydi**. `Complaint` uchun bu ikkita hisoblanadigan maydonni
+yo'qotadi:
+
+1. **qidiruv ustunlari** — post lentada ko'rinadi, qidiruvda esa YO'Q.
+   Xato chiqmaydi, log toza.
+2. **slug** — ⚠️ bu **D1-T3 dan beri ochiq turgan teshik edi** va uni
+   D4-T1 testi topdi. Barcha yozuvlar bo'sh slug oladi, ikkinchisi esa:
+
+   ```
+   duplicate key value violates unique constraint "complaint_slug_uniq_alive"
+   DETAIL: Key (slug)=() already exists
+   ```
+
+   Ya'ni D7-T7 (sovuq start, 50-100 post ommaviy kiritiladi) **bitta
+   postdan keyin to'xtardi** va sabab birinchi qarashda tushunarsiz
+   bo'lardi: "slug'ni hech kim bo'sh qoldirmagan-ku".
+
+Ikkalasi ham `ComplaintQuerySet` da yopildi. Bu teshik tanlangan dizayndan
+kelib chiqadi: `search_vector` GENERATED ustun bo'lgani uchun uni unutish
+mumkin emas, lekin **normallashtirish baribir Python'da qoladi** — trigger
+bermaydigan bo'shliq aynan shu yerda.
+
+### ⚠️ O'xshashlik chegarasi sozlamada, Postgres GUC'ida emas
+
+Xato yozilgan so'rov (`ipotaka` → `ipoteka`) uchun `word_similarity`
+ishlatiladi — oddiy `similarity` emas:
+
+```
+similarity('ipotaka', 'ipoteka olish qiyinmi')       = 0.20   ← ishlamaydi
+word_similarity('ipotaka', 'ipoteka olish qiyinmi')  = 0.50
+```
+
+Indeksli `<%` operatori chegarani `pg_trgm.word_similarity_threshold` dan
+oladi va uning standarti **0.6** — ya'ni yuqoridagi 0.50 ni o'tkazib
+yuborardi. Uni o'zgartirish esa **ulanish holatiga yozish** degani:
+`CONN_MAX_AGE=60` bilan ulanishlar qayta ishlatiladi, `SET` so'rovlar
+orasida oqib ketardi va buni test ushlamasdi.
+
+Shuning uchun oshkora taqqoslash ishlatiladi: indeksdan foydalanmaydi,
+lekin chegara ko'rinadigan mahsulot parametri bo'lib qoladi va bu yo'l
+faqat asosiy qidiruv bo'sh qaytganda ishlaydi.
+
 ### ⚠️⚠️ Uch marta qaytgan bitta teshik: ANONIMLIK va SANOQLAR
 
 M3 ning uchta taskida BIR XIL muammo boshqa shaklda qaytdi. Har safar

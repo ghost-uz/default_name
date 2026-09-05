@@ -10,12 +10,21 @@ import secrets
 from datetime import timedelta
 
 from django.conf import settings
+from django.contrib.postgres.indexes import GinIndex
+from django.contrib.postgres.search import SearchVector, SearchVectorField
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.text import slugify
 
-from apps.common.models import ContentModel, TimeStampedModel, VotableModel, VoteModel
+from apps.common.matn import qidiruv_uchun
+from apps.common.models import (
+    ContentModel,
+    ContentQuerySet,
+    TimeStampedModel,
+    VotableModel,
+    VoteModel,
+)
 
 # ⚠️ D1-T9 qabul mezoni: "tahrirlash oynasi cheklangan (masalan 30 daqiqa)".
 #    Sozlamaga chiqarilmadi — bu mahsulot qoidasi, muhitga bog'liq emas.
@@ -114,6 +123,88 @@ class Category(TimeStampedModel):
 
 
 # ===========================================================================
+# Muammo menejeri — qidiruv ustunlarini OMMAVIY yozuvda ham to'ldiradi
+# ===========================================================================
+# ⚠️ `type: ignore[override]` — django-stubs cheklovi, kod xatosi emas
+#    (`ContentQuerySet` da ham aynan shu izoh turibdi): ikkita QuerySet dan
+#    meros olinganda `as_manager()` ning qaytish tipi ota-sinflarda turlicha
+#    chiqadi. Ish vaqtida MRO to'g'ri ishlaydi.
+class ComplaintQuerySet(ContentQuerySet):  # type: ignore[override]
+    """⚠️⚠️ `bulk_create` VA `bulk_update` `save()` NI CHAQIRMAYDI.
+
+    `Complaint.save()` qidiruv ustunlarini to'ldiradi (D4-T1), lekin
+    ommaviy yozuv usullari uni butunlay chetlab o'tadi — na `save()`,
+    na `pre_save` signali ishlaydi. Natijasi eng yomon turdagi xato
+    bo'lardi: post yaratiladi, lentada ko'rinadi, ochiladi — LEKIN
+    qidiruvda umuman yo'q. Xato chiqmaydi, log toza, faqat natija bo'sh.
+
+    ⚠️ BU TESHIK TANLANGAN DIZAYNDAN KELIB CHIQADI. D4-T1 "trigger yoki
+       signal" degan edi; biz undan kuchliroq yo'lni tanladik
+       (`search_vector` — GENERATED ustun, uni Postgres o'zi hisoblaydi).
+       Lekin NORMALLASHTIRISH baribir Python'da qoladi (`matn.py`
+       docstring'idagi `unaccent` sababi), ya'ni aynan shu bosqichda
+       trigger bermaydigan bo'shliq paydo bo'ladi. Menejer uni yopadi.
+
+    ⚠️ Bu ehtimoliy emas, rejalashtirilgan holat: D7-T7 (sovuq start)
+       50-100 ta postni ommaviy kiritadi.
+
+    Zaxira yo'l — `python manage.py qidiruvni_yangilash`.
+    """
+
+    def _qidiruv_ustunlarini_toldirish(self, objs: list[Complaint]) -> None:
+        for obj in objs:
+            obj.qidiruv_sarlavha = qidiruv_uchun(obj.title)
+            obj.qidiruv_tavsif = qidiruv_uchun(obj.description)
+
+    def bulk_create(self, objs, *args, **kwargs):
+        """⚠️⚠️ SLUG HAM SHU YERDA YASALADI — D1-T3 dan beri ochiq
+        turgan teshik, D4-T1 testi topdi.
+
+        `save()` chaqirilmagani uchun `_yangi_slug()` ham ishlamaydi va
+        BARCHA yozuvlar bo'sh slug bilan yaratiladi. Birinchisi o'tadi,
+        ikkinchisi esa:
+
+            duplicate key value violates unique constraint
+            "complaint_slug_uniq_alive"  DETAIL: Key (slug)=() already exists
+
+        Ya'ni ommaviy kiritish (D7-T7 sovuq starti) bitta yozuvdan
+        keyin yiqilardi va sabab birinchi qarashda tushunarsiz bo'lardi:
+        "slug'ni hech kim bo'sh qoldirmagan-ku".
+        """
+        objs = list(objs)  # generator bo'lishi mumkin — ikki marta o'qilmasin
+        for obj in objs:
+            if not obj.slug:
+                obj.slug = obj._yangi_slug()
+        self._qidiruv_ustunlarini_toldirish(objs)
+        return super().bulk_create(objs, *args, **kwargs)
+
+    def bulk_update(self, objs, fields, *args, **kwargs):
+        """⚠️ Faqat MANBA maydoni yangilanayotganda aralashadi.
+
+        `bulk_update(..., ["hot_score"])` — D1-T11 fon vazifasi — butun
+        matnni qaytadan yozmasligi kerak. Shuning uchun shart `save()`
+        dagi bilan bir xil.
+        """
+        maydonlar = set(fields)
+        if maydonlar & {"title", "description"}:
+            objs = list(objs)
+            self._qidiruv_ustunlarini_toldirish(objs)
+            maydonlar |= {"qidiruv_sarlavha", "qidiruv_tavsif"}
+        return super().bulk_update(objs, sorted(maydonlar), *args, **kwargs)
+
+
+class ComplaintAliveManager(models.Manager.from_queryset(ComplaintQuerySet)):  # type: ignore[misc]
+    """Standart menejer — o'chirilganlarni ko'rsatmaydi (`ContentAliveManager` kabi)."""
+
+    def get_queryset(self) -> ComplaintQuerySet:
+        return super().get_queryset().filter(deleted_at__isnull=True)
+
+
+class ComplaintAllManager(models.Manager.from_queryset(ComplaintQuerySet)):  # type: ignore[misc]
+    pass
+
+
+# ===========================================================================
 # Muammo (D1-T3)
 # ===========================================================================
 class Generation(models.TextChoices):
@@ -156,6 +247,12 @@ class Complaint(ContentModel, VotableModel):
     #    Standart `False` ATAYLAB: obyekt boshqa joydan kelsa (Telegram
     #    avto-post, D5-T3) shablon "saqlangan" deb ko'rsatib qo'ymasin.
     saqlangan: bool = False
+
+    # ⚠️ Menejerlar QAYTA belgilanadi (`ContentModel` dagi umumiylar
+    #    o'rniga): ommaviy yozuvda qidiruv ustunlari to'ldirilishi uchun —
+    #    sabab `ComplaintQuerySet` docstring'ida.
+    objects = ComplaintAliveManager()  # type: ignore[misc]
+    all_objects = ComplaintAllManager()  # type: ignore[misc]
 
     # -- Muallif -----------------------------------------------------------
     # ⚠️ SET_NULL, CASCADE EMAS. Hisob o'chganda (D2-T8) jamoa yaratgan
@@ -246,6 +343,49 @@ class Complaint(ContentModel, VotableModel):
     #    ham skanerlaydi, ikkinchisi faqat disk va yozish yukini oshirardi.
     hot_score = models.FloatField("qaynoqlik", default=0.0, db_index=True)
 
+    # -- Qidiruv (D4-T1) ---------------------------------------------------
+    # ⚠️ NEGA NORMALLASHTIRILGAN MATN ALOHIDA USTUNDA SAQLANADI
+    #    Indeks ham, so'rov ham AYNAN bir xil normal shaklda bo'lishi
+    #    shart (`apps/common/matn.py::qidiruv_uchun`). Normallashtirish
+    #    esa Python'da bajariladi — sababi o'sha funksiyada: Postgres'ning
+    #    `unaccent()` i IMMUTABLE emas va GENERATED ustunga tushmaydi.
+    #
+    #    Ya'ni baza xom `title` dan to'g'ri tsvector qura olmaydi: unga
+    #    oldindan tayyorlangan matn kerak.
+    #
+    # ⚠️ `TextField`, `CharField` EMAS — garchi manbasi 150 belgilik
+    #    `title` bo'lsa ham. Transliteratsiya (D4-T2) matnni UZAYTIRADI:
+    #    "ю" -> "yu", "щ" -> "shch". To'liq kirillcha sarlavha to'rt
+    #    baravargacha o'sishi mumkin va `max_length` jimgina yiqilardi.
+    qidiruv_sarlavha = models.TextField(
+        "qidiruv matni: sarlavha", blank=True, default="", editable=False
+    )
+    qidiruv_tavsif = models.TextField(
+        "qidiruv matni: tavsif", blank=True, default="", editable=False
+    )
+
+    # ⚠️ GENERATED — `score_cached` bilan bir xil sabab: qo'lda
+    #    yangilanadigan ustun uchinchi drift manbai bo'lardi. Yangilash
+    #    yo'llaridan biri (admin, fon vazifasi, `bulk_update`) uni unutsa,
+    #    yozuv qidiruvdan JIMGINA yo'qolardi — xato bermasdan.
+    #
+    #    Bu D4-T1 qabul mezonidagi "trigger yoki signal bilan yangilanadi"
+    #    talabini ikkalasidan ham kuchliroq bajaradi: ustunni PostgreSQL
+    #    o'zi hisoblaydi va u manbadan farq QILA OLMAYDI.
+    #
+    # ⚠️ VAZNLAR: sarlavha "A", tavsif "B". Usiz "ipoteka" so'zi
+    #    sarlavhasida turgan post bilan 5000 belgilik tavsifda bir marta
+    #    uchragan post bir xil ball olardi.
+    search_vector = models.GeneratedField(
+        verbose_name="qidiruv vektori",
+        expression=(
+            SearchVector("qidiruv_sarlavha", weight="A", config="simple")
+            + SearchVector("qidiruv_tavsif", weight="B", config="simple")
+        ),
+        output_field=SearchVectorField(),
+        db_persist=True,
+    )
+
     class Meta:
         verbose_name = "muammo"
         verbose_name_plural = "muammolar"
@@ -265,6 +405,24 @@ class Complaint(ContentModel, VotableModel):
             # Kategoriya bo'yicha filtrlangan "Qaynoq" lenta (D1-T7).
             models.Index(
                 fields=["category", "hot_score"], name="complaint_cat_hot_idx"
+            ),
+            # To'liq matnli qidiruv (D4-T1). GIN — tsvector uchun yagona
+            # amaliy tanlov: btree lexema ro'yxati ichidan qidira olmaydi.
+            GinIndex(fields=["search_vector"], name="complaint_qidiruv_gin"),
+            # ⚠️ Trigram — XATO YOZILGAN so'rov uchun ("ipotaka" ->
+            #    "ipoteka"). tsvector aniq lexemaga tayanadi: bitta harf
+            #    xato bo'lsa u HECH NARSA topmaydi va foydalanuvchi
+            #    "saytda bunday narsa yo'q" degan xulosaga keladi.
+            #
+            # ⚠️ FAQAT SARLAVHADA. Trigram indeksining hajmi matn
+            #    uzunligiga proporsional: 5000 belgilik tavsifda u
+            #    jadvalning o'zidan katta bo'lib ketardi. Sarlavha esa
+            #    xato yozishning asosiy joyi — odam qidiruvga bir-ikki
+            #    so'z yozadi, abzats emas.
+            GinIndex(
+                fields=["qidiruv_sarlavha"],
+                name="complaint_sarlavha_trgm",
+                opclasses=["gin_trgm_ops"],
             ),
         ]
 
@@ -295,13 +453,33 @@ class Complaint(ContentModel, VotableModel):
         return f"{asos}-{secrets.token_hex(4)}"
 
     def save(self, *args, **kwargs) -> None:
+        # ⚠️ `update_fields` berilgan bo'lsa hisoblanadigan maydonlar unga
+        #    QO'SHILISHI kerak, aks holda yangi qiymat jimgina yo'qoladi.
+        qoshiladi: set[str] = set()
+
         if not self.slug:
             self.slug = self._yangi_slug()
-            # ⚠️ `update_fields` berilgan bo'lsa slug unga QO'SHILISHI kerak,
-            #    aks holda yangi qiymat jimgina yo'qoladi.
-            update_fields = kwargs.get("update_fields")
-            if update_fields is not None:
-                kwargs["update_fields"] = {*update_fields, "slug"}
+            qoshiladi.add("slug")
+
+        # ⚠️ Qidiruv ustunlari HAR saqlashda qayta hisoblanadi. Bu arzon
+        #    (sof Python, tarmoq ham, baza ham yo'q) va "tahrirlangan
+        #    postni indeksga qo'shishni unutish" holatini butunlay yo'q
+        #    qiladi — D1-T9 tahriri ham shu yo'ldan o'tadi.
+        self.qidiruv_sarlavha = qidiruv_uchun(self.title)
+        self.qidiruv_tavsif = qidiruv_uchun(self.description)
+
+        update_fields = kwargs.get("update_fields")
+        if update_fields is not None:
+            berilgan = set(update_fields)
+            # ⚠️ Faqat MANBA maydoni yangilanayotganda qo'shiladi. Aks
+            #    holda `save(update_fields=["hot_score"])` har 10 daqiqada
+            #    butun matnni qaytadan yozardi (D1-T11 fon vazifasi).
+            if "title" in berilgan:
+                qoshiladi.add("qidiruv_sarlavha")
+            if "description" in berilgan:
+                qoshiladi.add("qidiruv_tavsif")
+            kwargs["update_fields"] = berilgan | qoshiladi
+
         super().save(*args, **kwargs)
 
     # -- Anonimlik invarianti (D1-T6) --------------------------------------

@@ -315,6 +315,36 @@ docker compose -f docker-compose.server.yml logs --tail=100 web
 Ko'pincha migratsiya xatosi. Baza holati noaniq bo'lsa — zaxiradan tiklang,
 keyin qayta deploy qiling.
 
+### Qidiruv hech narsa topmayapti
+
+⚠️ Qidiruv buzilganda **xato chiqmaydi** — natija shunchaki bo'sh bo'ladi.
+Uch ehtimol, shu tartibda tekshiring:
+
+```bash
+# 1. Indeks ustunlari haqiqatan to'ldirilganmi
+docker compose -f docker-compose.server.yml exec web     python manage.py qidiruvni_yangilash --tekshir
+```
+
+| Natija | Ma'nosi |
+|---|---|
+| `0 tasi eskirgan` | indeks joyida — muammo boshqa yerda |
+| `N tasi eskirgan` | `--tekshir` siz qayta ishga tushiring |
+
+2. **`pg_trgm` kengaytmasi.** `0005_qidiruv_indeksi` migratsiyasi
+   `CREATE EXTENSION` bajaradi va bu **superuser** huquqini talab qiladi.
+   O'z Postgres konteynerimizda muammo yo'q, lekin boshqariladigan bazaga
+   (DigitalOcean, Neon, Supabase) ko'chilganda migratsiya ruxsat xatosi
+   bilan yiqiladi — kengaytmani panel orqali bir marta yoqing.
+
+```bash
+docker compose -f docker-compose.server.yml exec db     psql -U dard -d dard -c "SELECT extname FROM pg_extension;"
+```
+
+3. **Ommaviy kiritilgan kontent.** `bulk_create` / `bulk_update` `save()` ni
+   chetlab o'tadi. Model menejeri buni yopadi, lekin xom SQL bilan
+   yozilgan qatorlar indeksdan tashqarida qoladi — `qidiruvni_yangilash`
+   ularni tuzatadi.
+
 ### Disk to'ldi
 
 ```bash

@@ -2338,11 +2338,77 @@
       "bogliq": [
         "D1-T3"
       ],
-      "holat": "todo",
+      "holat": "done",
       "qabul_mezoni": [
         "10 ming postda qidiruv <200ms",
         "search_vector trigger yoki signal bilan yangilanadi"
-      ]
+      ],
+      "tugatilgan": "2026-09-05",
+      "natija": {
+        "yaratilgan": [
+          "apps/common/matn.py — umumiy matn primitivlari (APOSTROF_VARIANTLARI, normallashtir, qidiruv_uchun); inqiroz.py endi shu manbadan oladi",
+          "apps/complaints/models.py — qidiruv_sarlavha / qidiruv_tavsif ustunlari, search_vector (GeneratedField, tsvector), GIN + trigram indekslari, ComplaintQuerySet/menejerlar",
+          "apps/complaints/migrations/0005_qidiruv_indeksi.py — TrigramExtension + ustunlar + mavjud yozuvlarni to'ldirish + indekslar (tartib QO'LDA)",
+          "apps/complaints/selectors.py — qidiruv_queryset(), taxminiy_natijalar()",
+          "apps/complaints/management/commands/qidiruvni_yangilash.py — qayta indekslash (--tekshir rejimi bilan)",
+          "config/settings/base.py — QIDIRUV_OXSHASHLIK_CHEGARASI, QIDIRUV_TAKLIF_SONI",
+          "apps/complaints/tests/test_qidiruv.py — 50 test",
+          "DEPLOY.md — 'Qidiruv hech narsa topmayapti' bo'limi"
+        ],
+        "qabul_mezonlari": {
+          "10_ming_postda_200ms_dan_tez": "✅ O'LCHANDI. Jonli bazada 10 041 post: FTS 6.8 ms (EXPLAIN ANALYZE), selektor orqali 35.6 ms. Test to'plamida avtomatik o'lchanadi (test_10_MING_postda_qidiruv_200ms_dan_TEZ, 1.26 s). Sun'iy ma'lumot ATAYLAB yomon holat: bitta kichik lug'atdan olinganligi uchun ko'p yozuv so'rovga mos keladi.",
+          "search_vector_avtomatik_yangilanadi": "✅ TRIGGER/SIGNALDAN KUCHLIROQ — GENERATED ustun: uni PostgreSQL o'zi hisoblaydi va manbadan farq QILA OLMAYDI. Normallashtirish esa save() + menejer (bulk_create/bulk_update) orqali; xom SQL uchun zaxira yo'l — qidiruvni_yangilash buyrug'i."
+        },
+        "tekshirilgan": [
+          "⭐ EMPIRIK: to_tsvector('simple', \"ko'chmas\") -> 'ko':1 'chmas':2 — apostrof so'zni BO'LADI; 'kochmas' bilan qidirilsa topilmaydi (false). D4-T2 ning asosiy sababi shu yerda isbotlandi.",
+          "⭐ EMPIRIK: word_similarity('ipotaka','ipoteka olish qiyinmi')=0.50, oddiy similarity()=0.20 — uzun sarlavhada similarity ishlamaydi",
+          "vaznlar: sarlavhadagi moslik tavsifdagidan yuqori turadi (A > B)",
+          "buzuq kiritma 500 bermaydi (12 xil variant: '((', '&', ':*', backslash…)",
+          "bo'sh so'rov bo'sh natija qaytaradi ('hammasini ko'rsatish' emas)",
+          "qo'shtirnoqli ibora aniq tartibni talab qiladi (websearch)",
+          "ko'rinish invarianti: yashirilgan/o'chirilgan post qidiruvda ham, TAXMINIY natijalarda ham yo'q",
+          "bloklangan muallif (D2-T11) qidiruvda ham chiqmaydi",
+          "kategoriya filtri qidiruv bilan birga ishlaydi",
+          "update_fields=['hot_score'] matnni qayta yozmaydi (SQL tekshirilgan)",
+          "qidiruvni_yangilash eskirgan yozuvni topadi va tuzatadi; --tekshir yozmaydi",
+          "⭐ GUARD: indeks konfiguratsiyasi BAZADAN o'qib tekshiriladi (pg_get_expr) — model ustidan tekshiruv qo'llanmagan migratsiyani ham yashil ko'rsatardi"
+        ],
+        "qarorlar": [
+          "⭐⭐ NORMALLASHTIRISH PYTHON'DA, SQL'DA EMAS. Postgres'ning unaccent() i IMMUTABLE emas (lug'at o'qiydi) va GENERATED ustun ifodasiga tushmaydi. Odatdagi chetlab o'tish — o'zining IMMUTABLE o'ram funksiyasi — yolg'on va'da: lug'at almashsa indeks jimgina noto'g'ri bo'lib qoladi. Python'da qilish tuzoqni yo'q qiladi va indekslash bilan so'rov AYNAN bir kod yo'lidan o'tadi.",
+          "⭐ search_vector — GENERATED ustun (trigger ham, signal ham emas). score_cached bilan bir xil sabab: qo'lda yangilanadigan ustun drift manbai bo'lardi va yangilash yo'llaridan biri uni unutsa, yozuv qidiruvdan JIMGINA yo'qolardi.",
+          "Normal matn ALOHIDA ustunlarda saqlanadi (TextField, CharField emas): D4-T2 transliteratsiyasi matnni uzaytiradi ('щ' -> 'shch').",
+          "Vaznlar A/B: sarlavha va tavsif alohida ustun bo'lgani uchun bepul keldi.",
+          "Trigram indeksi FAQAT sarlavhada: uning hajmi matn uzunligiga proporsional va 5000 belgilik tavsifda jadvaldan katta bo'lardi.",
+          "search_type='websearch' ('plain' emas): plain ning ustiga qo'shtirnoqli ibora va -istisno qo'shadi, hech narsa olib tashlamaydi; 'raw' esa buzuq kiritmada ProgrammingError berardi.",
+          "O'xshashlik chegarasi SOZLAMADA (0.45) va oshkora taqqoslash bilan ishlatiladi — indeksli '<%' operatori chegarani GUC'dan oladi (standart 0.6, ya'ni 0.50 ni o'tkazib yuborardi), uni o'zgartirish esa ULANISH holatiga yozish degani: CONN_MAX_AGE=60 bilan so'rovlar orasida oqib ketardi. O'lchangan narxi 43 ms va bu yo'l faqat asosiy qidiruv bo'sh qaytganda ishlaydi.",
+          "apps/common/matn.py alohida modul: apostrof ro'yxatining ikkinchi nusxasi bir kuni eskirar edi, qidiruvning inqiroz moduliga bog'lanishi esa ma'nosiz bog'liqlik bo'lardi.",
+          "ComplaintQuerySet menejeri bulk_create/bulk_update ni ushlaydi: tanlangan dizayn (Python normallashtirish) trigger bermaydigan bo'shliq qoldiradi, menejer uni yopadi. D7-T7 sovuq starti aynan shu yo'ldan yuradi."
+        ],
+        "topilgan_xatolar": [
+          "⭐⭐ D1-T3 DAN BERI OCHIQ TURGAN TESHIK: bulk_create slug'ni ham yasamaydi (save() chaqirilmaydi) — barcha yozuvlar bo'sh slug oladi va ikkinchisi 'duplicate key ... Key (slug)=()' bilan yiqiladi. Ya'ni D7-T7 ommaviy kiritishi bitta postdan keyin to'xtardi. Test topdi, menejerda tuzatildi.",
+          "makemigrations AddIndex(search_vector) ni AddField(search_vector) dan OLDIN qo'ydi — migratsiya mavjud bo'lmagan ustunga indeks qurardi. Tartib qo'lda yozildi.",
+          "pathlib.write_text Windows'da CRLF yozadi va ruff format (line-ending=lf) 5 faylni butunlay qayta formatlashni talab qildi — LF ga qaytarildi.",
+          "Ko'rinish invarianti guardi (D2-T3) qidiruvni_yangilash dagi Complaint.all_objects.bulk_update() ni ushladi — istisno izohlandi."
+        ],
+        "olchangan_holat": {
+          "testlar": 934,
+          "qamrov_foiz": 95.41,
+          "d4_t1_testlari": 50,
+          "unumdorlik_ms": {
+            "fts_explain": 6.8,
+            "fts_selektor": 35.6,
+            "trigram": 43.7
+          },
+          "olchov_hajmi": 10041
+        },
+        "keyingi_uchun_eslatma": [
+          "⚠️ D4-T2: qidiruv_uchun() ga apostrofni O'CHIRISH va kiril->lotin transliteratsiyasi qo'shiladi, keyin `manage.py qidiruvni_yangilash`. Migratsiya SHART EMAS — ustunlar va indekslar o'zgarmaydi.",
+          "⚠️ Apostrofni o'chirish (yo'qotish) tavsiya etiladi, bir shaklga keltirish EMAS: 'simple' tokenizatori apostrofda so'zni bo'ladi, o'chirilsa esa \"ko'chmas\", \"koʻchmas\", \"kochmas\" va \"кўчмас\" — hammasi bitta lexemaga tushadi. Bu foydalanuvchilarning apostrofsiz yozish odatini ham qamrab oladi.",
+          "⚠️ D4-T3 (qidiruv sahifasi): ajratib ko'rsatish (SearchHeadline) NORMALLASHTIRILGAN ustundan olinsa asl matn (bosh harf, apostrof) yo'qoladi; asl ustundan olinsa kirillcha kontent uchun moslik topilmaydi. Bu savol o'sha taskda hal qilinishi kerak.",
+          "⚠️ D4-T3 sahifalash: qidiruv dolzarblik bo'yicha saralanadi, u esa model maydoni emas — D1-T12 kursori (kursor_filtri) qidiruvda ISHLAMAYDI.",
+          "⚠️ Boshqariladigan bazaga ko'chilsa TrigramExtension superuser talab qiladi (DEPLOY.md 8-bo'lim)."
+        ]
+      }
     },
     {
       "id": "D4-T2",

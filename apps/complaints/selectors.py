@@ -12,7 +12,15 @@ from __future__ import annotations
 from collections.abc import Sequence
 from dataclasses import dataclass
 
+from django.conf import settings
+from django.contrib.postgres.search import (
+    SearchQuery,
+    SearchRank,
+    TrigramWordSimilarity,
+)
 from django.db import models
+
+from apps.common.matn import qidiruv_uchun
 
 from .models import (
     Category,
@@ -344,4 +352,110 @@ def saqlanganlar_queryset(*, user) -> models.QuerySet[Complaint]:
         .filter(saved_by__user=user)
         .select_related("author", "category")
         .order_by("-saved_by__created_at", "-id")
+    )
+
+
+# ===========================================================================
+# Qidiruv (D4-T1)
+# ===========================================================================
+def qidiruv_queryset(
+    xom: str,
+    *,
+    filtr: LentaFiltri | None = None,
+    bloklanganlar: Sequence[int] = (),
+) -> models.QuerySet[Complaint]:
+    """To'liq matnli qidiruv — dolzarblik bo'yicha saralangan.
+
+    ⚠️ ASOSDA `lenta_queryset` TURADI, `Complaint.objects` EMAS.
+       Bu ataylab: ko'rinish invarianti (`visible()`), bloklangan
+       mualliflar va kategoriya/avlod filtrlari BITTA joyda yozilgan
+       (D2-T3). Qidiruv o'z so'rovini noldan qursa, bir kuni ulardan
+       biri bu yerda unutilardi — va aynan qidiruv Google'dan kelgan
+       begona odam ko'radigan sahifa.
+
+    ⚠️ `config="simple"` INDEKS BILAN BIR XIL BO'LISHI SHART.
+       `Complaint.search_vector` GENERATED ustuni `'simple'` bilan
+       qurilgan. Bu yerda boshqa konfiguratsiya berilsa so'rov xato
+       BERMAYDI — u shunchaki hech narsa topmaydi va sabab ko'rinmaydi.
+
+    ⚠️ SO'ROV HAM `qidiruv_uchun()` DAN O'TADI — indeks bilan bir xil
+       normal shakl. Bittasi unutilsa qidiruv jimgina buziladi.
+
+    ⚠️ `websearch` TURI TANLANDI (`plain` emas):
+       u ham bo'sh so'rovda ham, `((` kabi buzuq kiritmada ham xato
+       bermaydi (`raw` beradi), lekin qo'shimcha ravishda qo'shtirnoq
+       ichidagi ibora va `-so'z` bilan istisnoni tushunadi. Ya'ni
+       `plain` ning ustiga faqat qo'shadi, hech narsa olib tashlamaydi.
+
+    ⚠️ TENGLIKNI UZISH: `-created_at`, `-id`. `ts_rank` ko'p yozuvda
+       bir xil chiqadi (ayniqsa qisqa so'rovda) va usiz tartib har
+       so'rovda o'zgarardi — foydalanuvchi uchun natijalar "sakraydi".
+    """
+    qs = lenta_queryset(filtr or LentaFiltri(), bloklanganlar=bloklanganlar)
+
+    normal = qidiruv_uchun(xom)
+    if not normal:
+        # Bo'sh so'rov — bo'sh natija. "Hammasini ko'rsatish" bo'lardi
+        # yolg'on: foydalanuvchi hech narsa so'ramagan.
+        return qs.none()
+
+    sorov = SearchQuery(normal, config="simple", search_type="websearch")
+
+    return (
+        qs.filter(search_vector=sorov)
+        .annotate(dolzarblik=SearchRank(models.F("search_vector"), sorov))
+        .order_by("-dolzarblik", "-created_at", "-id")
+    )
+
+
+def taxminiy_natijalar(
+    xom: str,
+    *,
+    bloklanganlar: Sequence[int] = (),
+    soni: int | None = None,
+) -> models.QuerySet[Complaint]:
+    """Xato yozilgan so'rov uchun eng yaqin sarlavhalar (trigram).
+
+    ⚠️ NEGA KERAK: tsvector ANIQ lexemaga tayanadi. "ipotaka" deb
+       yozilgan so'rov "ipoteka" ni HECH QACHON topmaydi va foydalanuvchi
+       "saytda bunday narsa yo'q" degan xulosaga keladi. Bitta harf.
+
+    ⚠️ `word_similarity`, oddiy `similarity` EMAS — o'lchangan farq:
+
+           similarity('ipotaka', 'ipoteka olish qiyinmi')       = 0.20
+           word_similarity('ipotaka', 'ipoteka olish qiyinmi')  = 0.50
+
+       `similarity` butun satrlarni taqqoslaydi, ya'ni uzun sarlavha
+       qisqa so'rovga hech qachon "o'xshamaydi". `word_similarity` esa
+       eng mos KELGAN bo'lakni oladi — bizga aynan shu kerak.
+
+    ⚠️ NEGA `<%` OPERATORI (indeksli) EMAS, OSHKORA TAQQOSLASH
+       `<%` chegarani `pg_trgm.word_similarity_threshold` GUC'idan
+       oladi va uning standarti 0.6 — yuqoridagi 0.50 ni O'TKAZIB
+       YUBORADI. Uni o'zgartirish esa ULANISH holatiga yozish degani:
+       `CONN_MAX_AGE=60` bilan ulanishlar qayta ishlatiladi, ya'ni
+       `SET` so'rovlar orasida oqib ketardi va buni test ushlamasdi.
+
+       Oshkora taqqoslash indeksdan foydalanmaydi (ketma-ket skanerlash),
+       lekin: (1) chegara SOZLAMADA — ko'rinadigan va sinaladigan
+       mahsulot parametri, (2) o'lchangan narxi 10 041 postda **43 ms**,
+       (3) bu yo'l FAQAT asosiy qidiruv bo'sh qaytganda ishlaydi.
+
+    ⚠️ FAQAT SARLAVHA BO'YICHA — trigram indeksi ham shunday (modeldagi
+       izohga qarang). Tavsif bo'yicha o'xshashlik uzun matnda ma'nosiz
+       shovqin beradi.
+    """
+    qs = lenta_queryset(LentaFiltri(), bloklanganlar=bloklanganlar)
+
+    normal = qidiruv_uchun(xom)
+    if not normal:
+        return qs.none()
+
+    chegara = settings.QIDIRUV_OXSHASHLIK_CHEGARASI
+    limit = settings.QIDIRUV_TAKLIF_SONI if soni is None else soni
+
+    return (
+        qs.annotate(oxshashlik=TrigramWordSimilarity(normal, "qidiruv_sarlavha"))
+        .filter(oxshashlik__gte=chegara)
+        .order_by("-oxshashlik", "-id")[:limit]
     )

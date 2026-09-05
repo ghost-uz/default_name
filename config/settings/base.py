@@ -362,6 +362,28 @@ ISHONCHLI_PROKSILAR_SONI = 0
 
 
 # --------------------------------------------------------------------------
+# Qidiruv (D4-T1)
+# --------------------------------------------------------------------------
+# ⚠️ "Qanchalik yaqin — yetarli yaqin?" MAHSULOT savoli, texnik emas.
+#    Shuning uchun chegara sozlamada: uni to'g'rilash uchun kod tegilmaydi
+#    (D2-T4 dagi tezlik cheklovlari bilan bir xil sabab).
+#
+# ⚠️ O'LCHANGAN QIYMAT, taxmin emas:
+#        word_similarity('ipotaka', 'ipoteka olish qiyinmi') = 0.50
+#    0.45 bir harflik xatoni o'tkazadi, ikki butunlay boshqa so'zni esa
+#    (masalan 'ipoteka' va 'apteka' = 0.33) o'tkazmaydi.
+#
+# ⚠️ PASAYTIRMANG. Chegara juda past bo'lsa "hech narsa topilmadi"
+#    o'rniga ALOQASIZ takliflar chiqadi — bu yomonroq: foydalanuvchi
+#    qidiruv umuman ishlamayapti deb o'ylaydi.
+QIDIRUV_OXSHASHLIK_CHEGARASI = 0.45
+
+# Bo'sh natijada nechta taklif ko'rsatiladi. Ko'p bo'lsa taklif emas,
+# ikkinchi natijalar ro'yxatiga o'xshab qoladi.
+QIDIRUV_TAKLIF_SONI = 5
+
+
+# --------------------------------------------------------------------------
 # Autentifikatsiya
 # --------------------------------------------------------------------------
 AUTH_PASSWORD_VALIDATORS = [

@@ -24,32 +24,17 @@
 
 from __future__ import annotations
 
-import re
-import unicodedata
-
 # ⚠️ APOSTROF NORMALLASHTIRISH — o'zbek lotin yozuvi uchun MAJBURIY.
 #    "o'zimni", "oʻzimni", "o‘zimni", "o`zimni" — bir xil so'z, to'rt
 #    xil belgi. Normallashtirmasak, ro'yxat foydalanuvchi klaviaturasiga
 #    bog'liq bo'lib qolardi.
-APOSTROFLAR = str.maketrans(
-    {
-        "‘": "'",  # '
-        "’": "'",  # '
-        "ʻ": "'",  # ʻ
-        "ʼ": "'",  # ʼ
-        "`": "'",  # `
-        "´": "'",  # ´
-    }
-)
-
-BOSH_JOYLAR = re.compile(r"\s+")
-
-
-def normallashtir(matn: str) -> str:
-    """Kichik harf + bir xil apostrof + bir xil bo'shliq."""
-    matn = unicodedata.normalize("NFKC", matn or "")
-    return BOSH_JOYLAR.sub(" ", matn.translate(APOSTROFLAR).casefold()).strip()
-
+#
+# ⚠️ RO'YXAT VA FUNKSIYA `apps/common/matn.py` GA KO'CHDI (D4-T1):
+#    qidiruvga ham AYNAN shu apostrof ro'yxati kerak bo'ldi va ikkinchi
+#    nusxa yasash bir kuni ikkisining bir-biridan uzoqlashishi degani
+#    edi. Bu yerdagi xulq o'zgarmadi — pastdagi KALIT_SOZLAR aynan shu
+#    funksiya chiqaradigan shaklda yozilgan.
+from apps.common.matn import APOSTROFLAR, BOSH_JOYLAR, normallashtir  # noqa: F401
 
 # ⚠️ RO'YXAT ATAYLAB KENG (yuqoridagi izohga qarang).
 #    Har bir satr NORMALLASHTIRILGAN shaklda yozilgan: kichik harf,
