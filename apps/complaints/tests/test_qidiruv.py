@@ -41,7 +41,10 @@ def sarlavhalar(qs) -> list[str]:
         ("  Ipoteka   olish  ", "ipoteka olish"),
         ("Ipoteka\n\tolish", "ipoteka olish"),
         ("café", "cafe"),
-        ("ёлка", "елка"),  # `unaccent` ham aynan shuni qiladi
+        # ⚠️ D4-T1 da bu "елка" edi (`unaccent` qiladigan ish). D4-T2
+        #    transliteratsiyani AKSENTDAN OLDIN qo'ydi, ya'ni `ё` endi
+        #    `е` ga aylanib ulgurmaydi — batafsil `matn.py` da.
+        ("ёлка", "yolka"),
         ("", ""),
         ("   ", ""),
     ],
@@ -57,11 +60,14 @@ def test_qidiruv_normallashtirish_None_bilan_yiqilmaydi():
 
 def test_IKKI_normallashtirish_ATAYLAB_boshqacha():
     """⚠️ `normallashtir()` (D2-T6) apostrofni SAQLAYDI — inqiroz kalit
-    so'zlari aynan shu shaklda yozilgan. Qidiruvniki esa boshqa talabga
-    javob beradi (D4-T2). Ularni "soddalashtirib" birlashtirmaslik
-    kerakligi shu yerda qotirilgan."""
-    assert normallashtir("O‘ZIMNI") == "o'zimni"
-    assert qidiruv_uchun("O‘ZIMNI").startswith("o")
+    so'zlari aynan shu shaklda yozilgan va ro'yxatda qismiy moslik
+    qidiriladi. Qidiruv esa apostrofni O'CHIRADI (D4-T2).
+
+    Ularni "soddalashtirib" birlashtirish taklifi kelsa: bittasi
+    ikkinchisini buzadi. Shu yerda qotirilgan.
+    """
+    assert normallashtir("O‘ZIMNI O‘LDIR") == "o'zimni o'ldir"
+    assert qidiruv_uchun("O‘ZIMNI O‘LDIR") == "ozimni oldir"
 
 
 # ===========================================================================
@@ -247,6 +253,47 @@ def test_buzuq_kiritma_500_BERMAYDI(buzuq):
     ComplaintFactory(title="Ipoteka")
 
     assert qidiruv_queryset(buzuq).count() >= 0
+
+
+# ===========================================================================
+# 3b. Ikki alifbo va apostrof — uchidan-uchiga (D4-T2)
+# ===========================================================================
+def test_KIRILCHA_sorov_LOTINCHA_postni_topadi():
+    """⚠️ D4-T2 qabul mezoni, indeks bilan birga tekshiriladi.
+
+    Normallashtirish testlari (`apps/common/tests/test_matn.py`) faqat
+    funksiyani sinaydi. Bu test esa ustunlar, tsvector va so'rov —
+    uchalasi ham BIR XIL normal shaklda ekanini isbotlaydi.
+    """
+    ComplaintFactory(title="Ipoteka olish qiyinmi")
+
+    assert sarlavhalar(qidiruv_queryset("ипотека")) == ["Ipoteka olish qiyinmi"]
+
+
+def test_LOTINCHA_sorov_KIRILCHA_postni_topadi():
+    """Teskari yo'nalish — kontent kirillcha yozilgan holat."""
+    ComplaintFactory(title="Ипотека олиш қийинми")
+
+    assert sarlavhalar(qidiruv_queryset("ipoteka")) == ["Ипотека олиш қийинми"]
+
+
+@pytest.mark.parametrize(
+    "sorov",
+    ["ko'chmas", "koʻchmas", "ko‘chmas", "ko`chmas", "kochmas", "кўчмас"],
+)
+def test_APOSTROFNING_har_varianti_bir_xil_natija_beradi(sorov):
+    """⚠️⚠️ Qidiruv foydalanuvchining KLAVIATURASIGA bog'liq
+    bo'lmasligi kerak — D4-T2 ning butun ma'nosi shu."""
+    ComplaintFactory(title="Ko'chmas mulk masalasi")
+
+    assert sarlavhalar(qidiruv_queryset(sorov)) == ["Ko'chmas mulk masalasi"]
+
+
+def test_APOSTROFSIZ_yozilgan_post_ham_topiladi():
+    """Teskari tomon: kontent apostrofsiz yozilgan, so'rov apostrofli."""
+    ComplaintFactory(title="Kochmas mulk masalasi")
+
+    assert sarlavhalar(qidiruv_queryset("ko'chmas")) == ["Kochmas mulk masalasi"]
 
 
 # ===========================================================================

@@ -442,6 +442,7 @@ D2-T6 rasmiy ishonch telefonini talab qiladi, D2-T10 — yurist xulosasini.
 | Task | Nima |
 |---|---|
 | D4-T1 | PostgreSQL FTS — GENERATED `tsvector`, GIN + trigram indeks, qayta indekslash buyrug'i |
+| D4-T2 | Lotin/kiril transliteratsiyasi va apostrof — to'qqiz yozuv usuli, bitta lexema |
 
 ---
 
@@ -519,6 +520,71 @@ Ikkalasi ham `ComplaintQuerySet` da yopildi. Bu teshik tanlangan dizayndan
 kelib chiqadi: `search_vector` GENERATED ustun bo'lgani uchun uni unutish
 mumkin emas, lekin **normallashtirish baribir Python'da qoladi** — trigger
 bermaydigan bo'shliq aynan shu yerda.
+
+### To'qqiz yozuv usuli — bitta so'z (D4-T2)
+
+O'zbekistonda bitta odam bir kuni lotin, ertasiga kirill yozadi, apostrofni
+esa klaviaturasi qanday qo'ysa shunday qo'yadi. Qidiruv uchun bularning
+hammasi **bitta shaklga** kelishi kerak:
+
+```
+ko'chmas   ko‘chmas   ko’chmas   koʻchmas
+koʼchmas   ko`chmas   ko´chmas   kochmas   кўчмас
+                        ↓
+                     kochmas
+```
+
+Bittasi ham chetda qolsa, qidiruv foydalanuvchining **klaviaturasiga**
+bog'liq bo'lib qoladi — va buni tushuntirib bo'lmaydi.
+
+### ⚠️ Apostrof o'chiriladi, bir shaklga keltirilmaydi
+
+Bu D2-T6 dagi qaror bilan **ataylab teskari** (`normallashtir()` apostrofni
+saqlaydi, chunki inqiroz kalit so'zlari apostrofli yozilgan). Ikki sabab,
+ikkalasi ham o'lchangan:
+
+1. `simple` tokenizatori apostrofda so'zni bo'ladi (yuqoriga qarang);
+2. foydalanuvchilar apostrofni ko'pincha **umuman yozmaydi**.
+
+⚠️ Narxi bor va u ongli qabul qilingan: `to'y` va `toy` bir xil bo'lib
+qoladi. Qidiruvda **qamrov aniqlikdan muhimroq** — topilmagan natija
+foydalanuvchi uchun "sayt buzuq" degani, ortiqcha natija esa ro'yxatning
+ikkinchi qatori.
+
+### ⚠️ Transliteratsiya aksentdan OLDIN, apostrof NFKC dan OLDIN
+
+Ikkala tartib ham xatodan keyin qotirilgan:
+
+| Noto'g'ri tartib | Nima bo'lardi |
+|---|---|
+| aksent → transliteratsiya | `ё` avval `е` ga aylanardi → `yo` o'rniga `e`; `й` NFKD da `и`+breve ga parchalanib `i` bo'lardi |
+| NFKC → apostrof | `´` (U+00B4) ning **moslik dekompozitsiyasi** bor: NFKC uni bo'shliq + birikuvchi urg'uga aylantiradi va jadval unga yetib bormaydi |
+
+⚠️ Ikkinchisi **D2-T6 ga ham tegishli edi**: `o´ldirmoqchiman` inqiroz kalit
+so'ziga mos kelmasdi, chunki so'z `o` va `ldirmoqchiman` ga bo'linib
+ketardi. D4-T2 testi topdi.
+
+### ⚠️ `е` va `ц` kontekstga bog'liq
+
+Rasmiy o'zbek transliteratsiyasi, va bu qoidasiz kirillcha kontent lotincha
+so'rovga mos kelmaydi:
+
+```
+Европа  ->  yevropa      берди  ->  berdi
+цирк    ->  sirk         абзац  ->  abzats
+```
+
+### ⚠️ Normallashtirish o'zgarsa — migratsiya, qo'lda qadam emas
+
+`qidiruv_sarlavha` / `qidiruv_tavsif` — **saqlangan** qiymat. Qoidalar
+o'zgargach yangi postlar yangi shaklda, eskilari esa eski shaklda qoladi va
+qidiruv yarim ishlaydigan holatga tushadi — **xatosiz**.
+
+Shuning uchun D4-T2 o'zgarishi `0006_qidiruv_transliteratsiya` migratsiyasi
+bilan keladi: u `entrypoint` da avtomatik ishlaydi. Deploy'da qo'lda
+bajariladigan qadam bir kuni albatta unutiladi.
+
+`manage.py qidiruvni_yangilash` esa ta'mirlash va tekshirish uchun qoladi.
 
 ### ⚠️ O'xshashlik chegarasi sozlamada, Postgres GUC'ida emas
 

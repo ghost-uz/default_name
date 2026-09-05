@@ -53,7 +53,58 @@ APOSTROF_VARIANTLARI = "‘’ʻʼ`´"
 # Aniqlash uchun: hammasi ASCII apostrofga keladi.
 APOSTROFLAR = str.maketrans(dict.fromkeys(APOSTROF_VARIANTLARI, "'"))
 
+# ⚠️⚠️ QIDIRUV UCHUN: apostrof BIR SHAKLGA KELTIRILMAYDI, O'CHIRILADI.
+#    ASCII `'` ham shu ro'yxatda — ya'ni hech qanday apostrof qolmaydi.
+#
+#    IKKI SABAB, ikkalasi ham o'lchangan:
+#
+#    1. `simple` tokenizatori apostrofda SO'ZNI BO'LADI:
+#           to_tsvector('simple', "ko'chmas")  ->  'ko':1 'chmas':2
+#           to_tsvector('simple', "kochmas")   ->  'kochmas':1
+#       ikkinchisi bilan birinchisini qidirsangiz — TOPILMAYDI.
+#
+#    2. Foydalanuvchilar apostrofni ko'pincha UMUMAN yozmaydi
+#       ("uzbekiston", "kochmas mulk"). O'chirilganda "ko'chmas",
+#       "koʻchmas", "kochmas" va "кўчмас" — hammasi bitta lexemaga
+#       tushadi.
+#
+#    ⚠️ NARXI BOR VA U ONGLI QABUL QILINGAN: `o'` va `o` farqi yo'qoladi
+#       ("to'y" va "toy" bir xil bo'lib qoladi). Qidiruvda qamrov
+#       (recall) aniqlikdan muhimroq — topilmagan natija foydalanuvchi
+#       uchun "sayt buzuq" degani, ortiqcha natija esa shunchaki
+#       ro'yxatning ikkinchi qatori.
+APOSTROFSIZ = str.maketrans(dict.fromkeys(APOSTROF_VARIANTLARI + "'", ""))
+
 BOSH_JOYLAR = re.compile(r"\s+")
+
+
+def _apostrofni_tekislash(matn: str) -> str:
+    """Barcha apostrof variantlarini ASCII `'` ga keltiradi va NFKC qiladi.
+
+    ⚠️⚠️ TARTIB: TEKISLASH NFKC DAN OLDIN — bu jonli sinovda topilgan
+       xato (D4-T2 testi ushladi, lekin u D2-T6 ga ham tegishli edi).
+
+       `´` (U+00B4, AKUT) ning MOSLIK dekompozitsiyasi bor:
+
+           NFKC("ko´chmas")  ->  "ko" + " " + U+0301 + "chmas"
+
+       ya'ni NFKC uni BO'SHLIQ + birikuvchi urg'u belgisiga aylantiradi.
+       Shundan keyin apostrof jadvali unga yetib bormaydi: belgi
+       endi apostrof emas. Natijada "ko´chmas" -> "ko chmas" bo'lib,
+       so'z IKKIGA bo'linardi.
+
+       Oqibati ikki joyda ko'rinardi va ikkalasi ham jim: qidiruvda
+       natija topilmasdi, inqiroz aniqlashida esa `o´ldirmoqchiman`
+       kalit so'zga mos kelmasdi.
+
+       NFKC ni butunlay olib tashlash mumkin emas — u to'liq kenglikdagi
+       harflar va ligaturalarni ham tekislaydi. Shuning uchun tartib
+       almashtirildi: avval apostrof, keyin NFKC.
+
+    ⚠️ NFKC O'ZI ham apostrof hosil qilishi mumkin (U+FF07 -> U+0027),
+       lekin u ALLAQACHON nishon shakl — qo'shimcha o'tish kerak emas.
+    """
+    return unicodedata.normalize("NFKC", (matn or "").translate(APOSTROFLAR))
 
 
 def normallashtir(matn: str) -> str:
@@ -66,8 +117,7 @@ def normallashtir(matn: str) -> str:
        eng qimmat turdagi xato (`inqiroz.py` docstring'iga qarang).
        Guard: `apps/common/tests/test_inqiroz.py`.
     """
-    matn = unicodedata.normalize("NFKC", matn or "")
-    return BOSH_JOYLAR.sub(" ", matn.translate(APOSTROFLAR).casefold()).strip()
+    return BOSH_JOYLAR.sub(" ", _apostrofni_tekislash(matn).casefold()).strip()
 
 
 # ===========================================================================
@@ -98,6 +148,105 @@ def _aksentsiz(matn: str) -> str:
     )
 
 
+# ---------------------------------------------------------------------------
+# Kiril -> lotin (D4-T2)
+# ---------------------------------------------------------------------------
+# ⚠️⚠️ NEGA UMUMAN KERAK
+#    O'zbekistonda bir xil odam bir kuni lotin, ertasiga kirill yozadi —
+#    ko'pincha bitta jumla ichida ham. Transliteratsiyasiz "ipoteka" va
+#    "ипотека" bir-birini HECH QACHON topmaydi va foydalanuvchi qidiruvni
+#    buzuq deb qabul qiladi (D4-T2 `nega` bo'limi aynan shu haqda).
+#
+# ⚠️ YO'NALISH BITTA: kiril -> lotin. Teskarisi kerak emas — muhimi
+#    hamma narsa BITTA shaklga kelishi, qaysi shakl ekani ahamiyatsiz.
+#    Lotin tanlandi, chunki kontentning katta qismi shundaydir va
+#    transliteratsiya ishi kamroq bo'ladi.
+#
+# ⚠️ Jadval RASMIY o'zbek transliteratsiyasiga tayanadi: lotin yozuvidagi
+#    kontent aynan shu qoidalar bilan yozilgan, ya'ni faqat shunda
+#    kirillcha so'rov lotincha yozuvni topadi.
+#
+# ⚠️ `ў` va `ғ` apostrofli shaklga (`o'`, `g'`) o'tkaziladi, keyin esa
+#    apostrof umumiy qoida bilan o'chiriladi. To'g'ridan-to'g'ri `o` / `g`
+#    yozish qisqaroq bo'lardi, lekin u holda apostrof siyosati IKKI joyda
+#    yashardi va ularning biri bir kuni o'zgarardi.
+KIRIL_LOTIN = {
+    "а": "a",
+    "б": "b",
+    "в": "v",
+    "г": "g",
+    "д": "d",
+    "ё": "yo",
+    "ж": "j",
+    "з": "z",
+    "и": "i",
+    "й": "y",
+    "к": "k",
+    "л": "l",
+    "м": "m",
+    "н": "n",
+    "о": "o",
+    "п": "p",
+    "р": "r",
+    "с": "s",
+    "т": "t",
+    "у": "u",
+    "ф": "f",
+    "х": "x",
+    "ч": "ch",
+    "ш": "sh",
+    "ъ": "'",  # tutuq belgisi — apostrof qoidasi uni o'chiradi
+    "ь": "",  # yumshatish belgisi: lotin yozuvida muqobili yo'q
+    "э": "e",
+    "ю": "yu",
+    "я": "ya",
+    # --- o'zbek kirilliga xos harflar ---
+    "ў": "o'",
+    "қ": "q",
+    "ғ": "g'",
+    "ҳ": "h",
+    # --- faqat ruschada uchraydi ---
+    "ы": "i",
+    "щ": "shch",
+}
+
+# `е` va `ц` dan OLDIN kelgan belgi qoidani o'zgartiradi (pastga qarang).
+KIRIL_UNLILAR = frozenset("аеёиоуўэюяъь")
+
+
+def _transliteratsiya(matn: str) -> str:
+    """Kirillcha matnni lotinchaga o'giradi.
+
+    ⚠️ IKKI HARF KONTEKSTGA BOG'LIQ — rasmiy qoida shunday va usiz
+       kirillcha kontent lotincha so'rovga mos kelmaydi:
+
+           «Европа» -> "yevropa"   (so'z boshida)
+           «берди»  -> "berdi"     (undoshdan keyin)
+           «цирк»   -> "sirk"      (so'z boshida)
+           «абзац»  -> "abzats"    (aks holda)
+
+       Bu qoidalarsiz «Европа» "evropa" bo'lardi va lotin yozuvidagi
+       "Yevropa" bilan hech qachon uchrashmasdi.
+
+    ⚠️ Kirillcha bo'lmagan belgilar TEGILMAYDI: matn aralash bo'lishi
+       odatiy hol ("Windows 11 да ишламаяпти").
+    """
+    natija: list[str] = []
+    oldingi = ""
+
+    for belgi in matn:
+        if belgi == "е":
+            boshimi = not oldingi.isalpha() or oldingi in KIRIL_UNLILAR
+            natija.append("ye" if boshimi else "e")
+        elif belgi == "ц":
+            natija.append("s" if not oldingi.isalpha() else "ts")
+        else:
+            natija.append(KIRIL_LOTIN.get(belgi, belgi))
+        oldingi = belgi
+
+    return "".join(natija)
+
+
 def qidiruv_uchun(matn: str) -> str:
     """Indekslash va qidiruv uchun yagona normal shakl.
 
@@ -118,5 +267,21 @@ def qidiruv_uchun(matn: str) -> str:
 
        (guard testi bu funksiya va ustunlar mosligini tekshiradi).
     """
-    matn = unicodedata.normalize("NFKC", matn or "").casefold()
+    # ⚠️ Apostrof NFKC DAN OLDIN tekislanadi — sabab
+    #    `_apostrofni_tekislash()` da (u yerdagi xato ikkala funksiyaga
+    #    ham tegishli edi).
+    matn = _apostrofni_tekislash(matn).casefold()
+
+    # ⚠️⚠️ TARTIB AHAMIYATLI — ikkalasi ham jonli sinovda tekshirilgan:
+    #
+    #    · Transliteratsiya AKSENTDAN OLDIN. Teskarisida `ё` avval `е` ga
+    #      aylanardi (diakritika olib tashlanadi) va keyin "e" bo'lardi —
+    #      "yo" o'rniga. `й` esa NFKD da `и` + breve ga parchalanib "i"
+    #      bo'lib qolardi.
+    #
+    #    · Apostrof TRANSLITERATSIYADAN KEYIN: `ў` -> `o'` va `ъ` -> `'`
+    #      yangi apostrof hosil qiladi va ular ham o'chirilishi kerak.
+    matn = _transliteratsiya(matn)
+    matn = matn.translate(APOSTROFSIZ)
+
     return BOSH_JOYLAR.sub(" ", _aksentsiz(matn)).strip()

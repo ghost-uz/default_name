@@ -330,6 +330,10 @@ docker compose -f docker-compose.server.yml exec web     python manage.py qidiru
 | `0 tasi eskirgan` | indeks joyida — muammo boshqa yerda |
 | `N tasi eskirgan` | `--tekshir` siz qayta ishga tushiring |
 
+⚠️ Normallashtirish qoidalari o'zgarganda qayta indekslash **migratsiya
+bilan** keladi (`0006_qidiruv_transliteratsiya` namunasi) va `entrypoint`
+da avtomatik bajariladi — bu buyruq faqat ta'mirlash uchun.
+
 2. **`pg_trgm` kengaytmasi.** `0005_qidiruv_indeksi` migratsiyasi
    `CREATE EXTENSION` bajaradi va bu **superuser** huquqini talab qiladi.
    O'z Postgres konteynerimizda muammo yo'q, lekin boshqariladigan bazaga

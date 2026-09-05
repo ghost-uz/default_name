@@ -2421,11 +2421,60 @@
       "bogliq": [
         "D4-T1"
       ],
-      "holat": "todo",
+      "holat": "done",
       "qabul_mezoni": [
         "'ipoteka' va 'ипотека' bir xil natija beradi",
         "apostrof variantlari test bilan qoplangan"
-      ]
+      ],
+      "tugatilgan": "2026-09-05",
+      "natija": {
+        "yaratilgan": [
+          "apps/common/matn.py — KIRIL_LOTIN jadvali (35 harf), _transliteratsiya(), APOSTROFSIZ jadvali, _apostrofni_tekislash()",
+          "apps/complaints/migrations/0006_qidiruv_transliteratsiya.py — mavjud kontentni avtomatik qayta indekslaydi (sxema o'zgarmaydi)",
+          "apps/common/tests/test_matn.py — 41 test (transliteratsiya, apostrof, inqirozga ta'sir qilmasligi, jadval butunligi)",
+          "apps/complaints/tests/test_qidiruv.py — uchidan-uchiga 9 test qo'shildi"
+        ],
+        "qabul_mezonlari": {
+          "ipoteka_va_ипотека_bir_xil": "✅ Ikkala yo'nalish ham: kirilcha so'rov lotincha postni topadi VA aksincha. 8 juft so'z bilan tekshirilgan.",
+          "apostrof_variantlari_test_bilan_qoplangan": "✅ TO'QQIZ variant bitta shaklga keladi: ' ‘ ’ ʻ ʼ ` ´ + APOSTROFSIZ yozuv + KIRILCHA (ў). Uchidan-uchiga ham tekshirilgan (indeks + so'rov birga)."
+        },
+        "tekshirilgan": [
+          "⭐ kirilcha so'rov lotincha postni topadi va aksincha (indeks+so'rov birga)",
+          "apostrofsiz yozilgan post apostrofli so'rov bilan topiladi",
+          "⭐ `е` kontekstli: «Европа» -> yevropa (so'z boshida), «берди» -> berdi",
+          "⭐ `ц` kontekstli: «цирк» -> sirk, «абзац» -> abzats",
+          "ў -> o, ғ -> g, ъ -> (o'chadi): «ўзбек» -> ozbek, «маъно» -> mano",
+          "aralash matn buzilmaydi: «Windows 11 да ишламаяпти» -> windows 11 da ishlamayapti",
+          "o'zbek kirilining HAMMA harfi jadvalda (guard test)",
+          "natijada hech qanday kirilcha belgi qolmaydi (butun alifbo bo'ylab)",
+          "⭐ INQIROZ ANIQLASHI TEGILMAGAN: normallashtir() apostrofni saqlaydi va transliteratsiya qilmaydi (32 ta D2-T6 testi yashil)",
+          "qidiruvni_yangilash 41 yozuvdan 39 tasini eskirgan deb topdi va tuzatdi"
+        ],
+        "qarorlar": [
+          "⭐⭐ APOSTROF O'CHIRILADI, bir shaklga KELTIRILMAYDI — D2-T6 dagi qaror bilan ataylab teskari. Ikki o'lchangan sabab: (1) 'simple' tokenizatori apostrofda so'zni bo'ladi, ya'ni saqlansa \"ko'chmas\" ikkita lexemaga ajralib apostrofsiz so'rovga mos kelmasdi; (2) foydalanuvchilar apostrofni ko'pincha umuman yozmaydi. Narxi ONGLI qabul qilingan: \"to'y\" va \"toy\" bir xil bo'lib qoladi — qidiruvda qamrov aniqlikdan muhimroq.",
+          "⭐ TARTIB: transliteratsiya AKSENTDAN OLDIN. Teskarisida `ё` avval `е` ga aylanardi va \"yo\" o'rniga \"e\" bo'lardi; `й` esa NFKD da `и` + breve ga parchalanib \"i\" bo'lib qolardi.",
+          "⭐ `е` va `ц` KONTEKSTGA BOG'LIQ (rasmiy o'zbek transliteratsiyasi). Qoidasiz «Европа» \"evropa\" bo'lardi va lotincha \"Yevropa\" bilan hech qachon uchrashmasdi.",
+          "Yo'nalish bitta (kiril -> lotin): muhimi hamma narsa BITTA shaklga kelishi. Lotin tanlandi — kontentning katta qismi shundaydir.",
+          "`ў` va `ғ` apostrofli shaklga (o', g') o'tkaziladi, keyin umumiy apostrof qoidasi ularni o'chiradi — apostrof siyosati BITTA joyda qolsin.",
+          "⭐ QAYTA INDEKSLASH MIGRATSIYADA, qo'lda qadam EMAS: deploy'da qo'lda bajariladigan qadam bir kuni albatta unutiladi va qidiruv yarim ishlaydigan holatga tushardi (xatosiz). Buyruq keyingi o'zgarishlar va ta'mirlash uchun qoladi."
+        ],
+        "topilgan_xatolar": [
+          "⭐⭐ D2-T6 GA TEGISHLI HAQIQIY XATO: `´` (U+00B4) ning MOSLIK dekompozitsiyasi bor — NFKC uni BO'SHLIQ + birikuvchi urg'uga aylantiradi. Tekislash NFKC dan KEYIN turgani uchun apostrof jadvali unga yetib bormasdi: \"ko´chmas\" -> \"ko chmas\" (so'z ikkiga bo'linardi), inqirozda esa \"o´ldirmoqchiman\" kalit so'zga MOS KELMASDI. Tartib almashtirildi (apostrof NFKC dan oldin) + regressiya testi qo'shildi.",
+          "Test funksiyasi nomida apostrof (`test_kirilcha_BO'LMAGAN_...`) — Python identifikatori emas, SyntaxError."
+        ],
+        "olchangan_holat": {
+          "testlar": 984,
+          "qamrov_foiz": 95.44,
+          "d4_t2_testlari": 50,
+          "kiril_lotin_jadvali": 35,
+          "apostrof_variantlari": 9
+        },
+        "keyingi_uchun_eslatma": [
+          "⚠️ `qidiruv_uchun()` HAR o'zgarganda: (1) yangi migratsiya + RunPython (0006 ni namuna qiling), yoki (2) deploy'dan keyin `manage.py qidiruvni_yangilash`. Aks holda eski kontent qidiruvdan jimgina tushib qoladi.",
+          "⚠️ `normallashtir()` (D2-T6) ga TEGMANG: inqiroz kalit so'zlari apostrofli va ikkala alifboda alohida yozilgan. Ikki funksiya bir modulda turadi va aynan shuning uchun chalkashtirish oson — guard testlari `test_matn.py` da.",
+          "⚠️ D4-T3 da ajratib ko'rsatish (highlight) muammosi qoladi va endi u OG'IRLASHDI: normal shakl asl matndan sezilarli farq qiladi («Ипотека» -> \"ipoteka\"), ya'ni SearchHeadline ni to'g'ridan-to'g'ri ishlatib bo'lmaydi."
+        ]
+      }
     },
     {
       "id": "D4-T3",
