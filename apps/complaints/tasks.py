@@ -6,12 +6,16 @@ Vazifa Celery beat orqali har 10 daqiqada ishlaydi (config/settings/base.py:
 
 from __future__ import annotations
 
+import hashlib
 import logging
 import math
 from datetime import UTC, datetime, timedelta
 
 from celery import shared_task
+from django.core.files.base import ContentFile
 from django.utils import timezone
+
+from apps.common.og import og_rasm_yasash
 
 from .models import Complaint
 
@@ -144,3 +148,65 @@ def hot_scorelarni_yangilash(kunlar: int = HOT_OYNA_KUNLARI) -> int:
 
     log.info("hot_score yangilandi: %s ta post (oyna: %s kun)", yangilangan, kunlar)
     return yangilangan
+
+
+# ===========================================================================
+# Open Graph rasmi (D4-T4)
+# ===========================================================================
+@shared_task(
+    name="apps.complaints.tasks.og_rasmni_yangilash",
+    # ⚠️ Rasm — KOSMETIKA. Yasalmasa post baribir ishlaydi va shablon
+    #    standart rasmga qaytadi. Shuning uchun cheksiz qayta urinish
+    #    ma'nosiz: navbatni band qiladi va hech narsani tuzatmaydi.
+    max_retries=2,
+    default_retry_delay=60,
+)
+def og_rasmni_yangilash(complaint_id: int) -> str:
+    """Muammo uchun OG kartasini yasaydi va saqlaydi.
+
+    ⚠️ `all_objects`: yashirilgan yoki yumshoq o'chirilgan post uchun ham
+       yasaladi. Sabab — tiklangandan keyin rasm DARHOL kerak bo'ladi va
+       uni qayta yasashni hech kim eslamaydi. Rasmning o'zi hech qayerda
+       ko'rsatilmaydi: uni faqat `og:image` metasi beradi, u esa
+       yashirilgan postda umuman render bo'lmaydi.
+
+    ⚠️ FAYL NOMIDA MAZMUN HASHI BOR — bu ATAYLAB:
+
+       Ijtimoiy tarmoqlar `og:image` ni MANZIL bo'yicha keshlaydi va
+       uzoq vaqt yangilamaydi. Nom o'zgarmasa (`og/12.png`), sarlavha
+       tahrirlangandan keyin ham Telegram ESKI rasmni ko'rsatishda davom
+       etardi. Hash esa mazmun o'zgarganda manzilni ham o'zgartiradi.
+
+       Teskari tomoni ham muhim: mazmun O'ZGARMAGAN bo'lsa nom ham
+       o'zgarmaydi, ya'ni har saqlashda yangi fayl to'planmaydi.
+    """
+    # korinish-istisno: rasm yasash — kontent KO'RSATILMAYDI. `og:image`
+    # metasi yashirilgan postda render bo'lmaydi (ko'rinish tekshiruvi
+    # `complaint_detail` da), bu yerda esa tiklanish holati qamraladi.
+    muammo = (
+        Complaint.all_objects.select_related("category").filter(pk=complaint_id).first()
+    )
+
+    if muammo is None:
+        log.warning("og_rasmni_yangilash: muammo topilmadi (id=%s)", complaint_id)
+        return "topilmadi"
+
+    baytlar = og_rasm_yasash(
+        sarlavha=muammo.title,
+        kategoriya=muammo.category.name if muammo.category_id else "",
+    )
+    nom = f"{muammo.pk}-{hashlib.sha256(baytlar).hexdigest()[:8]}.png"
+
+    if muammo.og_rasm and muammo.og_rasm.name.endswith(nom):
+        return "o'zgarmadi"
+
+    # ⚠️ Eskisi O'CHIRILADI: aks holda har tahrirdan keyin `media/og/` da
+    #    yetim fayl qolardi va katalog cheksiz o'sardi.
+    if muammo.og_rasm:
+        muammo.og_rasm.delete(save=False)
+
+    muammo.og_rasm.save(nom, ContentFile(baytlar), save=False)
+    # ⚠️ `update_fields` — boshqa maydonlarga tegilmaydi. Vazifa fonda
+    #    ishlaydi va shu orada post tahrirlangan bo'lishi mumkin.
+    muammo.save(update_fields=["og_rasm"])
+    return nom

@@ -10,3 +10,14 @@ psycopg[binary]==3.3.*
 # D0-T3 — fon vazifalari (trending D1-T11, Telegram avto-post D5-T3)
 celery[redis]==5.5.*
 redis==5.*
+
+# D4-T4 — Open Graph rasmini serverda yasash.
+#
+# ⚠️ QOIDA BO'YICHA SAVOL BERILDI: "buni stdlib yoki Django bilan qilib
+#    bo'ladimi?" — YO'Q. Facebook, Telegram va X `og:image` da faqat RASTR
+#    formatni qabul qiladi (SVG ishlamaydi), ya'ni matnni haqiqiy
+#    piksellarga aylantirish kerak. Buni brauzersiz va rasm kutubxonasisiz
+#    qilishning yo'li yo'q.
+#
+# ⚠️ `ImageField` ham Pillow'ni talab qiladi (Django system check E210).
+pillow==12.*

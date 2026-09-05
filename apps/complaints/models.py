@@ -353,6 +353,24 @@ class Complaint(ContentModel, VotableModel):
     #    ham skanerlaydi, ikkinchisi faqat disk va yozish yukini oshirardi.
     hot_score = models.FloatField("qaynoqlik", default=0.0, db_index=True)
 
+    # -- Open Graph rasmi (D4-T4) ------------------------------------------
+    # ⚠️ MAYDON, chunki rasm FON VAZIFASIDA yasaladi (D4-T4 qabul mezoni):
+    #    so'rov ichida yasash sahifani ~200 ms sekinlashtirardi va bu narx
+    #    HAR ko'rishda to'lanardi, holbuki rasm faqat ijtimoiy tarmoq
+    #    skaneri uchun kerak.
+    #
+    # ⚠️ `blank=True` — rasm hali yasalmagan bo'lishi NORMAL holat:
+    #    post yozilgan zahoti u yo'q (vazifa navbatda turadi) va eski
+    #    postlarda umuman bo'lmasligi mumkin. Shablon o'shanda standart
+    #    rasmga qaytadi — sabab `_seo.html` da.
+    og_rasm = models.ImageField(
+        "OG rasm",
+        upload_to="og/",
+        blank=True,
+        editable=False,
+        help_text="Avtomatik yasaladi (D4-T4). Qo'lda yuklanmaydi.",
+    )
+
     # -- Qidiruv (D4-T1) ---------------------------------------------------
     # ⚠️ NEGA NORMALLASHTIRILGAN MATN ALOHIDA USTUNDA SAQLANADI
     #    Indeks ham, so'rov ham AYNAN bir xil normal shaklda bo'lishi

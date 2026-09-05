@@ -349,6 +349,34 @@ docker compose -f docker-compose.server.yml exec db     psql -U dard -d dard -c 
    yozilgan qatorlar indeksdan tashqarida qoladi — `qidiruvni_yangilash`
    ularni tuzatadi.
 
+### Ijtimoiy tarmoqda karta rasmsiz chiqyapti
+
+OG rasmlarini **Celery worker** yozadi va ular `media_data` volumeda
+turadi (`web`, `celery-worker` va nginx uchalasiga ham ulangan).
+
+```bash
+# Rasmlar bormi
+docker compose -f docker-compose.server.yml exec web ls -la /app/media/og | head
+
+# Yo'q bo'lsa — yasab chiqing
+docker compose -f docker-compose.server.yml exec web \
+    python manage.py og_rasmlarni_yangilash --faqat-yoqlar
+```
+
+⚠️ **Brend yoki maket o'zgarganda** eski kartalar eski ko'rinishda
+qolib ketadi va ular ijtimoiy tarmoqda yillab aylanib yuradi:
+
+```bash
+docker compose -f docker-compose.server.yml exec web python manage.py og_standart
+docker compose -f docker-compose.server.yml exec web python manage.py og_rasmlarni_yangilash
+```
+
+⚠️ Telegram va Facebook `og:image` ni **manzil bo'yicha** keshlaydi.
+Fayl nomida mazmun hashi bo'lgani uchun yangi rasm yangi manzilga
+tushadi — lekin ALLAQACHON ulashilgan havolalar eski kartani
+ko'rsatishda davom etadi (buni faqat platformaning o'z vositasi
+yangilaydi).
+
 ### Disk to'ldi
 
 ```bash

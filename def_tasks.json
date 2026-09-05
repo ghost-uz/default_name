@@ -2565,11 +2565,79 @@
       "bogliq": [
         "D1-T3"
       ],
-      "holat": "todo",
+      "holat": "done",
       "qabul_mezoni": [
         "har muammo sahifasi o'z canonical URL'iga ega",
         "OG rasm fon vazifasida yaratiladi"
-      ]
+      ],
+      "tugatilgan": "2026-09-05",
+      "natija": {
+        "yaratilgan": [
+          "apps/common/og.py — OG kartasini yasash (piksel bo'yicha o'rash, vertikal markazlashtirish, kategoriya chipi)",
+          "assets/fonts/ — VENDORLANGAN shrift: Inter-Regular.ttf + Inter-Bold.ttf (qisqartirilgan, jami 252 KB) + OFL.txt + README.md",
+          "apps/common/templatetags/seo.py — {% kanonik %} va {% mutlaq %}",
+          "apps/complaints/models.py — Complaint.og_rasm (ImageField) + migratsiya 0007",
+          "apps/complaints/tasks.py — og_rasmni_yangilash() Celery vazifasi",
+          "apps/common/management/commands/og_standart.py — standart rasm",
+          "apps/complaints/management/commands/og_rasmlarni_yangilash.py — ommaviy",
+          "static/img/og-default.png — standart karta (repoda)",
+          "templates/base.html — kanonik + to'liq OG/Twitter metalari (bloklar bilan)",
+          "templates/complaints/detail.html — o'z OG kartasi (article)",
+          "conftest.py — har test o'z MEDIA_ROOT ida (_media_izolyatsiyasi)",
+          "apps/common/tests/test_og.py (21) + apps/complaints/tests/test_seo.py (27)"
+        ],
+        "qabul_mezonlari": {
+          "har_muammo_sahifasi_oz_canonical_urliga_ega": "✅ Mutlaq kanonik; 🌐 jonli tekshirilgan. GUARD: URLconf'dagi HAR ommaviy sahifada kanonik YOKI `noindex` bo'lishi test bilan majburlanadi.",
+          "og_rasm_fon_vazifasida_yaratiladi": "✅ Celery vazifasi, post yozilgandan va tahrirlangandan keyin `.delay()`. Fayl nomida MAZMUN HASHI — ijtimoiy tarmoq keshi uchun. 🌐 jonli: rasm 200/image-png, 23 KB."
+        },
+        "tekshirilgan": [
+          "🌐 JONLI: muammo sahifasida kanonik + 8 ta OG/Twitter metasi to'g'ri",
+          "🌐 JONLI: `/media/og/<pk>-<hash>.png` 200 bilan uzatiladi",
+          "🌐 JONLI: `?category=karyera&sort=new&generation=genz` -> kanonik faqat `?category=karyera`",
+          "🌐 JONLI: qidiruv sahifasida kanonik YO'Q, `noindex, follow` bor",
+          "⭐ shrift qamrovi TEST bilan: lotin, o'zbek `ʻ`, 7 apostrof varianti, kirill (ў қ ғ ҳ), belgilar — yo'q glif bo'lsa test yiqiladi",
+          "og:title da sayt nomi takrorlanmaydi (`<title>` da bor, OG'da yo'q)",
+          "anonim postda muallif OG metalariga tushmaydi",
+          "rasm yo'q bo'lsa standart rasmga qaytadi",
+          "mazmun o'zgarmasa fayl qayta yozilmaydi; o'zgarsa eskisi O'CHIRILADI",
+          "yo'q muammo bilan vazifa yiqilmaydi (`topilmadi`)",
+          "yashirilgan post uchun ham rasm yasaladi (tiklanish uchun)",
+          "uchidan-uchiga: forma orqali yozilgan post rasmga ega bo'ladi",
+          "piksel bo'yicha o'rash: kirill/lotin/apostrofli matn chetga chiqmaydi",
+          "bitta 200 belgilik so'z majburan bo'linadi (cheksiz sikl yo'q)"
+        ],
+        "qarorlar": [
+          "⭐⭐ PILLOW QO'SHILDI — loyihaning 'yangi paketdan oldin savol ber' qoidasi bo'yicha savol berildi: Facebook/Telegram/X `og:image` da FAQAT rastr qabul qiladi (SVG ishlamaydi), ya'ni matnni piksellarga aylantirish kerak va buni brauzersiz, rasm kutubxonasisiz qilib bo'lmaydi. `ImageField` ham Pillow talab qiladi.",
+          "⭐⭐ SHRIFT VENDORLANDI (`assets/fonts/`, ikkita statik fayl, jami 252 KB, OFL). `python:3.12-slim` da shrift YO'Q, Windows shriftlari tarqatilmaydi — tizim shriftiga tayanish 'lokalda ishlaydi, konteynerda quti chizadi' holatini yaratardi. `htmx.min.js` bilan bir xil qaror. Inter tanlandi: saytning o'z shrifti VA kirillni qamrab oladi (test bilan tasdiqlangan).",
+          "⭐ `assets/`, `static/` EMAS: shrift faqat server tomonida ishlatiladi; `static/` da tursa collectstatic uni yig'ib, nginx 876 KB faylni bekorga tarqatardi.",
+          "⭐⭐ O'ZGARUVCHAN (variable) SHRIFT RAD ETILDI: bitta fayldan to'qqiz og'irlik olish jozibali edi, lekin u 876 KB va qisqartirilgandan keyin ham 513 KB — `gvar` jadvali qisqarmaydi. `check-added-large-files` hooki (500 KB) uni TO'G'RI rad etdi. Chegarani ko'tarish yoki istisno qo'shish qo'riqchini bo'shatardi; to'g'ri yechim — bizga faqat IKKI og'irlik kerak ekanini tan olish: ikkita statik nusxa 252 KB.",
+          "⭐⭐ KANONIKDA FAQAT `category` QOLADI. `sort` — bir xil kontent boshqa tartibda; `generation` — qolsa 8×3 = 24 ta yupqa sahifa; `after`/`sahifa` — sahifalash. ⚠️ Kanonikni faqat `request.path` dan qurish jonli loyihada 'Duplicate, not canonical' ga olib kelgan.",
+          "⭐ FAYL NOMIDA MAZMUN HASHI: ijtimoiy tarmoqlar `og:image` ni MANZIL bo'yicha keshlaydi va nom o'zgarmasa tahrirdan keyin ham ESKI rasmni ko'rsatishda davom etardi. Teskari tomoni: mazmun o'zgarmasa nom ham o'zgarmaydi -> ortiqcha fayl to'planmaydi.",
+          "OG metalari `{% block %}` orqali, standart qiymatlar base.html da: har sahifada to'rt qatorni qaytadan yozish ularning bir-biridan uzoqlashishiga olib kelardi (sarlavha yangilanadi, og:title eskiligicha qoladi).",
+          "Qidiruv sahifasida kanonik ATAYLAB YO'Q: sahifa `noindex` da va ikkalasi birga qarama-qarshi signal bo'lardi.",
+          "Vertikal markazlashtirish BREND bilan CHIP ORASIDA (butun rasm bo'yicha emas) — kategoriyasiz kartada pastda bo'sh joy qolardi (jonli ko'rildi).",
+          "Ommaviy buyruq vazifani SINXRON chaqiradi (`.delay()` emas): deploy paytida natija darhol ko'rinishi kerak va Redis o'chiq bo'lsa ish umuman bajarilmasdi."
+        ],
+        "topilgan_xatolar": [
+          "⭐ TESTLAR HAQIQIY `media/` KATALOGIGA YOZARDI: `CELERY_TASK_ALWAYS_EAGER` tufayli muammo yaratadigan har bir test OG rasmini ham yasaydi va ular loyihaning haqiqiy `media/og/` katalogida to'planardi. `conftest.py` da `_media_izolyatsiyasi` fixture'i qo'shildi (`tmp_path`).",
+          "Test funksiyasi nomida apostrof (`test_..._SIG'ADI`) — Python identifikatori emas. Bu D4-T3 dan keyin IKKINCHI marta uchradi.",
+          "⚠️ `fontTools.varLib.instancer` NOM JADVALINI yangilamaydi: ikkala fayl ham \"Regular\" deb ko'rinardi (`--update-name-table` kerak). Shu sababli test endi nom bilan birga O'LCHOVNI ham tekshiradi — qalin matn har doim kengroq, buni metadata yashira olmaydi."
+        ],
+        "olchangan_holat": {
+          "testlar": 1089,
+          "qamrov_foiz": 94.9,
+          "d4_t4_testlari": 48,
+          "shrift_kb": 252,
+          "og_rasm_kb": 23
+        },
+        "keyingi_uchun_eslatma": [
+          "⚠️ D4-T5 (sitemap): qidiruv sahifasi kirmaydi (`noindex`). Kategoriya sahifalari kanonikda `?category=` bilan turadi — sitemap'ga qo'shilsa AYNAN shu shaklda qo'shilsin, aks holda 'Duplicate, not canonical'.",
+          "⚠️ Brend/maket o'zgarsa: `manage.py og_standart` VA `manage.py og_rasmlarni_yangilash` — aks holda eski kartalar ijtimoiy tarmoqda yillab aylanib yuradi.",
+          "⚠️ Shrift almashtirilsa `test_SHRIFT_kerakli_belgilarni_QAMRAB_oladi` testi yo'q gliflarni ushlaydi (yo'q glif = bo'sh quti, xatosiz).",
+          "⚠️ DEPLOY: `celery-worker` `*app` ankeri orqali `media_data` volumeni oladi (tekshirilgan) — rasmni worker yozadi, nginx faqat o'qiydi.",
+          "⚠️ Shrift qayta yasalsa: `assets/fonts/README.md` dagi buyruqlar (`fonttools` DEV-only, requirements'da YO'Q) va `--update-name-table` bayrog'ini unutmang."
+        ]
+      }
     },
     {
       "id": "D4-T5",

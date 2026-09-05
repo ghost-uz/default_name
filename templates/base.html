@@ -1,4 +1,4 @@
-{% load static statik %}<!doctype html>
+{% load static statik seo %}<!doctype html>
 <html lang="uz" class="{% block html_class %}{% endblock %}">
   <head>
     <meta charset="utf-8" />
@@ -7,6 +7,45 @@
     <title>{% block title %}Dard.uz — Nolima, yechim topamiz{% endblock %}</title>
     <meta name="description" content="{% block description %}Dard.uz — hayotiy muammolaringiz bilan o'rtoqlashing va real tajribaga asoslangan yechim toping.{% endblock %}" />
     <meta name="theme-color" content="#2563eb" />
+
+    {% comment %}
+      ---------- SEO va ijtimoiy tarmoq metalari (D4-T4) ----------
+
+      ⚠️ KANONIK MANZIL har sahifada. Qoidasi va uning narxi
+         `apps/common/templatetags/seo.py` da — qisqasi: `?category=`
+         qoladi, saralash va sahifalash tashlanadi.
+
+      ⚠️ `noindex` sahifalar (qidiruv) bu blokni BO'SH qilib bekor
+         qiladi: indekslanmaydigan sahifaga kanonik berish qarama-qarshi
+         signal bo'lardi.
+
+      ⚠️ OG metalari `{% block %}` orqali: standart qiymatlar shu yerda
+         turadi va sahifa faqat KERAKLISINI bekor qiladi. Har sahifada
+         to'rt qatorni qaytadan yozish ularning bir-biridan uzoqlashishiga
+         olib kelardi (sarlavha yangilanadi, `og:title` esa eskiligicha
+         qoladi).
+    {% endcomment %}
+    {% block kanonik %}<link rel="canonical" href="{% kanonik %}" />{% endblock %}
+
+    {% static 'img/og-default.png' as og_standart %}
+    <meta property="og:site_name" content="Dard.uz" />
+    <meta property="og:locale" content="uz_UZ" />
+    <meta property="og:type" content="{% block og_turi %}website{% endblock %}" />
+    <meta property="og:url" content="{% kanonik %}" />
+    <meta property="og:title" content="{% block og_sarlavha %}Dard.uz — Nolima, yechim topamiz{% endblock %}" />
+    <meta property="og:description" content="{% block og_tavsif %}Dard.uz — hayotiy muammolaringiz bilan o'rtoqlashing va real tajribaga asoslangan yechim toping.{% endblock %}" />
+    {% comment %}
+      ⚠️ Rasm MUTLAQ manzilda bo'lishi SHART — Telegram va Facebook
+         skanerlari nisbiy manzilni umuman yuklamaydi va karta rasmsiz
+         qoladi.
+      ⚠️ O'lchamlar oldindan beriladi: skaner rasmni yuklamasdan turib
+         kartani rejalashtira oladi va birinchi ulashishda ham rasm
+         ko'rinadi (aks holda ko'pincha ikkinchi urinishda chiqadi).
+    {% endcomment %}
+    <meta property="og:image" content="{% block og_rasm %}{% mutlaq og_standart %}{% endblock %}" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
     {% comment %}
       ⚠️⚠️ HTMX O'Z `<style>` BLOKINI KIRITMASIN (D2-T9).
 

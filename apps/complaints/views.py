@@ -51,6 +51,7 @@ from .selectors import (
     taxminiy_natijalar,
     yon_panel_kategoriyalari,
 )
+from .tasks import og_rasmni_yangilash
 
 
 # ===========================================================================
@@ -428,6 +429,11 @@ def complaint_create(request: HttpRequest) -> HttpResponse:
             # ⚠️ Shubhali bo'lsa NAVBATGA tushadi, YASHIRILMAYDI
             #    (D2-T5 mahsulot qarori — apps/common/spam.py).
             avtomatik_belgilash(target=muammo, baho=form.spam_bahosi)
+            # ⚠️ OG kartasi FONDA yasaladi (D4-T4 qabul mezoni): rasm
+            #    chizish ~100 ms oladi va u foydalanuvchini kutishga
+            #    majburlashi mumkin emas — rasm faqat ijtimoiy tarmoq
+            #    skaneriga kerak, odamga emas.
+            og_rasmni_yangilash.delay(muammo.pk)
             messages.success(request, "Dardingiz e'lon qilindi.")
             return redirect(muammo.get_absolute_url())
     else:
@@ -474,6 +480,11 @@ def complaint_edit(request: HttpRequest, slug: str) -> HttpResponse:
                 target=muammo, matnlar=[muammo.title, muammo.description]
             )
             avtomatik_belgilash(target=muammo, baho=form.spam_bahosi)
+            # ⚠️ Tahrirdan keyin ham: sarlavha o'zgargan bo'lsa eski karta
+            #    endi noto'g'ri matnni ko'rsatardi. Vazifa mazmun
+            #    o'zgarmagan bo'lsa hech narsa yozmaydi (fayl nomi
+            #    mazmun hashidan quriladi).
+            og_rasmni_yangilash.delay(muammo.pk)
             messages.success(request, "O'zgarishlar saqlandi.")
             return redirect(muammo.get_absolute_url())
     else:

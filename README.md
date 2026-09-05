@@ -444,6 +444,7 @@ D2-T6 rasmiy ishonch telefonini talab qiladi, D2-T10 — yurist xulosasini.
 | D4-T1 | PostgreSQL FTS — GENERATED `tsvector`, GIN + trigram indeks, qayta indekslash buyrug'i |
 | D4-T2 | Lotin/kiril transliteratsiyasi va apostrof — to'qqiz yozuv usuli, bitta lexema |
 | D4-T3 | Qidiruv sahifasi `/qidiruv/` — ajratish, uch filtr, yaqin so'zlar takliflari |
+| D4-T4 | SEO asoslari — kanonik, Open Graph, avtomatik yasaladigan OG rasm |
 
 ---
 
@@ -521,6 +522,67 @@ Ikkalasi ham `ComplaintQuerySet` da yopildi. Bu teshik tanlangan dizayndan
 kelib chiqadi: `search_vector` GENERATED ustun bo'lgani uchun uni unutish
 mumkin emas, lekin **normallashtirish baribir Python'da qoladi** — trigger
 bermaydigan bo'shliq aynan shu yerda.
+
+### SEO va ijtimoiy tarmoq kartasi (D4-T4)
+
+Har sahifada kanonik manzil va to'liq Open Graph to'plami. Muammo
+sahifasining OG rasmi **fon vazifasida** yasaladi — sarlavha va
+kategoriyadan.
+
+```bash
+python manage.py og_standart              # static/img/og-default.png
+python manage.py og_rasmlarni_yangilash   # hammasini qayta yasaydi
+python manage.py og_rasmlarni_yangilash --faqat-yoqlar
+```
+
+### ⚠️⚠️ Kanonikda faqat `?category=` qoladi
+
+| Parametr | Kanonikda | Sabab |
+|---|---|---|
+| `category` | ✅ qoladi | "Moliya bo'yicha dardlar" — o'z mazmuni bo'lgan sahifa |
+| `sort` | ❌ | bir xil kontent, boshqa tartib |
+| `generation` | ❌ | qolsa 8 kategoriya × 3 avlod = 24 ta yupqa sahifa |
+| `after`, `sahifa` | ❌ | sahifalash |
+| `q` | — | qidiruv sahifasi `noindex`, kanonik umuman bermaydi |
+
+⚠️ Kanonikni **faqat `request.path` dan** qurish oson va noto'g'ri:
+o'shanda `/?category=moliya` bosh sahifaga kanoniklashadi va Search
+Console uni **«Duplicate, not canonical»** deb indeksdan chiqaradi —
+ya'ni kategoriya sahifalari qidiruvda umuman ko'rinmaydi.
+
+### ⚠️ Shrift vendorlangan — `assets/fonts/`
+
+OG rasmini yasash uchun **shrift fayli shart**: `python:3.12-slim` da
+hech qanday shrift yo'q. Tizim shriftiga tayanish «lokalda ishlaydi,
+konteynerda quti chizadi» holatini yaratardi.
+
+- **Inter** (OFL) — saytning o'z shrifti **va** kirillni qamrab oladi;
+- ikkita **statik** fayl (Regular + Bold), kerakli belgilarga
+  qisqartirilgan — jami **252 KB**;
+- `assets/`, **`static/` emas**: shrift faqat server tomonida ishlatiladi,
+  `static/` da tursa `collectstatic` uni yig'ib nginx uni bekorga
+  tarqatardi.
+
+⚠️ **Nega o'zgaruvchan (variable) shrift emas.** Bitta fayldan to'qqizta
+og'irlik olish jozibali ko'rinadi, lekin u 876 KB va kerakli belgilarga
+qisqartirilgandan keyin ham **513 KB** — `gvar` jadvali qisqarmaydi.
+`check-added-large-files` hooki (500 KB) uni to'g'ri rad etdi. Chegarani
+ko'tarish yoki istisno qo'shish mumkin edi, ikkalasi ham qo'riqchini
+bo'shatardi; to'g'ri yechim — bizga faqat ikki og'irlik kerak ekanini tan
+olish. Qanday yasalgani: [`assets/fonts/README.md`](assets/fonts/README.md).
+
+⚠️ Shriftda yo'q belgi **bo'sh quti** bo'lib chiziladi — xato chiqmaydi,
+va buni faqat Telegram'ga havola tashlagan odam ko'radi. Shuning uchun
+qamrov testi bor: lotin, o'zbek `ʻ`, apostrofning 7 varianti, kirill
+(`ў қ ғ ҳ`).
+
+### ⚠️ OG rasm fayl nomida mazmun hashi bor
+
+Ijtimoiy tarmoqlar `og:image` ni **manzil bo'yicha** keshlaydi. Nom
+o'zgarmasa (`og/12.png`), sarlavha tahrirlangandan keyin ham Telegram
+**eski** rasmni ko'rsatishda davom etardi. `og/12-a1b2c3d4.png` esa
+mazmun o'zgarganda manzilni ham o'zgartiradi — va o'zgarmasa yangi fayl
+to'planmaydi.
 
 ### Qidiruv sahifasi (D4-T3) — `/qidiruv/?q=…`
 

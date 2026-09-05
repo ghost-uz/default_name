@@ -1,7 +1,31 @@
 {% extends 'base.html' %}
+{% load seo %}
 
 {% block title %}{{ complaint.title|truncatechars:60 }} — Dard.uz{% endblock %}
 {% block description %}{{ complaint.description|truncatewords:25 }}{% endblock %}
+
+{% comment %}
+  ---------- Ijtimoiy tarmoq kartasi (D4-T4) ----------
+
+  ⚠️ `og:title` da " — Dard.uz" qo'shimchasi YO'Q: sayt nomi kartada
+     `og:site_name` orqali alohida ko'rsatiladi va uni sarlavhaga ham
+     qo'shish "Ipoteka olish — Dard.uz | Dard.uz" degan takrorga olib
+     kelardi.
+
+  ⚠️ ANONIMLIK: kartada muallif YO'Q. Sarlavha, tavsif va kategoriyadan
+     boshqa hech narsa chiqmaydi — `og:image` ham aynan shulardan
+     yasaladi (D1-T6 invarianti ijtimoiy tarmoqda ham amal qiladi).
+{% endcomment %}
+{% block og_turi %}article{% endblock %}
+{% block og_sarlavha %}{{ complaint.title }}{% endblock %}
+{% block og_tavsif %}{{ complaint.description|truncatewords:30 }}{% endblock %}
+{% comment %}
+  ⚠️ Rasm hali yasalmagan bo'lishi NORMAL: vazifa fonda ishlaydi va post
+     yozilgan zahoti u yo'q. O'shanda standart rasmga qaytamiz
+     (`block.super`) — rasmsiz karta Telegram lentasida kulrang qator
+     bo'lib qolardi.
+{% endcomment %}
+{% block og_rasm %}{% if complaint.og_rasm %}{% mutlaq complaint.og_rasm.url %}{% else %}{{ block.super }}{% endif %}{% endblock %}
 
 {% block content %}
 <div class="mx-auto grid max-w-[1100px] gap-6 px-4 py-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:px-6">

@@ -26,6 +26,18 @@
   <meta name="robots" content="noindex, follow" />
 {% endblock %}
 
+{% comment %}
+  ⚠️ KANONIK ATAYLAB BO'SH (D4-T4).
+
+     Sahifa `noindex` da. Unga kanonik manzil ham berish qarama-qarshi
+     signal bo'lardi: "meni indekslama" va "mening haqiqiy manzilim mana
+     bu" — ikkinchisi birinchisini shubha ostiga qo'yadi.
+
+     `og:*` metalari esa QOLADI: ular indekslashga emas, havolani
+     ulashganda karta chiqishiga xizmat qiladi.
+{% endcomment %}
+{% block kanonik %}{% endblock %}
+
 {% block content %}
 <div class="mx-auto max-w-3xl px-4 py-6 lg:px-6">
   <main id="main">

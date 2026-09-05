@@ -127,6 +127,30 @@ def _tashqi_tarmoqni_taqiqlash(monkeypatch, request):
 
 
 @pytest.fixture(autouse=True)
+def _media_izolyatsiyasi(settings, tmp_path):
+    """Har test O'Z `MEDIA_ROOT` ida ishlasin (D4-T4).
+
+    ⚠️⚠️ BUSIZ TESTLAR HAQIQIY `media/` KATALOGIGA YOZARDI.
+
+       D4-T4 dan keyin muammo yaratadigan HAR bir test OG rasmini ham
+       yasaydi (`CELERY_TASK_ALWAYS_EAGER=True`). Ular loyihaning
+       haqiqiy `media/og/` katalogiga tushib, u yerda yuzlab yetim
+       fayl to'planardi — va buni faqat qo'lda ko'zdan kechirish
+       oshkor qilardi (D0-T7 dagi sinov modellari bilan bir xil
+       turdagi xato).
+
+    ⚠️ `tmp_path` — HAR TEST uchun yangi katalog va pytest uni o'zi
+       tozalaydi. Bundan tashqari bu izolyatsiya beradi: bir test
+       yasagan fayl ikkinchisiga ko'rinmaydi.
+
+    ⚠️ `settings` fixture'i `setting_changed` signalini yuboradi va
+       Django saqlash (storage) obyektini QAYTA QURADI — aks holda
+       `default_storage` eski `location` ni keshda ushlab qolardi.
+    """
+    settings.MEDIA_ROOT = tmp_path / "media"
+
+
+@pytest.fixture(autouse=True)
 def _keshni_tozalash():
     """Har test toza keshdan boshlasin (D2-T4).
 
