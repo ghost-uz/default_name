@@ -446,6 +446,7 @@ D2-T6 rasmiy ishonch telefonini talab qiladi, D2-T10 — yurist xulosasini.
 | D4-T3 | Qidiruv sahifasi `/qidiruv/` — ajratish, uch filtr, yaqin so'zlar takliflari |
 | D4-T4 | SEO asoslari — kanonik, Open Graph, avtomatik yasaladigan OG rasm |
 | D4-T5 | `sitemap.xml` va `robots.txt` — faqat ko'rinadigan kontent |
+| D4-T6 | Schema.org QAPage (JSON-LD) — Google natijada javobni ko'rsatadi |
 
 ---
 
@@ -523,6 +524,51 @@ Ikkalasi ham `ComplaintQuerySet` da yopildi. Bu teshik tanlangan dizayndan
 kelib chiqadi: `search_vector` GENERATED ustun bo'lgani uchun uni unutish
 mumkin emas, lekin **normallashtirish baribir Python'da qoladi** — trigger
 bermaydigan bo'shliq aynan shu yerda.
+
+### Schema.org QAPage (D4-T6)
+
+Muammo sahifasida `application/ld+json` bloki: `Question` +
+`acceptedAnswer` / `suggestedAnswer`, ovoz soni bilan. Google natijada
+javobning o'zini ko'rsatishi mumkin — M4 dagi eng yuqori daromadli SEO
+ishi.
+
+### ⚠️ Javobsiz savolga QAPage yozilmaydi
+
+Google `QAPage` uchun **kamida bitta javob** kutadi. Javobsiz savolda
+`acceptedAnswer` ham, `suggestedAnswer` ham bo'lmaydi va Rich Results
+Test **xato** beradi. Shuning uchun blok umuman chiqarilmaydi — sahifa
+baribir indekslanadi (kanonik va OG joyida), javob paydo bo'lgan zahoti
+blok ham paydo bo'ladi.
+
+### ⚠️⚠️ JSON-LD — anonimlik invariantining uchinchi joyi
+
+Anonim postda `author` maydoni **umuman chiqarilmaydi**. Bu eng oson
+unutiladigan joy, chunki **JSON-LD sahifada ko'rinmaydi**: buzilganini
+na foydalanuvchi, na dasturchi sezadi — u faqat Google indeksida qoladi.
+
+Xuddi shu sabab yashirilgan yechim uchun ham amal qiladi: ro'yxat
+`complaint_detail` dan (ko'rinish filtridan o'tgan holda) keladi va
+`schema.py` **o'zi so'rov qilmaydi**.
+
+### ⚠️ `</script>` blokdan chiqa olmaydi
+
+JSON ichidagi `</script>` ketma-ketligi brauzer uchun skript blokini
+**shu yerda** tugatadi va qolgan matn HTML bo'lib o'qiladi — ya'ni
+foydalanuvchi matni orqali teg kiritish mumkin bo'lardi. `<`, `>` va `&`
+kodlanadi (Django'ning `json_script` filtri ishlatadigan jadval).
+
+⚠️ `nonce` shart: CSP `script-src` `<script>` elementiga **turidan qat'i
+nazar** qo'llanadi, Googlebot esa Chrome asosida ishlaydi.
+
+### ⚠️ N+1 boshqa mavzudagi o'zgarishdan keldi
+
+`_javob()` dastlab `yechim.complaint.get_absolute_url()` orqali yurardi.
+`complaint_detail` yechimlarni faqat `select_related("author")` bilan
+oladi — natijada **har yechim uchun bitta qo'shimcha so'rov**. D1-T14
+qo'riqchisi (uchta test) darhol yiqildi.
+
+Eng muhimi: regressiya **butunlay boshqa mavzudagi** (SEO) ishdan keldi.
+Shuning uchun N+1 guardi qat'iy son emas, **bog'liqlik** tekshiradi.
 
 ### `sitemap.xml` va `robots.txt` (D4-T5)
 

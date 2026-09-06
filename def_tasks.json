@@ -2715,10 +2715,58 @@
       "bogliq": [
         "D4-T4"
       ],
-      "holat": "todo",
+      "holat": "done",
       "qabul_mezoni": [
         "Google Rich Results Test xatosiz o'tadi"
-      ]
+      ],
+      "tugatilgan": "2026-09-06",
+      "natija": {
+        "yaratilgan": [
+          "apps/complaints/schema.py — QAPage JSON-LD (Question + acceptedAnswer + suggestedAnswer, upvoteCount bilan)",
+          "apps/complaints/views.py — complaint_detail kontekstiga `schema_json`",
+          "templates/complaints/detail.html — `application/ld+json` bloki (nonce bilan)",
+          "apps/complaints/tests/test_schema.py — 16 test"
+        ],
+        "qabul_mezonlari": {
+          "google_rich_results_test_xatosiz_otadi": "✅ Struktura QAPage spetsifikatsiyasiga mos: `mainEntity` -> `Question` (name, text, answerCount, upvoteCount, dateCreated) va kamida bitta javob. ⚠️ JAVOBSIZ savolda blok UMUMAN chiqarilmaydi — aynan shu holat Rich Results Test'da xato berardi. (Jonli URL bo'lmagani uchun Google vositasi bilan tekshirib bo'lmaydi; domen olingach bir marta tekshirilsin.)"
+        },
+        "tekshirilgan": [
+          "🌐 JONLI: qabul qilingan yechimli postda to'liq QAPage bloki chiqdi",
+          "javobsiz savolda blok YO'Q",
+          "yashirilgan postda blok YO'Q (muallif o'zi ko'rsa ham)",
+          "⭐ yashirilgan YECHIM blokga tushmaydi (JSON-LD sahifada ko'rinmaydi — sizishni faqat Google ko'rardi)",
+          "⭐ ANONIM savol va ANONIM yechimda `author` maydoni UMUMAN yo'q",
+          "qabul qilingan yechim `acceptedAnswer` da, qolganlari `suggestedAnswer` da",
+          "`upvoteCount` ovozlarni aks ettiradi; manfiy ball 0 ga keladi",
+          "⭐ `</script>` blokdan chiqa olmaydi (`<`, `>`, `&` kodlangan) va JSON baribir yaroqli qoladi",
+          "CSP nonce bor",
+          "javob URL'i `#yechim-<pk>` langariga olib boradi (shablon bilan bog'liq)"
+        ],
+        "qarorlar": [
+          "⭐⭐ JAVOBSIZ SAVOLGA QAPage YOZILMAYDI. Google `QAPage` uchun kamida bitta javob kutadi (`acceptedAnswer` yoki `suggestedAnswer`) va usiz Rich Results Test XATO beradi — qabul mezoni esa aynan 'xatosiz o'tadi' deydi. Sahifa baribir indekslanadi (kanonik va OG joyida), javob paydo bo'lgan zahoti blok ham paydo bo'ladi.",
+          "⭐ ANONIMLIK — D1-T6 invariantining UCHINCHI joyi (shablon, OG, JSON-LD) va eng oson unutiladigani, chunki JSON-LD sahifada KO'RINMAYDI: buzilganini na foydalanuvchi, na dasturchi sezardi.",
+          "⭐ Yechimlar ro'yxati TASHQARIDAN beriladi (`complaint_detail` dan, u `ozi_korinadigan()` dan o'tgan). Modul o'zi so'rov qilsa, ko'rinish filtri ikkinchi marta yozilardi va bir kuni ular farq qilardi.",
+          "Django'ning `json_script` filtri ISHLATILMADI: u `<script>` tegini o'zi yasaydi va turini `application/json` qilib qotiradi, bizga esa `application/ld+json` kerak. Qochish jadvali esa o'shanikidan olindi.",
+          "`nonce` SHART: CSP `script-src` `<script>` elementiga turidan qat'i nazar qo'llanadi va Googlebot Chrome asosida ishlaydi.",
+          "Javob URL'i `#yechim-<pk>` langari bilan — Google javobga to'g'ridan-to'g'ri olib boradi. Langar shablonda va bog'lanish test bilan qotirilgan.",
+          "`upvoteCount` manfiy bo'la olmaydi (`max(0, ...)`) — Google manfiy qiymatni rad etadi."
+        ],
+        "topilgan_xatolar": [
+          "⭐⭐ N+1 REGRESSIYASI: `_javob()` `yechim.complaint.get_absolute_url()` orqali yurgan edi va `complaint_detail` yechimlarni faqat `select_related('author')` bilan oladi — ya'ni HAR yechim uchun bitta qo'shimcha so'rov. D1-T14 qo'riqchisi (uchta test) darhol yiqildi. Eng muhimi: regressiya BUTUNLAY BOSHQA MAVZUDAGI (SEO) o'zgarishdan keldi. Tuzatish: URL bir marta hisoblanadi va javoblarga beriladi (`select_related` ga `complaint` qo'shish ham yechim edi, lekin u kerak bo'lmagan JOIN'ni har detal sahifasiga qo'shardi).",
+          "⭐ Yangi N+1 guardi `schema.py` YONIDA ham qo'yildi va ATAYLAB buzib tekshirildi: buzilganda 13 va 5 so'rov (yiqiladi), tuzatilganda o'tadi.",
+          "`accept_solution()` imzosi `(solution=, by_user=)` — testda `(complaint=, user=)` deb yozilgandi."
+        ],
+        "olchangan_holat": {
+          "testlar": 1125,
+          "qamrov_foiz": 95.32,
+          "d4_t6_testlari": 16
+        },
+        "keyingi_uchun_eslatma": [
+          "⚠️ Domen olingandan keyin: Google Rich Results Test'da javobli muammo sahifasi bir marta tekshirilsin.",
+          "⚠️ `_solution.html` dagi `id=yechim-<pk>` langari JSON-LD bilan BOG'LIQ — nomi o'zgarsa havola hech qayerga olib bormaydi. Guard: `test_javob_URL_i_LANGARGA_olib_boradi`.",
+          "⚠️ `schema.py` ga yangi maydon qo'shilganda bog'lanish bo'ylab yurmang: N+1 guardi yiqiladi (sabab `_javob()` docstring'ida)."
+        ]
+      }
     },
     {
       "id": "D4-T7",

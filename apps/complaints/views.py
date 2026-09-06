@@ -37,6 +37,7 @@ from apps.solutions.models import Solution, SolutionVote
 
 from .forms import ComplaintForm
 from .models import Complaint, ComplaintVote, Generation, SavedComplaint
+from .schema import qapage_json
 from .selectors import (
     HOLAT_FILTRI,
     SAHIFA_HAJMI,
@@ -386,6 +387,20 @@ def complaint_detail(
     #    mumkin. Yechimlardan birida belgi bo'lsa ham blok chiqadi.
     inqiroz = muammo.inqiroz_aniqlandi or any(y.inqiroz_aniqlandi for y in yechimlar)
 
+    # ⚠️ QAPage JSON-LD FAQAT OMMAVIY KO'RINADIGAN postda (D4-T6).
+    #    Muallif o'z yashirilgan postini ko'ra oladi (yuqoridagi
+    #    avtorizatsiya) — lekin o'sha sahifada strukturaviy ma'lumot
+    #    berish noto'g'ri bo'lardi: u kontentni "e'lon qilingan" deb
+    #    tasvirlaydi.
+    #
+    # ⚠️ `yechimlar` ALLAQACHON ko'rinish filtridan o'tgan
+    #    (`ozi_korinadigan()`) — `schema.py` o'zi so'rov qilmaydi.
+    schema = (
+        qapage_json(muammo=muammo, yechimlar=yechimlar, request=request)
+        if muammo.is_publicly_visible
+        else None
+    )
+
     return render(
         request,
         "complaints/detail.html",
@@ -393,6 +408,7 @@ def complaint_detail(
             "active_nav": "feed",
             "complaint": muammo,
             "solutions": yechimlar,
+            "schema_json": schema,
             "solution_form": solution_form or SolutionForm(),
             "muallifmi": ozinikimi,
             "tahrirlay_oladi": muammo.tahrirlay_oladimi(request.user),
