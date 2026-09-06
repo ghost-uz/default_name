@@ -308,12 +308,33 @@ jobs:
           CHEGARA = 90
           natija = json.loads(pathlib.Path("lh.json").read_text(encoding="utf-8"))
           qatorlar, ogohlar = [], []
+          auditlar = natija["audits"]
+
+          def yiqilganlar(toifa):
+              """⚠️ QAYSI audit yiqilgani — ballning O'ZI harakatga yaroqsiz.
+
+              Birinchi versiya faqat «Accessibility: 89» deb yozardi va
+              buni o'qigan odam nima tuzatishni bilmasdi. Ro'yxat esa
+              to'g'ridan-to'g'ri ish beradi.
+              """
+              nomlar = []
+              for a in toifa.get("auditRefs", []):
+                  audit = auditlar.get(a["id"], {})
+                  ball = audit.get("score")
+                  if ball is not None and ball < 1 and audit.get("scoreDisplayMode") != "informative":
+                      nomlar.append(audit.get("title", a["id"]))
+              return nomlar
+
           for kalit, toifa in natija["categories"].items():
               ball = round((toifa.get("score") or 0) * 100)
               holat = "ok" if ball >= CHEGARA else "PAST"
               qatorlar.append(f"| {toifa['title']} | {ball} | {CHEGARA} | {holat} |")
               if ball < CHEGARA:
-                  ogohlar.append(f"{toifa['title']}: {ball} (chegara {CHEGARA})")
+                  buzuq = yiqilganlar(toifa)[:5]
+                  ogohlar.append(
+                      f"{toifa['title']}: {ball} (chegara {CHEGARA})"
+                      + (" — " + "; ".join(buzuq) if buzuq else "")
+                  )
 
           jadval = (
               "### Lighthouse (D7-T4)\n\n"
@@ -327,6 +348,16 @@ jobs:
           for o in ogohlar:
               print(f"::warning title=Lighthouse::{o}")
           PY
+
+      # ⚠️ To'liq hisobot ARTEFAKT sifatida: annotatsiya faqat besh
+      #    auditni ko'rsatadi, batafsil tahlil uchun JSON kerak.
+      - name: Hisobotni saqlash
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: lighthouse
+          path: lh.json
+          retention-days: 14
 
   # =======================================================================
   # 3. Docker obrazi quriladimi
