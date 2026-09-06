@@ -282,6 +282,24 @@ class User(AbstractUser):
         )
 
     @property
+    def has_pro(self) -> bool:
+        """⚠️⚠️ D6-T1 QABUL MEZONI: PRO holatining YAGONA HAQIQAT MANBAI.
+
+        Task `nega` bo'limi: «PRO tekshiruvi kod bo'ylab tarqalsa,
+        muddati tugagan obuna qayerdadir ishlab qolaveradi». Shuning
+        uchun kodda HECH QAYERDA `expires_at` yoki `status` bilan
+        to'g'ridan-to'g'ri taqqoslash bo'lmasin — hammasi shu xossadan
+        o'tsin. Buni guard test majburlaydi
+        (`apps/payments/tests_guard.py`).
+
+        ⚠️ Obuna QATORI hech qachon to'lamagan odamda umuman yo'q.
+           `getattr(..., None)` ishlaydi chunki
+           `RelatedObjectDoesNotExist` `AttributeError` dan meros oladi.
+        """
+        obuna = getattr(self, "obuna", None)
+        return obuna is not None and obuna.faolmi
+
+    @property
     def can_write(self) -> bool:
         """Kontent yarata oladimi (dard, yechim, izoh, ovoz).
 
@@ -532,9 +550,11 @@ class ExpertProfile(TimeStampedModel):
         default=False,
         help_text="PRO obunachilar siz bilan bog'lana olishi uchun.",
     )
-    # ⚠️ To'lov D6-T1/T2/T3 da. Bu yerda faqat MUDDAT saqlanadi —
-    #    "PRO" holati hisoblanadigan narsa, alohida bayroq emas.
-    pro_until = models.DateTimeField("PRO muddati", null=True, blank=True)
+    # ⚠️⚠️ `pro_until` D6-T1 da OLIB TASHLANDI. U `Subscription` bilan
+    #    IKKINCHI haqiqat manbai bo'lardi va aynan task ogohlantirgan
+    #    holatni yasardi: ikkita sana, biri yangilanadi, ikkinchisi
+    #    unutiladi. Endi muddat FAQAT `user.obuna` da
+    #    (`apps/payments/models.py`).
 
     class Meta:
         verbose_name = "ekspert profili"
@@ -569,19 +589,19 @@ class ExpertProfile(TimeStampedModel):
 
     @property
     def pro_faolmi(self) -> bool:
-        """⭐⭐ QABUL MEZONI: "tasdiqlanmagan ekspert PRO nishonini ololmaydi".
+        """⭐⭐ D3-T5 MEZONI: "tasdiqlanmagan ekspert PRO nishonini ololmaydi".
 
-        PRO — IKKI shartning kesishmasi: tasdiqlangan MALAKA va amaldagi
-        MUDDAT. Faqat muddatga qarasak, to'lov qilgan (yoki `pro_until`
-        ni admin'da qo'lda qo'ygan) tasdiqlanmagan odam "Tasdiqlangan
-        PRO" nishonini olardi — ya'ni pul bilan ishonch sotib olinardi.
-        Task `nega` bo'limi aynan shundan ogohlantiradi.
+        PRO NISHONI — IKKI shartning kesishmasi: tasdiqlangan MALAKA va
+        amaldagi to'lov. Faqat to'lovga qarasak, tasdiqlanmagan odam
+        pul to'lab "Tasdiqlangan PRO" nishonini olardi — ya'ni pul
+        bilan ishonch sotib olinardi.
+
+        ⚠️⚠️ D6-T1: muddat endi SHU YERDA hisoblanmaydi, `user.has_pro`
+           dan olinadi. Bu xossa PRO holatining manbai EMAS, uning
+           ISTE'MOLCHISI: "malaka + to'lov" qoidasi shu yerda,
+           "to'lov amaldami?" savoli esa bitta joyda.
         """
-        return (
-            self.tasdiqlanganmi
-            and self.pro_until is not None
-            and self.pro_until > timezone.now()
-        )
+        return self.tasdiqlanganmi and self.user.has_pro
 
     @property
     def tahrirlash_mumkinmi(self) -> bool:

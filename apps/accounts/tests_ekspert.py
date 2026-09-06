@@ -43,6 +43,27 @@ def ariza_yaratish(*, user, hujjatli: bool = True, **kw) -> ExpertProfile:
     return profil
 
 
+def _pro_berish(user, *, kun: int = 30):
+    """To'lovni imitatsiya qiladi (D6-T1).
+
+    ⚠️ PRO endi `ExpertProfile` da EMAS, `payments.Subscription` da:
+       `has_pro` — yagona haqiqat manbai va `pro_faolmi` unga tayanadi.
+    """
+    from apps.payments.models import ObunaHolati, ObunaRejasi, Subscription
+
+    obuna = Subscription.objects.create(
+        user=user,
+        plan=ObunaRejasi.PRO,
+        status=ObunaHolati.FAOL,
+        expires_at=timezone.now() + timedelta(days=kun),
+    )
+    # ⚠️ Teskari OneToOne keshi: `user` obyekti obunani ALLAQACHON
+    #    "yo'q" deb keshlagan bo'lishi mumkin (`services._keshni_yangilash`
+    #    dagi bilan bir xil sabab).
+    user.obuna = obuna
+    return obuna
+
+
 def topshirilgan(*, user) -> ExpertProfile:
     profil = ariza_yaratish(user=user)
     return ekspert_arizasi_topshirish(profil=profil)
@@ -56,23 +77,25 @@ def test_QABUL_MEZONI_tasdiqlanmagan_PRO_nishonini_OLOLMAYDI(user):
     yolg'on".
 
     PRO — IKKI shartning kesishmasi: tasdiqlangan MALAKA va amaldagi
-    MUDDAT. Faqat muddatga qarasak, to'lov qilgan (yoki `pro_until` ni
-    admin'da qo'lda qo'ygan) tasdiqlanmagan odam "Tasdiqlangan PRO"
-    nishonini olardi — ya'ni pul bilan ishonch sotib olinardi.
+    TO'LOV. Faqat to'lovga qarasak, tasdiqlanmagan odam pul to'lab
+    "Tasdiqlangan PRO" nishonini olardi — ya'ni pul bilan ishonch
+    sotib olinardi.
+
+    ⚠️ D6-T1 dan keyin muddat `payments.Subscription` da; qoida
+       o'zgarmadi, faqat manbasi ko'chdi.
     """
     profil = ariza_yaratish(user=user)
-    profil.pro_until = timezone.now() + timedelta(days=30)
-    profil.save(update_fields=["pro_until"])
+    _pro_berish(user)
 
     assert profil.verification_status != TasdiqHolati.TASDIQLANGAN
+    assert user.has_pro is True, "to'lov haqiqatan amalda"
     assert profil.pro_faolmi is False, "tasdiqsiz PRO nishoni berildi"
 
 
 def test_TASDIQLANGAN_va_MUDDATLI_bolsa_PRO_faol(staff, user):
     profil = topshirilgan(user=user)
     ekspertni_tasdiqlash(moderator=staff, profil=profil)
-    profil.pro_until = timezone.now() + timedelta(days=30)
-    profil.save(update_fields=["pro_until"])
+    _pro_berish(user)
 
     assert profil.pro_faolmi is True
 
@@ -80,15 +103,16 @@ def test_TASDIQLANGAN_va_MUDDATLI_bolsa_PRO_faol(staff, user):
 def test_TASDIQLANGAN_lekin_MUDDATI_otgan_PRO_emas(staff, user):
     profil = topshirilgan(user=user)
     ekspertni_tasdiqlash(moderator=staff, profil=profil)
-    profil.pro_until = timezone.now() - timedelta(days=1)
-    profil.save(update_fields=["pro_until"])
+    _pro_berish(user, kun=-1)
 
     assert profil.pro_faolmi is False
 
 
 def test_FOYDALANUVCHI_ozini_TASDIQLAY_OLMAYDI(user):
-    """⚠️ `verification_status` va `pro_until` FORMADA YO'Q — bu task
-    `nega` bo'limidagi muammoning eng to'g'ridan-to'g'ri ko'rinishi."""
+    """⚠️ `verification_status` FORMADA YO'Q — bu task `nega`
+    bo'limidagi muammoning eng to'g'ridan-to'g'ri ko'rinishi.
+
+    ⚠️ Obuna ham formada yo'q: u to'lovdan keladi (D6-T1)."""
     from apps.accounts.forms import EkspertArizaForm
 
     maydonlar = set(EkspertArizaForm().fields)

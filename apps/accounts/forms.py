@@ -25,7 +25,8 @@ class EkspertArizaForm(forms.ModelForm):
        `nega` bo'limidagi "yolg'on nishon" muammosining eng to'g'ridan
        to'g'ri ko'rinishi.
 
-    ⚠️ `pro_until` ham yo'q: u to'lovdan keladi (D6-T1), formadan emas.
+    ⚠️ Obuna ham yo'q: u to'lovdan keladi (D6-T1 `Subscription`),
+       formadan emas.
     """
 
     class Meta:

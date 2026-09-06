@@ -84,7 +84,9 @@ def _dayjest_matni(bildirishnoma: Notification) -> str:
     name="apps.notifications.tasks.telegram_yuborish",
     max_retries=QAYTA_URINISH_SONI,
 )
-def telegram_yuborish(self, notification_id: int) -> str:
+def telegram_yuborish(
+    self, notification_id: int, *, kechiktirilgan: bool = False
+) -> str:
     """Bildirishnomani Telegram'ga uzatadi.
 
     ⚠️ D5-T2 QABUL MEZONI 1: "yuborish sinxron EMAS". Bu vazifa
@@ -130,9 +132,26 @@ def telegram_yuborish(self, notification_id: int) -> str:
     # ⚠️ JIM SOATLAR: xabar TASHLANMAYDI, ertalabgacha KECHIKTIRILADI.
     #    `countdown` bilan qayta navbatga qo'yiladi — `retry` EMAS,
     #    chunki bu xato emas va `max_retries` ni yeb qo'ymasligi kerak.
-    if (sozlama is None or sozlama.jim_soatlar) and jim_vaqtmi():
+    #
+    # ⚠️⚠️ KECHIKTIRISH BIR MARTALIK (`kechiktirilgan` bayrog'i).
+    #    Ikki sabab, ikkalasi ham jonli topilgan:
+    #
+    #    1. EAGER rejimda (`CELERY_TASK_ALWAYS_EAGER`, ya'ni TESTLARDA)
+    #       `apply_async` `countdown` ni E'TIBORSIZ qoldiradi va vazifani
+    #       DARHOL qayta ishga tushiradi. Bayroqsiz u yana jim soatga
+    #       tushib, yana o'zini chaqirardi — `RecursionError`. Bu 2026-09-06
+    #       da soat 22:00 dan o'tganda 14 ta ALOQASIZ testni yiqitdi va
+    #       to'plamni 87s dan 331s ga cho'zdi. Xato KUNDUZI ko'rinmasdi.
+    #
+    #    2. Ishlab chiqarishda ham himoya: `jim_vaqtmi()` yoki oyna
+    #       sozlamasi buzuq bo'lsa (masalan boshi = oxiri) xabar CHEKSIZ
+    #       kechikardi va hech qachon yetib bormasdi. Endi eng yomon
+    #       holatda u bir marta kechikadi va YUBORILADI.
+    if not kechiktirilgan and (sozlama is None or sozlama.jim_soatlar) and jim_vaqtmi():
         telegram_yuborish.apply_async(
-            args=[notification_id], countdown=jim_oyna_tugashigacha()
+            args=[notification_id],
+            kwargs={"kechiktirilgan": True},
+            countdown=jim_oyna_tugashigacha(),
         )
         return "jim soat"
 

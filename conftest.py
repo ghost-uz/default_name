@@ -151,6 +151,30 @@ def _media_izolyatsiyasi(settings, tmp_path):
 
 
 @pytest.fixture(autouse=True)
+def _jim_soatlarni_ochirish(settings):
+    """⚠️⚠️ TESTLAR DEVOR SOATIGA BOG'LIQ BO'LMASIN (D5-T4).
+
+    Jim soatlar oynasi (standart 22:00-08:00, MAHALLIY vaqtda) haqiqiy
+    vaqtga qaraydi. Usiz `telegram_yuborish` ni chaqiradigan HAR QANDAY
+    test kechqurun boshqacha ishlardi: 2026-09-06 da soat 22:00 dan
+    o'tganda 14 ta ALOQASIZ test yiqildi va to'plam 87s dan 331s ga
+    cho'zildi.
+
+    Bu xatoning eng yomon turi: kod o'zgarmagan, test o'zgarmagan,
+    faqat SOAT o'zgargan. Kunduzi qayta ishga tushirsangiz "o'zi
+    tuzalib ketgan"dek ko'rinadi.
+
+    Oyna nol kenglikda (`boshi == oxiri`) — `jim_vaqtmi()` uni
+    "hech qachon" deb o'qiydi. Oynani sinaydigan testlar uni ochiq
+    beradi (`settings.JIM_SOATLAR_*`) yoki `jim_vaqtmi` ni mock qiladi.
+    """
+    from datetime import time
+
+    settings.JIM_SOATLAR_BOSHI = time(0, 0)
+    settings.JIM_SOATLAR_OXIRI = time(0, 0)
+
+
+@pytest.fixture(autouse=True)
 def _keshni_tozalash():
     """Har test toza keshdan boshlasin (D2-T4).
 

@@ -3208,11 +3208,67 @@
       "bogliq": [
         "D3-T5"
       ],
-      "holat": "todo",
+      "holat": "done",
       "qabul_mezoni": [
         "user.has_pro yagona haqiqat manbai",
         "muddati tugashi Celery bilan tekshiriladi"
-      ]
+      ],
+      "tugatilgan": "2026-09-06",
+      "natija": {
+        "yaratilgan": [
+          "apps/payments/models.py — Subscription, ObunaRejasi, ObunaHolati (migratsiya payments/0001_obuna)",
+          "apps/payments/services.py — obunani_uzaytirish(), avto_yangilashni_ozgartirish(), muddati_otganlarni_belgilash()",
+          "apps/payments/tasks.py — obunalarni_tekshirish() kunlik vazifasi",
+          "apps/payments/admin.py — qo'lda obuna berish (apellyatsiya uchun)",
+          "apps/accounts/models.py — User.has_pro; pro_faolmi endi unga tayanadi; pro_until OLIB TASHLANDI (migratsiya accounts/0008 — ma'lumot ko'chirish bilan, teskari yo'li ham bor va SINALGAN)",
+          "config/settings/base.py — OBUNA_MUDDATI_KUN + beat jadvali",
+          "apps/payments/tests_guard.py — manba-kod invarianti (1 test)",
+          "apps/payments/tests_obuna.py — 28 test"
+        ],
+        "qabul_mezonlari": {
+          "user_has_pro_yagona_haqiqat_manbai": "✅ `User.has_pro` — bitta xossa. AST guard test `apps/payments/` DAN TASHQARIDA `expires_at`/`pro_until`/`auto_renew` ga tegishni taqiqlaydi (D2-T3 va D2-T7 guard'lari bilan bir xil naqsh). Guard ATAYLAB buzib tasdiqlangan.",
+          "muddati_tugashi_celery_bilan_tekshiriladi": "✅ `obunalarni_tekshirish` kuniga bir marta. ⚠️ LEKIN u YAGONA himoya EMAS: `Subscription.faolmi` muddatni HAR chaqiruvda o'zi tekshiradi. `test_VAZIFA_ISHLAMASA_HAM_PRO_ochadi` buni vazifani umuman ishlatmasdan isbotlaydi."
+        },
+        "tekshirilgan": [
+          "⭐⭐ muddati o'tgan obunada `has_pro` FALSE — Celery ishlatilmagan holda",
+          "⭐⭐ tasdiqlanmagan ekspert TO'LAGANDA HAM PRO nishonini olmaydi",
+          "⭐ uzaytirish QOLGAN MUDDAT USTIGA qo'shiladi (erta to'lovchi yutqazmaydi)",
+          "⭐ muddati o'tgan obuna HOZIRDAN boshlanadi (o'tmishga to'lanmaydi)",
+          "⭐ bekor qilish obunani DARHOL to'xtatmaydi",
+          "⭐ vazifa so'rov soni obunalar soniga bog'liq emas",
+          "obunasiz odamda qator umuman yo'q; `has_pro` qo'shimcha so'rov qilmaydi",
+          "tugagan obuna uzaytirilganda qayta faollashadi; ikki uzaytirish qo'shiladi",
+          "profil sahifasida PRO nishoni; to'lovsiz ekspertda YO'Q; qo'shimcha so'rov qilinmaydi",
+          "migratsiya TESKARI yo'nalishda ham ishlaydi (`migrate accounts 0007`)"
+        ],
+        "qarorlar": [
+          "⭐⭐ IKKI XIL «PRO» AJRATILDI. `User.has_pro` = TO'LOV amalda (har qanday foydalanuvchi); `ExpertProfile.pro_faolmi` = PRO NISHONI (tasdiqlangan malaka VA `has_pro`). Ikkinchisi birinchisining ISTE'MOLCHISI, parallel manba emas. D3-T5 qoidasi kuchda: tasdiqlanmagan odam pul to'lab «Tasdiqlangan PRO» ololmaydi. Oddiy foydalanuvchi ham PRO bo'la oladi — buni `contact_visible` yordam matni («PRO obunachilar siz bilan bog'lana olishi uchun») allaqachon nazarda tutgan.",
+          "⭐⭐ `pro_until` OLIB TASHLANDI, saqlanmadi. Uni qoldirish aynan task ogohlantirgan holatni yasardi: ikkita sana, biri yangilanadi, ikkinchisi unutiladi. Migratsiya ma'lumotni ko'chiradi va TESKARI yo'li ham bor (prodda rollback yo'li ochiq qolsin).",
+          "⭐⭐ `faolmi` HOLAT VA MUDDATNI birga tekshiradi. Faqat `status` ga qarasak, muddat tugagan payt bilan vazifaning keyingi ishga tushishi orasida obuna BIR KUNGACHA BEPUL uzayardi. Vazifa — TOZALASH, haqiqat manbai emas.",
+          "⭐ BEKOR QILISH = `auto_renew=False`, holat FAOL bo'lib QOLADI. Darhol to'xtatish «bekor qilish» tugmasini JAZOGA aylantirardi (oyning boshida bekor qilgan odam 29 kunini yo'qotardi) va pulni qaytarish talabini keltirib chiqarardi. Shu sababli `BEKOR_QILINGAN` holati ham YO'Q.",
+          "⭐ UZAYTIRISH QOLGAN MUDDAT USTIGA. `now + 30` erta to'lagan mijozni jazolardi. Muddati o'tgan bo'lsa esa `now` dan — teskarisida uzoq tanaffusdan keyin qaytgan odam o'tmishga to'lardi.",
+          "`OneToOne` — JORIY holat. To'lovlar TARIXI D6-T2/T3 dagi tranzaksiya jadvalida bo'ladi (idempotentlik ham o'sha yerda). Bu yerda tarix saqlashga urinish ikkita yarim-manba yasardi.",
+          "`select_for_update` — D6-T2/T3 da bir vaqtda ikki webhook ODATIY hol; usiz bittasining uzaytirishi jimgina yo'qolardi.",
+          "Admin'da obunani QO'LDA yaratish MUMKIN — provayder yiqilganda yoki apellyatsiyada yagona chora bazaga to'g'ridan-to'g'ri kirish bo'lmasin (u hech qayerda yozilmaydi).",
+          "INTERFEYS QO'SHILMADI: sotib olinadigan narsa yo'q ekan, obuna sahifasi ham bo'sh bo'lardi. U D6-T2/T3 (to'lov oqimi) bilan keladi."
+        ],
+        "topilgan_xatolar": [
+          "⭐⭐⭐ D5-T4 DA CHEKSIZ REKURSIYA — SOAT 22:00 DAN O'TGANDA FOSH BO'LDI. EAGER rejimda (testlar) `apply_async` `countdown` ni e'tiborsiz qoldirib vazifani DARHOL qayta ishga tushiradi; u yana jim soatga tushib, yana o'zini chaqirardi -> `RecursionError`. 14 ta ALOQASIZ test yiqildi va to'plam 87s dan 331s ga cho'zildi — kod ham, testlar ham o'zgarmagan holda, FAQAT SOAT o'zgargani uchun. D5-T4 testlarim `jim_vaqtmi` ni MOCK qilgani uchun bu yo'lni hech qachon sinamagan edi. Tuzatildi: `kechiktirilgan` bayrog'i — kechiktirish BIR MARTALIK. Ishlab chiqarishda ham foyda: oyna sozlamasi buzuq bo'lsa xabar CHEKSIZ kechikardi.",
+          "⭐⭐ TESTLAR DEVOR SOATIGA BOG'LIQ EDI. `conftest._jim_soatlarni_ochirish` autouse fixture'i jim oynani nol kenglikka qo'yadi; oynani sinaydigan testlar uni OSHKORA e'lon qiladi (`oyna` fixture'i). Bu xatoning eng yomon turi: kunduzi qayta ishga tushirsangiz «o'zi tuzalib ketgan»dek ko'rinadi.",
+          "⭐ TESKARI OneToOne KESHI JIM ESKIRARDI. `obunani_uzaytirish` obunani `select_for_update()` bilan QAYTA oladi, ya'ni chaqiruvchidagi `user.obuna` dan BOSHQA nusxani o'zgartiradi. Django teskari OneToOne ni keshlaydi (yo'qligini HAM), shuning uchun o'sha so'rov ichida `has_pro` ESKI javobni berardi. D6-T2/T3 da bu haqiqiy xato bo'lardi: webhook obunani uzaytiradi, javob sahifasi «PRO faol emas» deydi — va xato TASODIFIY ko'rinardi. Ikki test uni ushladi; testni emas, XIZMATNI tuzatdim (`_keshni_yangilash`)."
+        ],
+        "olchangan_holat": {
+          "testlar": 1296,
+          "qamrov_foiz": 95.48,
+          "d6_t1_testlari": 29
+        },
+        "keyingi_uchun_eslatma": [
+          "⚠️ D6-T2/T3 (Click/Payme) `services.obunani_uzaytirish()` ni CHAQIRSIN — obuna mantiqini takrorlamasin, aks holda ikki to'lov yo'li ikki xil qoida bo'yicha ishlardi.",
+          "⚠️ IDEMPOTENTLIK D6-T2/T3 da TRANZAKSIYA darajasida (`transaction_id` noyob). `obunani_uzaytirish` ATAYLAB idempotent emas — u haqiqiy to'lovni bildiradi.",
+          "⚠️ Yangi PRO imkoniyati qo'shsangiz `user.has_pro` ni ishlating. Guard test boshqa yo'lni bloklaydi; ataylab bo'lsa `# pro-istisno: <sabab>` izohi.",
+          "⚠️ DEPLOY: Celery beat kunlik `obunalarni_tekshirish` ni ishlatsin. U ishlamasa ham PRO ochadi (faolmi o'zi tekshiradi) — faqat `status` ustuni eskiradi."
+        ]
+      }
     },
     {
       "id": "D6-T2",

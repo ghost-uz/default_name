@@ -57,6 +57,22 @@ def _belgilangan(html: str) -> set[str]:
     }
 
 
+@pytest.fixture
+def oyna(settings):
+    """⚠️ Sinaladigan oyna OSHKORA e'lon qilinadi.
+
+    `conftest._jim_soatlarni_ochirish` jim soatlarni HAMMA testda
+    o'chiradi (aks holda ular devor soatiga bog'liq bo'lardi). Oynaning
+    O'ZINI sinaydigan test uni shu yerda tiklaydi — endi test qaysi
+    oynani nazarda tutayotgani KO'RINADI, sozlamadan meros olinmaydi.
+    """
+    from datetime import time
+
+    settings.JIM_SOATLAR_BOSHI = time(22, 0)
+    settings.JIM_SOATLAR_OXIRI = time(8, 0)
+    return settings
+
+
 def _kunduz():
     """Jim oynadan tashqaridagi vaqt (mahalliy 12:00)."""
     return timezone.make_aware(datetime(2026, 9, 6, 12, 0))
@@ -160,26 +176,21 @@ def test_NOMALUM_kalit_XATO_bermaydi(user):
 # ===========================================================================
 # 3. ⚠️ Jim soatlar
 # ===========================================================================
-def test_jim_oyna_YARIM_TUNDAN_otadi():
+def test_jim_oyna_YARIM_TUNDAN_otadi(oyna):
     """⚠️ Oyna 22:00 -> 08:00, ya'ni oddiy `boshlanish <= hozir < tugash`
     taqqoslash HAR DOIM `False` berardi."""
     assert jim_vaqtmi(hozir=_tun()) is True
     assert jim_vaqtmi(hozir=_kunduz()) is False
 
 
-def test_jim_oyna_chegaralari(settings):
-    from datetime import time
-
-    settings.JIM_SOATLAR_BOSHI = time(22, 0)
-    settings.JIM_SOATLAR_OXIRI = time(8, 0)
-
+def test_jim_oyna_chegaralari(oyna):
     assert jim_vaqtmi(hozir=timezone.make_aware(datetime(2026, 9, 6, 22, 0))) is True
     assert jim_vaqtmi(hozir=timezone.make_aware(datetime(2026, 9, 6, 7, 59))) is True
     assert jim_vaqtmi(hozir=timezone.make_aware(datetime(2026, 9, 6, 8, 0))) is False
     assert jim_vaqtmi(hozir=timezone.make_aware(datetime(2026, 9, 6, 21, 59))) is False
 
 
-def test_kechikish_ERTALABGACHA():
+def test_kechikish_ERTALABGACHA(oyna):
     """23:00 da -> 08:00 gacha 9 soat."""
     assert jim_oyna_tugashigacha(hozir=_tun()) == 9 * 3600
 
@@ -201,6 +212,59 @@ def test_JIM_SOATDA_xabar_KECHIKTIRILADI(user):
     yuborish.assert_not_called()
     assert qayta.call_args.kwargs["countdown"] == 1234
     assert qayta.call_args.kwargs["args"] == [b.pk]
+    # ⚠️ Bayroq bilan qayta navbatga qo'yiladi — ikkinchi marta
+    #    kechiktirilmasin (rekursiya va cheksiz kechikish himoyasi).
+    assert qayta.call_args.kwargs["kwargs"] == {"kechiktirilgan": True}
+
+
+def test_KECHIKTIRISH_BIR_MARTALIK_rekursiya_YOQ(user, oyna):
+    """⚠️⚠️ REGRESSIYA: EAGER rejimda cheksiz rekursiya.
+
+    `CELERY_TASK_ALWAYS_EAGER` (ya'ni TESTLARDA) `apply_async`
+    `countdown` ni E'TIBORSIZ qoldiradi va vazifani DARHOL qayta ishga
+    tushiradi. `kechiktirilgan` bayrog'isiz u yana jim soatga tushib,
+    yana o'zini chaqirardi.
+
+    Bu 2026-09-06 da soat 22:00 dan o'tganda 14 ta ALOQASIZ testni
+    yiqitdi va to'plamni 87s dan 331s ga cho'zdi — kod ham, testlar ham
+    o'zgarmagan holda, FAQAT SOAT o'zgargani uchun.
+
+    ⚠️ Bu test `jim_vaqtmi` ni MOCK QILMAYDI — aynan shu sababdan xato
+       oldingi testlardan o'tib ketgan edi: hammasi mock ishlatardi.
+
+    Ishlab chiqarishda ham foyda: oyna sozlamasi buzuq bo'lsa xabar
+    CHEKSIZ kechikardi; endi eng yomon holatda bir marta kechikadi va
+    YUBORILADI.
+    """
+    _telegramli(user)
+    b = _bildirishnoma(user)
+
+    with (
+        mock.patch(YUBORISH) as yuborish,
+        mock.patch("apps.notifications.tasks.jim_vaqtmi", return_value=True) as jim,
+    ):
+        # ⚠️ `apply_async` MOCK QILINMAYDI — eager rejim uni haqiqatan
+        #    bajarsin, aks holda rekursiya yo'li sinalmagan bo'lardi.
+        assert telegram_yuborish(b.pk) == "jim soat"
+
+    # Ikkinchi (kechiktirilgan) chaqiruv jim soatni QAYTA tekshirmaydi
+    # va xabarni yuboradi.
+    assert jim.call_count == 1
+    yuborish.assert_called_once()
+
+
+def test_KECHIKTIRILGAN_chaqiruv_jim_soatni_TEKSHIRMAYDI(user, oyna):
+    _telegramli(user)
+    b = _bildirishnoma(user)
+
+    with (
+        mock.patch(YUBORISH) as yuborish,
+        mock.patch("apps.notifications.tasks.jim_vaqtmi", return_value=True) as jim,
+    ):
+        assert telegram_yuborish(b.pk, kechiktirilgan=True) == "yuborildi"
+
+    jim.assert_not_called()
+    yuborish.assert_called_once()
 
 
 def test_JIM_SOATLAR_OCHIRILGAN_bolsa_darhol_yuboriladi(user):

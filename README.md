@@ -472,6 +472,7 @@ D2-T6 rasmiy ishonch telefonini talab qiladi, D2-T10 — yurist xulosasini.
 | D5-T3 | Kanalga avto-post — kuniga 3 ta qaynoq savol, takrorsiz, muallifsiz |
 | D5-T4 | Bildirishnoma sozlamalari — tur bo'yicha yoqish/o'chirish, jim soatlar |
 | D5-T5 | Ekspertlarga «javobsiz savollar» dayjesti — haftada bir marta, faqat o'z sohasi |
+| D6-T1 | Obuna modeli va PRO cheklovlari — `user.has_pro` yagona manba |
 
 ---
 
@@ -549,6 +550,67 @@ Ikkalasi ham `ComplaintQuerySet` da yopildi. Bu teshik tanlangan dizayndan
 kelib chiqadi: `search_vector` GENERATED ustun bo'lgani uchun uni unutish
 mumkin emas, lekin **normallashtirish baribir Python'da qoladi** — trigger
 bermaydigan bo'shliq aynan shu yerda.
+
+### Obuna va PRO (D6-T1)
+
+`payments.Subscription` (OneToOne, `user.obuna`) — reja, holat, boshlanish,
+tugash, avto-yangilash. Kunlik Celery vazifasi muddati o'tganlarni
+`TUGAGAN` deb belgilaydi.
+
+### ⚠️⚠️ Ikki xil «PRO» — bitta so'z, ikki boshqa tushuncha
+
+| | `User.has_pro` | `ExpertProfile.pro_faolmi` |
+|---|---|---|
+| Ma'nosi | **to'lov** amalda | PRO **nishoni** ko'rsatiladi |
+| Kimga | har qanday foydalanuvchi | faqat ekspert |
+| Sharti | faol obuna | tasdiqlangan malaka **va** `has_pro` |
+
+Ikkinchisi birinchisining **iste'molchisi**, parallel manba emas. D3-T5
+qoidasi kuchda qoladi: tasdiqlanmagan odam pul to'lab «Tasdiqlangan PRO»
+nishonini **ololmaydi**.
+
+`ExpertProfile.pro_until` **olib tashlandi** — uni qoldirish aynan
+taskning `nega` bo'limidagi holatni yasardi: ikkita sana, biri
+yangilanadi, ikkinchisi unutiladi.
+
+### ⚠️⚠️ Celery — tozalash, haqiqat manbai emas
+
+`Subscription.faolmi` **holatni ham, muddatni ham** tekshiradi. Faqat
+`status` ga qarasak, muddat tugagan payt bilan vazifaning keyingi ishga
+tushishi orasida obuna **bir kungacha bepul** uzayardi. Vazifa umuman
+ishlamasa ham hech kim bepul PRO olmaydi.
+
+Manba kodi guard'i (`apps/payments/tests_guard.py`) `apps/payments/` dan
+tashqarida `expires_at` / `auto_renew` ga tegishni **taqiqlaydi** — ataylab
+bo'lsa `# pro-istisno: <sabab>` izohi qo'yiladi.
+
+### ⚠️ Bekor qilish darhol to'xtatmaydi
+
+Bekor qilish = `auto_renew = False`; holat **`FAOL` bo'lib qoladi** va
+muddat tugagach vazifa uni yopadi. Darhol to'xtatish «bekor qilish»
+tugmasini **jazoga** aylantirardi: oyning boshida bekor qilgan odam 29
+kunini yo'qotardi.
+
+Shu mantiqda uzaytirish ham **qolgan muddat ustiga** qo'shiladi —
+`now + 30` erta to'lagan mijozni jazolardi.
+
+### ⚠️⚠️ Jim soatlarda kechiktirish BIR MARTALIK (D5-T4 tuzatildi)
+
+Bu xato D6-T1 ustida ishlaganda, soat 22:00 dan o'tgan paytda fosh
+bo'ldi. Eager rejimda (testlar) `apply_async` `countdown` ni e'tiborsiz
+qoldirib vazifani **darhol** qayta ishga tushiradi — u yana jim soatga
+tushib, yana o'zini chaqirardi (`RecursionError`).
+
+14 ta **aloqasiz** test yiqildi va to'plam 87s dan 331s ga cho'zildi —
+kod ham, testlar ham o'zgarmagan holda, **faqat soat** o'zgargani uchun.
+
+Ishlab chiqarishda ham foyda: oyna sozlamasi buzuq bo'lsa xabar
+**cheksiz** kechikardi; endi eng yomon holatda bir marta kechikadi va
+yuboriladi.
+
+⚠️ Testlar endi devor soatiga bog'liq emas: `conftest` jim oynani nol
+kenglikka qo'yadi, oynani sinaydigan testlar uni **oshkora** e'lon
+qiladi.
 
 ### Ekspert dayjesti (D5-T5)
 

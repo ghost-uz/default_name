@@ -438,6 +438,15 @@ JIM_SOATLAR_OXIRI = _time(8, 0)
 
 
 # --------------------------------------------------------------------------
+# Obuna (D6-T1)
+# --------------------------------------------------------------------------
+# ⚠️ Bitta to'lov necha kun beradi. Uzaytirish QOLGAN MUDDAT USTIGA
+#    qo'shiladi (`services.obunani_uzaytirish`) — erta to'lagan mijoz
+#    kunlarini yo'qotmasin.
+OBUNA_MUDDATI_KUN = 30
+
+
+# --------------------------------------------------------------------------
 # Ekspertlarga «javobsiz savollar» dayjesti (D5-T5)
 # --------------------------------------------------------------------------
 # ⚠️ BESHTA SAVOL. Ko'proq bo'lsa xabar Telegram'da "ko'proq" tugmasi
@@ -613,6 +622,15 @@ CELERY_BEAT_SCHEDULE = {
         "task": "apps.notifications.tasks.dayjest_yuborish",
         "schedule": 604800.0,
         "options": {"expires": 86400},
+    },
+    # ⚠️ Bu vazifa PRO ni HIMOYA QILMAYDI — `Subscription.faolmi`
+    #    muddatni har chaqiruvda o'zi tekshiradi. Vazifa faqat `status`
+    #    ustunini haqiqatga yaqin tutadi (hisobot va so'rovlar uchun).
+    #    Kuniga bir marta yetarli.
+    "obunalarni-tekshirish": {
+        "task": "apps.payments.tasks.obunalarni_tekshirish",
+        "schedule": 86400.0,
+        "options": {"expires": 43200},
     },
     "kanalga-post": {
         "task": "apps.complaints.tasks.kanalga_post",

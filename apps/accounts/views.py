@@ -388,8 +388,14 @@ def profile(request: HttpRequest, username: str) -> HttpResponse:
     # ⚠️ `select_related` — teskari OneToOne ham qo'llab-quvvatlanadi.
     #    Usiz shablon "Ekspert"/"PRO" nishonlarini chizishda QO'SHIMCHA
     #    so'rov qilardi va bu N+1 emas, lekin baribir bekorga.
+    #
+    # ⚠️ D6-T1: `ekspert_profili__user__obuna` — `pro_faolmi` endi
+    #    `user.has_pro` ga qaraydi, ya'ni obuna qatori ham kerak.
+    #    Foydalanuvchi ikki marta JOIN qilinadi (bir marta o'zi, bir
+    #    marta ekspert profili orqali) — bu ortiqcha ko'rinadi, lekin
+    #    alternativa ikkita qo'shimcha SO'ROV edi.
     profil = get_object_or_404(
-        User.objects.select_related("ekspert_profili"),
+        User.objects.select_related("ekspert_profili__user__obuna"),
         username=username,
         ochirilgan_at__isnull=True,
     )
