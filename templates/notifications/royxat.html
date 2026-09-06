@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% load lenta %}
+
+{% comment %}
+  Bildirishnomalar markazi (D5-T1).
+
+  Kontekst:
+    bildirishnomalar -> shu sahifadagi yozuvlar (o'qilgan deb
+                        belgilanishdan OLDIN olingan — sabab `views.py` da)
+    sahifa           -> Django `Page`
+
+  ⚠️ Sahifa `noindex`: bu shaxsiy ro'yxat va u qidiruv tizimida
+     umuman turmasligi kerak. Kanonik ham berilmaydi (D4-T4 dagi
+     qidiruv sahifasi bilan bir xil qaror).
+{% endcomment %}
+
+{% block title %}Bildirishnomalar — Dard.uz{% endblock %}
+{% block description %}Sizga kelgan bildirishnomalar.{% endblock %}
+
+{% block head_extra %}
+  <meta name="robots" content="noindex, nofollow" />
+{% endblock %}
+
+{% block kanonik %}{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-2xl px-4 py-6 lg:px-6">
+  <main id="main">
+    <h1 class="mb-5 text-2xl font-extrabold">Bildirishnomalar</h1>
+
+    {% if bildirishnomalar %}
+      <ul class="card divide-y divide-line overflow-hidden">
+        {% for b in bildirishnomalar %}
+          {% comment %}
+            ⚠️ YANGI (o'qilmagan) yozuvlar ajratib ko'rsatiladi. Ular
+               ro'yxat OLINGANDAN keyin o'qilgan deb belgilanadi, ya'ni
+               foydalanuvchi shu sahifada nima yangi ekanini ko'radi,
+               keyingi tashrifda esa ular oddiy qatorga aylanadi.
+          {% endcomment %}
+          <li class="{% if not b.okilganmi %}bg-primary/5{% endif %}">
+            <a href="{{ b.manzil }}" class="flex items-start gap-3 px-4 py-3.5 transition-colors hover:bg-surface-2">
+              <span class="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full {% if b.okilganmi %}bg-surface-2 text-fg-muted{% else %}bg-primary text-on-primary{% endif %}" aria-hidden="true">
+                {% if b.turi == "yechim_qabul" %}
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                {% else %}
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                {% endif %}
+              </span>
+
+              <span class="min-w-0 flex-1">
+                <span class="block text-[15px] leading-snug {% if not b.okilganmi %}font-semibold{% endif %}">{{ b.matn }}</span>
+                {% if b.complaint %}
+                  <span class="clamp-2 mt-0.5 block text-[13px] text-fg-muted">{{ b.complaint.title }}</span>
+                {% endif %}
+                <time class="mt-1 block text-[12px] text-fg-muted" datetime="{{ b.created_at|date:'c' }}">{{ b.created_at|timesince }} oldin</time>
+              </span>
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
+
+      {% if sahifa.has_other_pages %}
+        <nav class="mt-5 flex items-center justify-between gap-3" aria-label="Sahifalar">
+          {% if sahifa.has_previous %}
+            <a href="{% lenta_url sahifa=sahifa.previous_page_number %}" class="btn-outline btn-sm" rel="prev">← Oldingi</a>
+          {% else %}<span></span>{% endif %}
+
+          <span class="tnum text-sm text-fg-muted">{{ sahifa.number }} / {{ sahifa.paginator.num_pages }}</span>
+
+          {% if sahifa.has_next %}
+            <a href="{% lenta_url sahifa=sahifa.next_page_number %}" class="btn-outline btn-sm" rel="next">Keyingi →</a>
+          {% else %}<span></span>{% endif %}
+        </nav>
+      {% endif %}
+    {% else %}
+      {% include "components/_empty_state.html" with icon="bookmark" title="Hozircha bildirishnoma yo'q" text="Dardingizga yechim kelganda yoki yechimingiz qabul qilinganda shu yerda ko'rasiz." action_url="/" action="Lentaga o'tish" %}
+    {% endif %}
+  </main>
+</div>
+
+<div class="h-16 lg:hidden" aria-hidden="true"></div>
+{% endblock %}

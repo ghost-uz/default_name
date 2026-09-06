@@ -411,6 +411,22 @@ OXSHASH_ISH_MUDDATI = 300
 
 
 # --------------------------------------------------------------------------
+# Bildirishnomalar (D5-T1)
+# --------------------------------------------------------------------------
+# ⚠️ Kesh muddati — ZAXIRA, asosiy mexanizm emas. Sanoq o'zgarganda kesh
+#    OCHIQ tozalanadi (`apps/notifications/services.py`); TTL esa
+#    tozalash unutilgan holat uchun xavfsizlik to'ri. Usiz noto'g'ri
+#    son mangu qolardi va uni faqat Redis'ni tozalash tuzatardi.
+BILDIRISHNOMA_KESH_MUDDATI = 300  # 5 daqiqa
+
+# ⚠️ Belgida ko'rsatiladigan eng katta son. Undan ko'pi "99+" bo'lib
+#    chiqadi: sarlavhadagi belgi tor va uch xonali son maketni buzadi.
+BILDIRISHNOMA_BELGI_CHEGARASI = 99
+
+BILDIRISHNOMA_SAHIFA_HAJMI = 30
+
+
+# --------------------------------------------------------------------------
 # Autentifikatsiya
 # --------------------------------------------------------------------------
 AUTH_PASSWORD_VALIDATORS = [

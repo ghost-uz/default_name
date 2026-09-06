@@ -451,6 +451,10 @@ D2-T6 rasmiy ishonch telefonini talab qiladi, D2-T10 — yurist xulosasini.
 
 **M4 (qidiruv va SEO) TO'LIQ TUGADI** — 7/7 task.
 
+| Task | Nima |
+|---|---|
+| D5-T1 | Bildirishnomalar markazi — ichki kanal, sarlavhada o'qilmaganlar belgisi |
+
 ---
 
 ### To'liq matnli qidiruv (D4-T1)
@@ -527,6 +531,41 @@ Ikkalasi ham `ComplaintQuerySet` da yopildi. Bu teshik tanlangan dizayndan
 kelib chiqadi: `search_vector` GENERATED ustun bo'lgani uchun uni unutish
 mumkin emas, lekin **normallashtirish baribir Python'da qoladi** — trigger
 bermaydigan bo'shliq aynan shu yerda.
+
+### Bildirishnomalar markazi (D5-T1) — `/bildirishnomalar/`
+
+Sarlavhadagi qo'ng'iroqda o'qilmaganlar soni (keshdan), markazda ro'yxat.
+Ro'yxat ochilganda hammasi o'qilgan deb belgilanadi.
+
+⚠️ **Nega ichki markaz kerak, Telegram yetarli emas.** Telegram
+bildirishnomasi (D5-T2) tezroq ochiladi, lekin unga tayanib bo'lmaydi:
+foydalanuvchi botni bloklashi yoki Telegram'dan umuman chiqib ketishi
+mumkin — o'shanda u yechim kelganini **hech qachon** bilmaydi. Ichki
+markazni bloklab bo'lmaydi.
+
+### ⚠️⚠️ Anonim manbada `actor` bazaga ham yozilmaydi
+
+«Ismni ko'rsatmaymiz» degan yondashuv (yozib qo'yib, shablonda yashirish)
+bu loyihada **uch marta** muammo bo'lgan: D1-T6 (shablon), OG metalari,
+JSON-LD. Bildirishnomada qoida qattiqroq — **yozuvning o'zi qolmaydi**,
+ya'ni uni admin, eksport (D2-T8) yoki kelajakdagi API ham oshkor qila
+olmaydi.
+
+Matn o'shanda «Kimdir muammoingizga yechim yozdi» bo'ladi — va bu
+**to'g'ri** matn.
+
+### ⚠️ Ro'yxat o'qilgan deb belgilashdan OLDIN olinadi
+
+Teskari tartibda foydalanuvchi qaysi bildirishnoma **yangi** ekanini ko'ra
+olmasdi: sahifa ochilgan zahoti hammasi «eski» bo'lib qolardi va ro'yxat
+mutlaqo bir xil ko'rinardi. Endi shu sahifada yangilari ajratiladi,
+keyingi tashrifda esa ular oddiy qatorga aylanadi.
+
+### ⚠️ Sanoq shablon tegi orqali, kontekst-protsessor emas
+
+Kontekst-protsessor qiymatni **har** renderga qo'shadi — jumladan HTMX
+qismlariga (ovoz kartasi, «yana yuklash»), ular esa sarlavhani umuman
+chizmaydi. Bu D1-T14 da qotirilgan so'rov byudjetiga bekorga qo'shilardi.
 
 ### O'xshash muammolar (D4-T7)
 

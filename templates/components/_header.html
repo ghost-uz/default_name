@@ -1,4 +1,4 @@
-{% comment %}
+{% load bildirishnoma %}{% comment %}
   Sayt sarlavhasi.
 
   Kontekst (ixtiyoriy):
@@ -93,7 +93,29 @@
         Dard yozish
       </a>
 
+      {% comment %}
+        ---------- Bildirishnomalar (D5-T1) ----------
+
+        ⚠️ Sanoq KESHDAN keladi (`oqilmagan_bildirishnomalar` tegi) —
+           sarlavha HAR sahifada chiziladi va bu yerda so'rov qilish
+           D1-T14 da qotirilgan byudjetga to'g'ridan-to'g'ri
+           qo'shilardi.
+
+        ⚠️ Nol bo'lsa belgi UMUMAN chizilmaydi: "0" yozilgan belgi
+           foydalanuvchiga "yangi narsa bor" degan yolg'on signal
+           berardi.
+      {% endcomment %}
       {% if request.user.is_authenticated %}
+        {% oqilmagan_bildirishnomalar as oqilmagan %}
+        <a href="{% url 'bildirishnomalar' %}"
+           class="btn-ghost relative !px-2 {% if active_nav == 'bildirishnomalar' %}!text-fg !bg-surface-2{% endif %}"
+           aria-label="Bildirishnomalar{% if oqilmagan %} ({{ oqilmagan }} ta yangi){% endif %}">
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+          {% if oqilmagan %}
+            <span class="tnum absolute -right-0.5 -top-0.5 grid min-w-4 place-items-center rounded-full bg-danger px-1 text-[10px] font-bold leading-4 text-white">{{ oqilmagan }}</span>
+          {% endif %}
+        </a>
+
         <a href="{% url 'profile' request.user.username %}" class="btn-outline !px-2" aria-label="Mening profilim">
           <span class="grid h-6 w-6 place-items-center rounded-full bg-primary text-[11px] font-bold text-on-primary" aria-hidden="true">{{ request.user.initial }}</span>
         </a>

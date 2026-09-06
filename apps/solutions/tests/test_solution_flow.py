@@ -380,11 +380,21 @@ def test_yashirilgan_yechim_sahifada_KORINMAYDI(client):
 def test_batafsil_sahifa_sorov_soni_YECHIMLAR_SONIGA_BOGLIQ_EMAS(
     auth_client, user, django_assert_max_num_queries
 ):
-    """⚠️ Har yechimda muallif, karma va "men ovoz berganmanmi?" bor."""
+    """⚠️ Har yechimda muallif, karma va "men ovoz berganmanmi?" bor.
+
+    ⚠️ CHEGARA 10 -> 11 (D5-T1). Sabab ANIQ va bir martalik:
+       sarlavhadagi o'qilmagan bildirishnomalar belgisi SOVUQ KESHDA
+       bitta indeksli `COUNT` qiladi. Iliq keshda u NOL so'rov, ya'ni
+       11 — eng yomon holat, odatdagi emas.
+
+       Chegara "shunchaki yetmadi" deb ko'tarilmadi: qo'shimcha so'rov
+       yechimlar soniga BOG'LIQ EMAS va uni `test_n_plus_1.py` dagi
+       bog'liqlik testi alohida qo'riqlaydi.
+    """
     muammo = ComplaintFactory(author=user)
     for _ in range(10):
         ExpertSolutionFactory(complaint=muammo)
     Complaint.objects.filter(pk=muammo.pk).update(solutions_count=10)
 
-    with django_assert_max_num_queries(10):
+    with django_assert_max_num_queries(11):
         assert auth_client.get(muammo.get_absolute_url()).status_code == 200

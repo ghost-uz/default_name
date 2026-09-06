@@ -63,6 +63,18 @@ def yechim_yozish(
 
     # korinish-istisno: sanoqchilarni yangilash, ko'rsatish emas.
     Complaint.all_objects.filter(pk=complaint.pk).update(**yangilanish)
+
+    # ⚠️ BILDIRISHNOMA TRANZAKSIYA ICHIDA (D5-T1). Signal emas, ochiq
+    #    chaqiruv — sanoqchilar bilan bir xil sabab: signal
+    #    `bulk_create` va `loaddata` da ishlamaydi va aloqa ko'rinmay
+    #    qoladi.
+    #
+    # ⚠️ Import FUNKSIYA ICHIDA: `notifications` modeli `Solution` ga FK
+    #    bilan bog'langan, ya'ni modul darajasidagi import aylanma
+    #    bo'lardi.
+    from apps.notifications.services import yangi_yechim_bildirishnomasi
+
+    yangi_yechim_bildirishnomasi(solution=yechim)
     return yechim
 
 
@@ -144,6 +156,13 @@ def accept_solution(*, solution: Solution, by_user) -> Solution:
     #    kechikish bor, lekin yo'qotish yo'q.
     nishonlarni_tekshirish(user=solution.author)
 
+    # ⚠️ Yechim muallifiga xabar (D5-T1). Qabul qilish har doim muammo
+    #    egasining ishi, ya'ni u o'ziga xabar olmaydi — buni
+    #    `bildirishnoma_yaratish()` o'zi tekshiradi va shart shu yerda
+    #    takrorlanmaydi.
+    from apps.notifications.services import yechim_qabul_bildirishnomasi
+
+    yechim_qabul_bildirishnomasi(solution=solution)
     return solution
 
 

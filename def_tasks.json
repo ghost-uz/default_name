@@ -2843,11 +2843,70 @@
       "bogliq": [
         "D1-T10"
       ],
-      "holat": "todo",
+      "holat": "done",
       "qabul_mezoni": [
         "o'qilmaganlar soni keshlanadi",
         "ko'rilgandan keyin tozalanadi"
-      ]
+      ],
+      "tugatilgan": "2026-09-06",
+      "natija": {
+        "yaratilgan": [
+          "apps/notifications/models.py — Notification + BildirishnomaTuri",
+          "apps/notifications/services.py — yaratish, sanoq (kesh), o'qilgan deb belgilash, ro'yxat",
+          "apps/notifications/views.py + urls.py — /bildirishnomalar/",
+          "apps/notifications/templatetags/bildirishnoma.py — sarlavhadagi belgi",
+          "apps/notifications/migrations/0001_initial.py",
+          "templates/notifications/royxat.html",
+          "templates/components/_header.html — qo'ng'iroq + belgi",
+          "apps/solutions/services.py — yechim_yozish va accept_solution ga ulanish",
+          "config/settings/base.py — BILDIRISHNOMA_{KESH_MUDDATI,BELGI_CHEGARASI,SAHIFA_HAJMI}",
+          "apps/notifications/tests.py — 24 test"
+        ],
+        "qabul_mezonlari": {
+          "oqilmaganlar_soni_keshlanadi": "✅ `oqilmagan_soni()` keshdan; ikkinchi chaqiruvda NOL so'rov (test bilan). Kesh yangi bildirishnoma va o'qilgan deb belgilashda OCHIQ tozalanadi; TTL faqat zaxira.",
+          "korilgandan_keyin_tozalanadi": "✅ Ro'yxat ochilganda hammasi o'qilgan deb belgilanadi. 🌐 JONLI: belgi 3 -> markaz ochildi -> yangilar ajratilgan -> ikkinchi ochishda oddiy qator, belgi yo'q."
+        },
+        "tekshirilgan": [
+          "🌐 JONLI: sarlavhada belgi (3), markazda yangilar ajratilgan, ikkinchi ochishda tozalangan",
+          "yechim yozilganda muallifga, qabul qilinganda yechim egasiga xabar",
+          "⭐ o'z muammosiga javob yozgan odam XABAR OLMAYDI",
+          "⭐ ANONIM yechimda `actor` UMUMAN yozilmaydi; matn 'Kimdir...'",
+          "⭐ ANONIM muammoda qabul aktyori ham yozilmaydi",
+          "anonim muallif nomi sahifada ham chiqmaydi",
+          "o'chirilgan hisob egasiga (author=None) bildirishnoma yozilmaydi",
+          "sanoq keshlanadi (ikkinchi chaqiruvda 0 so'rov); mehmonda 0 so'rov",
+          "boshqa foydalanuvchining sanog'i o'zgarmaydi",
+          "sahifa kirish talab qiladi; `noindex, nofollow`, kanonik yo'q",
+          "belgi: son, nol bo'lsa umuman chizilmaydi, katta son '99+'",
+          "kontent hard-delete bo'lsa bildirishnoma ham ketadi (FK butunligi)"
+        ],
+        "qarorlar": [
+          "⭐⭐ ANONIM MANBADA `actor` UMUMAN YOZILMAYDI (bazaga ham). 'Yozib qo'yib, shablonda yashirish' bu loyihada UCH marta muammo bo'lgan (D1-T6, OG metalari, JSON-LD). Bu yerda yozuvning O'ZI qolmasa, uni admin, eksport (D2-T8) yoki kelajakdagi API ham oshkor qila olmaydi. Bu — anonimlik invariantining TO'RTINCHI joyi.",
+          "⭐ `ContentType` ISHLATILMADI (ochiq qaror Q1 bilan izchil): aniq `complaint`/`solution` FK'lari baza darajasida butunlikni beradi va kontent o'chirilsa bildirishnoma ham ketadi.",
+          "⭐ `okilgan_at` SANA, `is_read` boolean EMAS: 'qachon o'qilgan?' savoli D5-T4 (jim soatlar) uchun kerak bo'ladi. `okilganmi` shundan hisoblanadi (`Complaint.status` / `is_solved` bilan bir xil naqsh).",
+          "⭐ SANOQ SHABLON TEGI orqali, kontekst-protsessor EMAS: protsessor qiymatni HTMX qismlariga ham qo'shardi (ular sarlavhani chizmaydi) va D1-T14 byudjetiga bekorga qo'shilardi.",
+          "⭐ RO'YXAT O'QILGAN DEB BELGILASHDAN OLDIN olinadi: teskari tartibda foydalanuvchi qaysi bildirishnoma YANGI ekanini ko'ra olmasdi.",
+          "Kesh bo'sh bo'lsa sanoq HISOBLANADI (D3-T3 reytingidan farqli): narx bitta indeksli COUNT va u faqat bitta foydalanuvchiga tegishli — thundering herd yo'q.",
+          "Bildirishnoma tranzaksiya ichida, OCHIQ chaqiruv (signal emas): signal `bulk_create` va `loaddata` da ishlamaydi (`yechim_yozish` dagi sanoqchilar bilan bir xil sabab).",
+          "O'ziga bildirishnoma yozilmasligi `bildirishnoma_yaratish()` da, chaqiruvchida emas — aks holda har yangi chaqiruv joyida takrorlanardi.",
+          "Turlar ATAYLAB ikkita: har bir tur foydalanuvchi e'tiborini talab qiladi va ortiqcha bildirishnoma botdan chiqib ketishga olib keladi (D5-T4 ning butun mavzusi). Yangi tur qo'shish arzon."
+        ],
+        "topilgan_xatolar": [
+          "⚠️ So'rov chegarasi 10 -> 11 (`test_solution_flow`): sarlavhadagi belgi SOVUQ KESHDA bitta indeksli COUNT qiladi. Iliq keshda nol so'rov, ya'ni 11 — eng yomon holat. Qo'shimcha so'rov yechimlar soniga BOG'LIQ EMAS.",
+          "mypy `union-attr`: `complaint_id` tekshiruvi obyekt turini toraytirmaydi — obyektning o'zi tekshiriladi (null FK'da Django so'rov qilmaydi).",
+          "Tailwind: yangi sinflar uchun `npm run build` MAJBURIY (guard test ushladi)."
+        ],
+        "olchangan_holat": {
+          "testlar": 1169,
+          "qamrov_foiz": 95.27,
+          "d5_t1_testlari": 24
+        },
+        "keyingi_uchun_eslatma": [
+          "⚠️ D5-T2 (Telegram) SHU modeldan foydalanadi: bildirishnoma yozilgach Celery vazifasi uni Telegram'ga uzatadi. Ichki markaz — ZAXIRA kanal (bot bloklansa ham xabar yo'qolmaydi).",
+          "⚠️ D5-T4 (sozlamalar) `bildirishnoma_yaratish()` ga filtr qo'shadi — u yagona kirish nuqtasi, ya'ni bitta joyda.",
+          "⚠️ Yangi tur qo'shilganda `BildirishnomaTuri` MIGRATSIYA talab qiladi (Django `choices` o'zgarishini kuzatadi) va `Notification.matn` ga bitta qator."
+        ]
+      }
     },
     {
       "id": "D5-T2",
