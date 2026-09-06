@@ -68,6 +68,24 @@ class User(AbstractUser):
         db_index=True,
     )
 
+    # ⚠️ BOT BLOKLANGANI BELGISI (D5-T2).
+    #    Telegram 403 qaytarganda ("bot was blocked by the user") bu
+    #    bayroq qo'yiladi va keyingi xabarlar UMUMAN yuborilmaydi.
+    #
+    # ⚠️ Busiz navbat bitta foydalanuvchi uchun cheksiz aylanardi: har
+    #    yangi bildirishnoma yana bir necha qayta urinish yaratardi va
+    #    ular hech qachon muvaffaqiyat bilan tugamasdi.
+    #
+    # ⚠️ Foydalanuvchi botni QAYTA ochsa bayroq o'zi tozalanmaydi —
+    #    Telegram bu haqda xabar bermaydi. U kirish oqimida
+    #    (`accounts/services.py`) tozalanadi: odam Telegram orqali
+    #    kirgan bo'lsa, demak bot bilan aloqasi bor.
+    telegram_bloklandi = models.BooleanField(
+        "Telegram boti bloklangan",
+        default=False,
+        help_text="Telegram 403 qaytarganda avtomatik qo'yiladi (D5-T2).",
+    )
+
     bio = models.TextField("o'zi haqida", max_length=500, blank=True)
 
     # -- Nomni bir marta o'zgartirish (D1-T1 mahsulot qarori) --------------

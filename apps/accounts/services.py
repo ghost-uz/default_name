@@ -211,10 +211,31 @@ def telegram_foydalanuvchisini_olish_yoki_yaratish(
 
     mavjud = User.objects.filter(telegram_id=telegram_id).first()
     if mavjud is not None:
+        yangilanadi: list[str] = []
         if (mavjud.first_name, mavjud.last_name) != (ism, familiya):
             mavjud.first_name = ism
             mavjud.last_name = familiya
-            mavjud.save(update_fields=["first_name", "last_name"])
+            yangilanadi += ["first_name", "last_name"]
+
+        # ⚠️ BOT BLOKLANGANI BAYROG'I SHU YERDA TOZALANADI (D5-T2).
+        #
+        #    Telegram bot blokdan chiqarilganini XABAR QILMAYDI — biz
+        #    buni faqat bilvosita bilishimiz mumkin. Login vidjeti
+        #    o'sha botning nomidan ishlaydi, ya'ni undan o'tgan odamda
+        #    bot bilan aloqa BOR.
+        #
+        # ⚠️ Bu EVRISTIKA, kafolat emas: nazariy jihatdan bloklangan
+        #    holatda ham vidjetdan o'tish mumkin. Lekin muqobili —
+        #    bayroqni MANGU qoldirish, ya'ni odam botni qayta ochsa ham
+        #    hech qachon xabar olmasligi. Yolg'on ijobiy narxi bitta
+        #    muvaffaqiyatsiz yuborish, yolg'on salbiyniki esa —
+        #    foydalanuvchini butunlay yo'qotish.
+        if mavjud.telegram_bloklandi:
+            mavjud.telegram_bloklandi = False
+            yangilanadi.append("telegram_bloklandi")
+
+        if yangilanadi:
+            mavjud.save(update_fields=yangilanadi)
         return mavjud, False
 
     for _ in range(5):  # nom to'qnashuvida qayta urinish

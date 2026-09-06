@@ -569,6 +569,17 @@ TELEGRAM_BOT_TOKEN = env("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_BOT_USERNAME = env("TELEGRAM_BOT_USERNAME", "")
 TELEGRAM_CHANNEL_ID = env("TELEGRAM_CHANNEL_ID", "")  # D5-T3 avto-post
 
+# ⚠️ Bot API so'roviga kutish vaqti (D5-T2). Vazifa Celery ichida
+#    ishlaydi, ya'ni foydalanuvchi kutmaydi — lekin cheksiz kutish
+#    worker'ni band qilib qo'yardi va navbat to'planardi.
+TELEGRAM_TIMEOUT = env_int("TELEGRAM_TIMEOUT", 10)
+
+# ⚠️ SAYT MANZILI — fon vazifalari uchun MAJBURIY.
+#    Telegram xabaridagi havola mutlaq bo'lishi kerak, vazifada esa
+#    `request` yo'q (`build_absolute_uri` ishlamaydi). Prod'da u
+#    `ALLOWED_HOSTS` dan olinadi (`config/settings/prod.py`).
+SAYT_MANZILI = env("SAYT_MANZILI", "http://127.0.0.1:8000")
+
 # D7-T1 — xatolarni kuzatish
 SENTRY_DSN = env("SENTRY_DSN", "")
 SENTRY_ENVIRONMENT = env("SENTRY_ENVIRONMENT", "development")

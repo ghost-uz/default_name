@@ -468,6 +468,7 @@ D2-T6 rasmiy ishonch telefonini talab qiladi, D2-T10 — yurist xulosasini.
 | Task | Nima |
 |---|---|
 | D5-T1 | Bildirishnomalar markazi — ichki kanal, sarlavhada o'qilmaganlar belgisi |
+| D5-T2 | Telegram bot — fon vazifasi, qayta urinish, bloklanganni belgilash |
 
 ---
 
@@ -545,6 +546,49 @@ Ikkalasi ham `ComplaintQuerySet` da yopildi. Bu teshik tanlangan dizayndan
 kelib chiqadi: `search_vector` GENERATED ustun bo'lgani uchun uni unutish
 mumkin emas, lekin **normallashtirish baribir Python'da qoladi** — trigger
 bermaydigan bo'shliq aynan shu yerda.
+
+### Telegram bildirishnomasi (D5-T2)
+
+Bildirishnoma yozilgach Celery vazifasi uni Telegram'ga uzatadi. Xato
+turlari ajratiladi: **bloklangan** (doimiy), **vaqtinchalik** (qayta
+urinish), **boshqa** (jurnalga).
+
+```bash
+TELEGRAM_BOT_TOKEN=...   # bo'sh bo'lsa xabar yuborilmaydi — bu xato EMAS
+SAYT_MANZILI=...         # prod'da ALLOWED_HOSTS dan olinadi
+```
+
+⚠️ Yangi paket **qo'shilmadi**: bitta `POST` va bitta JSON javob uchun
+stdlib `urllib` yetarli.
+
+### ⚠️⚠️ Vazifa `transaction.on_commit()` orqali navbatga tushadi
+
+`yechim_yozish` va `accept_solution` — ikkalasi ham `@transaction.atomic`.
+Vazifa to'g'ridan-to'g'ri `delay()` qilinsa, worker uni **commit
+bo'lgunicha** olishi mumkin va o'shanda bildirishnoma bazada hali yo'q —
+vazifa «topilmadi» deb tugardi.
+
+Xato **tasodifiy** bo'lardi: sekin bazada o'tib ketardi, yuk ostida esa
+qaytalanardi.
+
+### ⚠️⚠️ Istisnolarda manzil yo'q — token o'sha yerda
+
+Telegram API'da token **manzilning ichida**:
+`https://api.telegram.org/bot<TOKEN>/sendMessage`. Uni istisno matniga,
+jurnalga yoki Sentry'ga qo'shish — **bot tokenini oshkor qilish**.
+
+`URLError` manzilni o'zi qo'shishi mumkin, shuning uchun faqat istisno
+turi nomi yoziladi. Buni guard test qo'riqlaydi.
+
+### ⚠️ 403 da foydalanuvchi belgilanadi
+
+`User.telegram_bloklandi` qo'yiladi va keyingi xabarlar **umuman**
+yuborilmaydi — aks holda navbat bitta odam uchun cheksiz aylanardi.
+
+Bayroq **kirishda** tozalanadi: Telegram blokdan chiqarilganini xabar
+qilmaydi, login vidjeti esa o'sha botning nomidan ishlaydi. Bu
+evristika, lekin muqobili — bayroqni mangu qoldirish, ya'ni odam botni
+qayta ochsa ham hech qachon xabar olmasligi.
 
 ### Bildirishnomalar markazi (D5-T1) — `/bildirishnomalar/`
 

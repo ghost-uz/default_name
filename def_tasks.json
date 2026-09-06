@@ -2919,11 +2919,66 @@
       "bogliq": [
         "D5-T1"
       ],
-      "holat": "todo",
+      "holat": "done",
       "qabul_mezoni": [
         "yuborish sinxron EMAS",
         "403 (bot bloklangan) bo'lsa foydalanuvchi belgilanadi va qayta urinilmaydi"
-      ]
+      ],
+      "tugatilgan": "2026-09-06",
+      "natija": {
+        "yaratilgan": [
+          "apps/notifications/telegram.py — Bot API mijozi (stdlib urllib), xato turlari: TelegramBloklandi / TelegramVaqtinchalik / TelegramXatosi",
+          "apps/notifications/tasks.py — telegram_yuborish() Celery vazifasi",
+          "apps/accounts/models.py — User.telegram_bloklandi + migratsiya 0007",
+          "apps/accounts/services.py — kirishda bayroq tozalanadi",
+          "apps/notifications/services.py — transaction.on_commit() orqali navbatga",
+          "config/settings/base.py — TELEGRAM_TIMEOUT, SAYT_MANZILI",
+          "config/settings/prod.py — SAYT_MANZILI ALLOWED_HOSTS dan olinadi",
+          "apps/notifications/tests_telegram.py — 23 test"
+        ],
+        "qabul_mezonlari": {
+          "yuborish_sinxron_emas": "✅ Celery vazifasi, `transaction.on_commit()` orqali navbatga qo'yiladi. Ko'rinish Telegram serverining javobini kutmaydi.",
+          "403_da_foydalanuvchi_belgilanadi_va_qayta_urinilmaydi": "✅ `User.telegram_bloklandi` qo'yiladi va keyingi xabarlar UMUMAN yuborilmaydi (ikki test bilan). 403 dan tashqari 'chat not found', 'user is deactivated' va 'bot can't initiate conversation' ham doimiy deb qaraladi."
+        },
+        "tekshirilgan": [
+          "403 / chat not found / user is deactivated -> TelegramBloklandi",
+          "429 -> `retry_after` saqlanadi va qayta urinishda HURMAT qilinadi",
+          "tarmoq va 5xx -> vaqtinchalik, eksponensial kechikish bilan qayta urinish",
+          "400 (buzuq HTML) -> qayta urinilmaydi, jurnalga tushadi",
+          "⭐⭐ ISTISNODA TOKEN VA MANZIL YO'Q (uch xil xato yo'li bilan)",
+          "HTML qochiriladi; sarlavhadagi `<script>` xabarni buzmaydi",
+          "telegramsiz hisobga urinilmaydi; bloklanganiga umuman urinilmaydi",
+          "⭐ ANONIM manbada ism Telegram XABARIGA tushmaydi",
+          "xabarda mutlaq sayt havolasi (tugma) bor",
+          "yo'q bildirishnoma bilan vazifa yiqilmaydi",
+          "⭐ vazifa COMMITDAN KEYIN navbatga tushadi (`django_capture_on_commit_callbacks` bilan)",
+          "kirishda blok bayrog'i tozalanadi"
+        ],
+        "qarorlar": [
+          "⭐ YANGI PAKET QO'SHILMADI: bitta POST va bitta JSON javob — `requests` qulayroq, lekin bu yerda sessiya ham, oqim ham, autentifikatsiya sxemasi ham kerak emas. Loyiha qoidasi bo'yicha savol berildi.",
+          "⭐⭐ `transaction.on_commit()` — vazifani TO'G'RIDAN-TO'G'RI `delay()` qilish TASODIFIY xato yaratardi: `yechim_yozish` va `accept_solution` `@transaction.atomic` ichida ishlaydi, ya'ni worker vazifani COMMIT bo'lgunicha olishi va bildirishnomani topmasligi mumkin. Sekin bazada o'tib ketardi, yuk ostida qaytalanardi.",
+          "⭐⭐ ISTISNOLARDA MANZIL YO'Q: Telegram API'da token MANZILNING ICHIDA (`/bot<TOKEN>/sendMessage`). Uni istisno matniga yoki Sentry'ga qo'shish — tokenni oshkor qilish. `URLError` manzilni O'ZI qo'shishi mumkin, shuning uchun faqat tur nomi yoziladi. Guard test bor.",
+          "Blok bayrog'i KIRISHDA tozalanadi (evristika): Telegram blokdan chiqarilganini xabar qilmaydi, login vidjeti esa o'sha botning nomidan ishlaydi. Muqobili — bayroqni MANGU qoldirish, ya'ni odam botni qayta ochsa ham hech qachon xabar olmasligi. Yolg'on ijobiy narxi bitta muvaffaqiyatsiz yuborish, yolg'on salbiyniki — foydalanuvchini yo'qotish.",
+          "Vazifa istisno bilan TUGAMAYDI (qayta urinishdan tashqari) — u satr qaytaradi: fon vazifasidagi istisno hech kimga ko'rinmaydi, lekin Celery uni xato deb sanaydi va monitoring shovqinini oshiradi.",
+          "Token bo'sh bo'lsa mijoz JIM o'tadi: dev/testda bot sozlanmagan va bu xato emas — aks holda har testni mock qilish kerak bo'lardi.",
+          "Xabar QISQA (ikki qator) + 'Ochish' tugmasi: Telegram lentasida bildirishnoma bir qarashda o'qilishi kerak, batafsili saytda.",
+          "`SAYT_MANZILI` prod'da `ALLOWED_HOSTS` dan olinadi — alohida muhit o'zgaruvchisi ikkinchi haqiqat manbai bo'lardi va Telegram havolasi eski domenga ketishi mumkin edi."
+        ],
+        "topilgan_xatolar": [
+          "⭐ MOCK ISHLATILGAN JOYDA bo'lishi kerak, e'lon qilingan joyda emas: `tasks.py` `from .telegram import xabar_yuborish` qiladi va nom import paytida bog'lanadi. `telegram` modulidagi nomni almashtirish vazifaga ta'sir qilmadi — 6 test 'yuborilmadi' deb yiqildi.",
+          "mypy keshini tozalash kerak bo'ldi: yangi Django sozlamasi qo'shilgach django-stubs uni eski keshdan o'qib 'Settings object has no attribute' berdi."
+        ],
+        "olchangan_holat": {
+          "testlar": 1192,
+          "qamrov_foiz": 95.33,
+          "d5_t2_testlari": 23
+        },
+        "keyingi_uchun_eslatma": [
+          "⚠️ D5-T4 (sozlamalar) `bildirishnoma_yaratish()` ga filtr qo'shadi — u yagona kirish nuqtasi, ya'ni Telegram yo'li ham avtomatik hurmat qiladi.",
+          "⚠️ DEPLOY: `TELEGRAM_BOT_TOKEN` va (ixtiyoriy) `SAYT_MANZILI`. Token bo'sh bo'lsa xabar yuborilmaydi va bu XATO EMAS — ichki markaz (D5-T1) ishlashda davom etadi.",
+          "⚠️ Celery worker ishlab turishi SHART, aks holda vazifa navbatda qoladi va Telegram xabari hech qachon yetib bormaydi."
+        ]
+      }
     },
     {
       "id": "D5-T3",

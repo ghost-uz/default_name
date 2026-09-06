@@ -68,6 +68,13 @@ SESSION_COOKIE_SECURE = HTTPS_ENABLED
 CSRF_COOKIE_SECURE = HTTPS_ENABLED
 
 _SXEMA = "https" if HTTPS_ENABLED else "http"
+
+# ⚠️ Fon vazifalaridagi mutlaq havolalar uchun (D5-T2). Alohida muhit
+#    o'zgaruvchisi TALAB QILINMAYDI: domen allaqachon `ALLOWED_HOSTS` da
+#    va ikkinchi joyda takrorlash ularning bir-biridan uzoqlashishiga
+#    olib kelardi (Telegram havolasi eski domenga ketardi va buni hech
+#    kim sezmasdi).
+SAYT_MANZILI = env("SAYT_MANZILI", f"{_SXEMA}://{ALLOWED_HOSTS[0]}")
 CSRF_TRUSTED_ORIGINS = env_list(
     "DJANGO_CSRF_TRUSTED_ORIGINS",
     ",".join(f"{_SXEMA}://{host}" for host in ALLOWED_HOSTS),

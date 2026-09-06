@@ -64,6 +64,26 @@ def bildirishnoma_yaratish(
         solution=solution,
     )
     _keshni_tozalash(recipient.pk)
+
+    # ⚠️⚠️ `on_commit` — VAZIFANI TO'G'RIDAN-TO'G'RI `delay()` QILMANG.
+    #
+    #    Bu funksiya tranzaksiya ICHIDA chaqiriladi (`yechim_yozish`,
+    #    `accept_solution` — ikkalasi ham `@transaction.atomic`). Vazifa
+    #    darhol navbatga tushsa, worker uni tranzaksiya COMMIT
+    #    bo'lgunicha olishi mumkin va o'shanda bildirishnoma bazada
+    #    HALI YO'Q — vazifa "topilmadi" deb tugaydi.
+    #
+    #    Xato TASODIFIY bo'lardi: sekin bazada o'tib ketardi, yuk
+    #    ostida esa qaytalanardi. `on_commit` uni butunlay yo'q qiladi.
+    #
+    # ⚠️ Import funksiya ichida: `tasks` -> `telegram` -> `settings`
+    #    zanjiri modul yuklanishida kerak emas.
+    from django.db import transaction
+
+    from .tasks import telegram_yuborish
+
+    transaction.on_commit(lambda: telegram_yuborish.delay(bildirishnoma.pk))
+
     return bildirishnoma
 
 
