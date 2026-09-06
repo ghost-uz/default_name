@@ -261,17 +261,22 @@ def test_saqlash_ISHLAYDI(user):
 
 
 def test_saqlangan_holat_QAYTA_korsatiladi(user):
-    BildirishnomaSozlamasi.objects.create(
-        user=user,
-        turlar={BildirishnomaTuri.YANGI_YECHIM.value: False},
-        jim_soatlar=False,
-    )
+    # ⚠️ FAQAT bitta tur o'chiriladi — qolgan HAMMASI yoqiq qoladi.
+    #    Ro'yxatni qo'lda sanab yozish yangi tur qo'shilganda testni
+    #    sindirardi (D5-T5 da aynan shunday bo'ldi).
+    ochiq = {turi.value: True for turi in BildirishnomaTuri}
+    ochiq[BildirishnomaTuri.YANGI_YECHIM.value] = False
+    BildirishnomaSozlamasi.objects.create(user=user, turlar=ochiq, jim_soatlar=False)
     c = Client()
     c.force_login(user)
 
     sahifa = c.get(MANZIL).content.decode()
 
-    assert _belgilangan(sahifa) == {f"tur_{BildirishnomaTuri.YECHIM_QABUL.value}"}
+    assert _belgilangan(sahifa) == {
+        f"tur_{turi.value}"
+        for turi in BildirishnomaTuri
+        if turi != BildirishnomaTuri.YANGI_YECHIM
+    }
 
 
 def test_forma_TURLARDAN_avtomatik_quriladi():

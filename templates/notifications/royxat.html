@@ -48,6 +48,14 @@
               <span class="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full {% if b.okilganmi %}bg-surface-2 text-fg-muted{% else %}bg-primary text-on-primary{% endif %}" aria-hidden="true">
                 {% if b.turi == "yechim_qabul" %}
                   <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                {% elif b.turi == "dayjest" %}
+                  {% comment %}
+                    ⚠️ Dayjest — XABAR EMAS, RO'YXAT (D5-T5). Xabar pufagi
+                       ikonkasi "kimdir sizga yozdi" degan taassurot berardi,
+                       holbuki dayjestni tizim yuboradi va u bir necha
+                       savolga olib boradi.
+                  {% endcomment %}
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
                 {% else %}
                   <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                 {% endif %}
@@ -55,7 +63,17 @@
 
               <span class="min-w-0 flex-1">
                 <span class="block text-[15px] leading-snug {% if not b.okilganmi %}font-semibold{% endif %}">{{ b.matn }}</span>
-                {% if b.complaint %}
+                {% comment %}
+                  ⚠️⚠️ DAYJESTDA SARLAVHA KO'RSATILMAYDI (D5-T5).
+                     `b.complaint` dayjestda ro'yxatning BIRINCHI savoli,
+                     ya'ni uni chiqarish "dayjest = shu bitta savol"
+                     degan YOLG'ON taassurot berardi — matn esa
+                     ko'plikda ("javobsiz savollar"). Jonli tekshiruvda
+                     aynan shunday ko'rindi.
+                {% endcomment %}
+                {% if b.turi == "dayjest" %}
+                  <span class="mt-0.5 block text-[13px] text-fg-muted">Javob kutayotgan savollarni ko'rish</span>
+                {% elif b.complaint %}
                   <span class="clamp-2 mt-0.5 block text-[13px] text-fg-muted">{{ b.complaint.title }}</span>
                 {% endif %}
                 <time class="mt-1 block text-[12px] text-fg-muted" datetime="{{ b.created_at|date:'c' }}">{{ b.created_at|timesince }} oldin</time>

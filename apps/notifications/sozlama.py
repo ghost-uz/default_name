@@ -38,6 +38,18 @@ MUHIM_TURLAR = frozenset(
         BildirishnomaTuri.YANGI_YECHIM,
         # Javob qabul qilingani — kam uchraydigan va kuchli ijobiy signal.
         BildirishnomaTuri.YECHIM_QABUL,
+        # ⚠️⚠️ DAYJEST (D5-T5) — bu ro'yxatga ONGLI ravishda qo'shildi.
+        #
+        #    Yuqoridagi ehtiyotkorlik qoidasi HAJMGA qarshi edi: ko'p
+        #    xabar botdan chiqib ketishga olib keladi. Dayjest esa
+        #    HAFTADA BIR MARTA va faqat tasdiqlangan ekspertga boradi —
+        #    ya'ni u dalil bu yerda ishlamaydi.
+        #
+        #    Teskarisi rost: ekspert ariza topshirib, tasdiqlanib, keyin
+        #    hech narsa olmasa — u qaytmaydi. Standart holatda o'chiq
+        #    dayjest sozlamalar sahifasini ochgan bir necha odamga
+        #    yetardi, ya'ni taskning maqsadi bajarilmasdi.
+        BildirishnomaTuri.DAYJEST,
     }
 )
 

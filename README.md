@@ -471,6 +471,7 @@ D2-T6 rasmiy ishonch telefonini talab qiladi, D2-T10 — yurist xulosasini.
 | D5-T2 | Telegram bot — fon vazifasi, qayta urinish, bloklanganni belgilash |
 | D5-T3 | Kanalga avto-post — kuniga 3 ta qaynoq savol, takrorsiz, muallifsiz |
 | D5-T4 | Bildirishnoma sozlamalari — tur bo'yicha yoqish/o'chirish, jim soatlar |
+| D5-T5 | Ekspertlarga «javobsiz savollar» dayjesti — haftada bir marta, faqat o'z sohasi |
 
 ---
 
@@ -548,6 +549,51 @@ Ikkalasi ham `ComplaintQuerySet` da yopildi. Bu teshik tanlangan dizayndan
 kelib chiqadi: `search_vector` GENERATED ustun bo'lgani uchun uni unutish
 mumkin emas, lekin **normallashtirish baribir Python'da qoladi** — trigger
 bermaydigan bo'shliq aynan shu yerda.
+
+### Ekspert dayjesti (D5-T5)
+
+Haftada bir marta tasdiqlangan ekspert **o'z sohasidagi** javobsiz
+savollar ro'yxatini oladi (`DAYJEST_SAVOL_SONI`, oyna
+`DAYJEST_OYNA_KUNLARI`). Soha — `ExpertProfile.specialty`, ya'ni
+`Category` ga FK (D3-T5): ikkinchi taksonomiya yaratilmadi.
+
+Dayjest **yangi `BildirishnomaTuri`** sifatida qilingan, to'g'ridan-to'g'ri
+Telegram chaqiruvi emas. Shu qaror bilan u D5-T4 infratuzilmasini bepul
+meros oldi: sozlama bilan o'chirish, jim soatlar, bloklangan foydalanuvchi
+belgisi, qayta urinish — hech biri qayta yozilmadi.
+
+### ⚠️⚠️ Inqiroz savoli dayjestga chiqmaydi — D5-T3 dan boshqa sababga ko'ra
+
+Kanalda (D5-T3) sabab **kuchaytirish** edi: minglab odamga tarqatish. Bu
+yerda auditoriya bitta malakali odam, ya'ni u dalil ishlamaydi.
+
+Haqiqiy sabab — **asbob noto'g'ri**: dayjest haftalik va «ish navbati»
+shaklida keladi. Shoshilinch yordamga muhtoj odamni olti kun kutadigan
+navbatga qo'yish ikki marta xato: yordam kechikadi, va biz uni
+«bajariladigan ish» qatoriga tushiramiz. Inqirozga javob — D2-T6 dagi
+darhol ko'rsatiladigan telefonlar.
+
+### ⚠️ Eng uzoq kutgan savol birinchi
+
+Maqsad «bu haftada nima bo'ldi» emas, **javobsiz savollarni kamaytirish**.
+Yangisidan boshlansa, band kategoriyada eski savollar hech qachon
+ro'yxatga tushmasdi — har hafta yangilari ustidan bosardi.
+
+Takror **ataylab**: javob berilmagan savol keyingi haftada yana chiqadi.
+Dayjest — yangiliklar lentasi emas, **ish navbati**. Oyna uni cheklaydi:
+umidsiz eski savol o'zi tushib qoladi.
+
+### ⚠️ Ro'yxat saqlanmaydi, yuborish paytida qayta hisoblanadi
+
+Jim soatlar (D5-T4) xabarni ertalabgacha kechiktiradi. Saqlangan ro'yxat
+o'shanda allaqachon javob olgan savollarni ko'rsatardi va ekspertni
+bekorga yugurtirardi. Ro'yxat bo'shab qolsa xabar **umuman
+yuborilmaydi** — «javobsiz savol yo'q» degan xabar aynan botdan chiqib
+ketishga olib keladigan shovqin.
+
+Shu sababdan bildirishnoma matnida **sanoq yo'q**: ko'rsatilgan raqam
+ko'rsatilgan ro'yxatga teng bo'lishi kerak (M3 invarianti), ro'yxat esa
+jonli.
 
 ### Bildirishnoma sozlamalari (D5-T4)
 

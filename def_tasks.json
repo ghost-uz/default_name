@@ -3124,10 +3124,78 @@
         "D3-T5",
         "D5-T2"
       ],
-      "holat": "todo",
+      "holat": "done",
       "qabul_mezoni": [
         "faqat ekspert sohasiga mos savollar yuboriladi"
-      ]
+      ],
+      "tugatilgan": "2026-09-06",
+      "natija": {
+        "yaratilgan": [
+          "apps/notifications/dayjest.py — ekspertlar(), javobsiz_savollar(), dayjestlar(), savollar_uchun(), xabar_matni()",
+          "apps/notifications/tasks.py — dayjest_yuborish() haftalik vazifasi + _dayjest_matni()",
+          "apps/notifications/models.py — BildirishnomaTuri.DAYJEST + matn/manzil shoxlari (migratsiya 0003)",
+          "apps/notifications/services.py — dayjest_bildirishnomasi() + complaint__category JOIN",
+          "apps/notifications/sozlama.py — DAYJEST `MUHIM_TURLAR` ga qo'shildi",
+          "apps/accounts/factories.py — ExpertProfileFactory (D3-T5 dan beri va'da qilingan edi)",
+          "templates/notifications/royxat.html — dayjest ikonkasi va quyi satri",
+          "config/settings/base.py — DAYJEST_SAVOL_SONI/OYNA_KUNLARI + beat",
+          "apps/notifications/tests_dayjest.py — 35 test"
+        ],
+        "qabul_mezonlari": {
+          "faqat_ekspert_sohasiga_mos_savollar_yuboriladi": "✅ `ExpertProfile.specialty` (Category FK, D3-T5) bo'yicha filtrlanadi. Test boshqa sohadagi savolni qo'yib, u dayjestga TUSHMASLIGINI tekshiradi; filtr olib tashlanganda test yiqilishi ATAYLAB tasdiqlangan."
+        },
+        "tekshirilgan": [
+          "⭐⭐ boshqa sohadagi savol dayjestga tushmaydi (qabul mezoni)",
+          "⭐ har ekspert O'Z sohasini oladi (ikki ekspert, ikki kategoriya)",
+          "⭐ INQIROZ belgisi bor savol dayjestga chiqmaydi",
+          "⭐ eng UZOQ KUTGAN savol birinchi",
+          "⭐ so'rov soni ekspertlar soniga bog'liq EMAS (2 ta, 1 va 5 ekspertda)",
+          "⭐ markazda dayjest qatori qo'shimcha so'rov qilmaydi (o'sish yo'q)",
+          "yashirilgan/o'chirilgan yechim JAVOB EMAS — savol hamon javobsiz",
+          "yopilgan (CLOSED) va yashirilgan savol chiqmaydi",
+          "oynadan eski savol tushib qoladi; chegara hurmat qilinadi",
+          "tasdiqlanmagan / telegramsiz / botni bloklagan / bloklangan / o'chirilgan hisob dayjest OLMAYDI",
+          "⭐ BLOK MUDDATI O'TGAN ekspert OLADI (`is_banned` bayrog'i yetarli emas)",
+          "PRO talab qilinmaydi",
+          "bo'sh dayjest yuborilmaydi; ekspertsiz platformada yiqilmaydi",
+          "xabarda MUALLIF yo'q (ochiq postda ham); havolalar bor",
+          "ro'yxat YUBORISH paytida qayta hisoblanadi; bo'shab qolsa yuborilmaydi",
+          "D5-T4 sozlamasi bilan o'chirilishi mumkin, yozuv baribir yaratiladi",
+          "JONLI brauzerda: dayjest qatori -> lenta filtri (kategoriya + ochiq) uchidan-uchiga tekshirildi"
+        ],
+        "qarorlar": [
+          "⭐⭐ DAYJEST YANGI `BildirishnomaTuri` QILINDI, to'g'ridan-to'g'ri Telegram'ga yuborilmadi. Shu qaror bilan u D5-T4 infratuzilmasini BEPUL meros oldi: sozlama bilan o'chirish, jim soatlar, bloklangan foydalanuvchi belgisi, qayta urinish — hech biri qayta yozilmadi. Ichki markaz esa D5-T1 dagidek zaxira kanal bo'lib qoladi.",
+          "⭐⭐ INQIROZ SAVOLI CHIQMAYDI — LEKIN D5-T3 DAN BOSHQA SABABGA KO'RA. Kanalda sabab KUCHAYTIRISH edi (minglab odam); bu yerda auditoriya bitta malakali odam, ya'ni u dalil ishlamaydi. Haqiqiy sabab — ASBOB NOTO'G'RI: dayjest HAFTALIK va «ish navbati» shaklida keladi. Shoshilinch yordamga muhtoj odamni olti kun kutadigan navbatga qo'yish ikki marta xato: yordam kechikadi va biz uni «bajariladigan ish» qatoriga tushiramiz. Inqirozga javob — D2-T6 dagi telefonlar.",
+          "⭐⭐ TARTIB: ENG ESKISI BIRINCHI (yangisi emas). Maqsad «bu haftada nima bo'ldi» emas, JAVOBSIZ SAVOLLARNI KAMAYTIRISH. Yangisidan boshlansa, band kategoriyada eski savollar hech qachon ro'yxatga tushmasdi. Takror ATAYLAB: dayjest yangiliklar lentasi emas, ISH NAVBATI — javobsiz savol keyingi haftada yana chiqadi.",
+          "⭐ MATNDA SANOQ YO'Q («5 ta savol» emas). M3 da uch marta qaytgan invariant: ko'rsatilgan raqam ko'rsatilgan ro'yxatga TENG bo'lsin. Ro'yxat JONLI, ya'ni har qanday saqlangan raqam ertaga yolg'on bo'lardi.",
+          "⭐ RO'YXAT SAQLANMAYDI, YUBORISH paytida qayta hisoblanadi. Jim soatlar xabarni ertalabgacha kechiktiradi — saqlangan ro'yxat o'shanda allaqachon javob olgan savollarni ko'rsatardi. Bo'shab qolsa umuman yuborilmaydi.",
+          "⭐ `MUHIM_TURLAR` ga ONGLI qo'shildi. D5-T4 dagi ehtiyotkorlik qoidasi HAJMGA qarshi edi; dayjest esa haftada bir marta va faqat tasdiqlangan ekspertga boradi. Standart holatda o'chiq bo'lsa, taskning maqsadi bajarilmasdi.",
+          "PRO TALAB QILINMAYDI: PRO to'lov bilan bog'liq (D3-T5), dayjest esa yo'naltirish vositasi. Faqat to'lovchilarga yuborish maqsadni buzardi — eng ko'p javob yozadigan odam eng ko'p to'lovchi emas.",
+          "`complaint` — ro'yxatning BIRINCHI savoli va u faqat KATEGORIYANI aniqlash uchun. Yon ta'siri foydali: savol haqiqiy o'chirilsa dayjest yozuvi ham CASCADE bilan ketadi.",
+          "Beat `crontab()` EMAS, oddiy interval (sozlama moduli celery'ni import qilmasin). Aniq soat kerak emas: tunda ishga tushsa ham xabarni jim soatlar ertalabgacha kechiktiradi.",
+          "Vazifada QAYTA URINISH YO'Q: u yozuvlar YARATADI va qayta urinish bir ekspertga ikkita dayjest yuborardi. Har ekspertning Telegram xabari esa o'z vazifasida qayta urinadi — yo'qotish yo'q."
+        ],
+        "topilgan_xatolar": [
+          "⭐⭐ N+1 QO'RIQCHISI YIQILMADI. `django_assert_max_num_queries(15)` shakli `complaint__category` JOIN'i olib tashlanganda ham O'TDI (o'lchandi: JOIN'siz 5 qator = 11 so'rov, ya'ni shiftdan past). Test `beshta == bitta` ga o'zgartirildi — endi u shiftga emas, O'SISH YO'QLIGIGA qaraydi va uni bo'sh chegara bilan aldab bo'lmaydi. Bu seansda yiqila olmaydigan testning IKKINCHI holati.",
+          "⭐ JONLI BRAUZER CHALG'ITUVCHI QATORNI FOSH QILDI: markazda dayjest quyi satrida `complaint.title` chiqardi, ya'ni BITTA savol sarlavhasi — matn esa ko'plikda («javobsiz savollar»). Foydalanuvchi dayjestni o'sha bitta savol deb o'ylardi. Shablon tuzatildi va guard test qo'shildi. Ikonka ham xabar pufagidan ro'yxatga almashtirildi.",
+          "D2-T3 manba-kod qo'riqchisi `Complaint.objects.none()` ni ushladi va `# korinish-istisno:` izohini talab qildi — qo'riqcha ATAYLAB «xavfsiz» ni farqlamaydi.",
+          "`ExpertProfileFactory` baza cheklovini buzdi (`ekspert_tasdiq_vaqtsiz_bolmaydi`): tasdiqlangan profilda `verified_at` SHART. `verified_at` endi holatdan HOSIL QILINADI, qotirilmaydi — aks holda holatni almashtirgan test mavjud bo'lmaydigan qator yasardi.",
+          "D5-T4 testi `{tur_yechim_qabul}` deb QO'LDA sanab yozilgandi va yangi tur qo'shilishi bilan sindi. Endi u `BildirishnomaTuri` dan hosil qilinadi («bittasidan boshqa hammasi»)."
+        ],
+        "olchangan_holat": {
+          "testlar": 1266,
+          "qamrov_foiz": 95.42,
+          "d5_t5_testlari": 35,
+          "markaz_sorovlari": "6 ta — dayjest qatorlari soniga bog'liq emas",
+          "dayjestlar_sorovlari": "2 ta — ekspertlar soniga bog'liq emas"
+        },
+        "keyingi_uchun_eslatma": [
+          "⚠️ Celery BEAT ishlab turishi kerak (haftada bir marta). Worker'siz dayjest umuman yuborilmaydi.",
+          "⚠️ Dayjest matnini o'zgartirganda ANONIMLIK testlarini buzmang: `xabar_matni()` ga muallif QO'SHILMAYDI (kanal bilan bir xil qoida).",
+          "⚠️ Yangi bildirishnoma turi qo'shsangiz `royxat.html` dagi ikonka shoxini ham qo'shing — aks holda u xabar pufagi ikonkasini oladi.",
+          "⚠️ WINDOWS GOTCHA (shu seansda vaqt yedi): `manage.py shell -c \"exec(open(f).read())\"` da `encoding='utf-8'` BERISH SHART. Bu mashinada `locale.getpreferredencoding()` = cp1251 va skript ichidagi `—` bazaga MOJIBAKE bo'lib yozildi. Xato jim: hech qanday istisno bermaydi, faqat brauzerda `вЂ\"` ko'rinadi."
+        ]
+      }
     },
     {
       "id": "D6-T1",

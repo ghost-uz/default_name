@@ -34,6 +34,11 @@ class BildirishnomaTuri(models.TextChoices):
 
     YANGI_YECHIM = "yangi_yechim", "Muammoingizga yechim yozildi"
     YECHIM_QABUL = "yechim_qabul", "Yechimingiz qabul qilindi"
+    # ⚠️ Ekspertlarga haftalik dayjest (D5-T5). U BITTA muammoga
+    #    tegishli emas — `complaint` da ro'yxatning BIRINCHI (eng uzoq
+    #    kutgan) savoli turadi va u faqat KATEGORIYANI aniqlash uchun
+    #    kerak. To'liq ro'yxat Telegram xabarida va lentada.
+    DAYJEST = "dayjest", "Sohangizdagi javobsiz savollar"
 
 
 class Notification(TimeStampedModel):
@@ -139,6 +144,15 @@ class Notification(TimeStampedModel):
             return f"{kim} muammoingizga yechim yozdi"
         if self.turi == BildirishnomaTuri.YECHIM_QABUL:
             return "Yechimingiz to'g'ri javob deb belgilandi"
+        if self.turi == BildirishnomaTuri.DAYJEST:
+            # ⚠️ SANOQ ATAYLAB YO'Q ("5 ta savol" emas). M3 da uch marta
+            #    qaytgan invariant: ko'rsatilgan raqam ko'rsatilgan
+            #    ro'yxatga TENG bo'lishi kerak. Bu yerda ro'yxat JONLI
+            #    (lenta filtri) va yozuv yaratilgandan keyin o'zgaradi —
+            #    ya'ni har qanday saqlangan raqam ertaga yolg'on bo'lardi.
+            if self.complaint is not None:
+                return f"{self.complaint.category.name} sohasida javobsiz savollar"
+            return "Sohangizda javobsiz savollar"
         return self.get_turi_display()
 
     @property
@@ -155,6 +169,16 @@ class Notification(TimeStampedModel):
         muammo = self.complaint
         if muammo is None:
             return reverse("bildirishnomalar")
+
+        if self.turi == BildirishnomaTuri.DAYJEST:
+            # ⚠️ BITTA savolga emas, RO'YXATGA olib boradi: matn ko'plikda
+            #    ("javobsiz savollar") va bitta savolga tushirish
+            #    qolganlarini ko'rinmas qilardi.
+            #
+            # ⚠️ Alohida "dayjest sahifasi" yaratilmadi — mavjud lenta
+            #    filtri aynan shu ro'yxatni beradi va u JONLI: dayjest
+            #    yuborilgandan keyin javob olgan savol u yerda chiqmaydi.
+            return f"{reverse('feed')}?category={muammo.category.slug}&status=open"
 
         yol = muammo.get_absolute_url()
         if self.solution_id is not None:

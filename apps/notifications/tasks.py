@@ -14,7 +14,8 @@ import logging
 from celery import shared_task
 from django.conf import settings
 
-from .models import Notification
+from . import dayjest
+from .models import BildirishnomaTuri, Notification
 from .sozlama import jim_oyna_tugashigacha, jim_vaqtmi
 from .telegram import (
     TelegramBloklandi,
@@ -49,6 +50,33 @@ def _xabar_matni(bildirishnoma: Notification) -> str:
     if bildirishnoma.complaint is not None:
         qatorlar.append(html_qochirish(bildirishnoma.complaint.title))
     return "\n".join(qatorlar)
+
+
+def _dayjest_matni(bildirishnoma: Notification) -> str:
+    """Dayjest xabari — YUBORISH PAYTIDA qayta hisoblanadi (D5-T5).
+
+    ⚠️⚠️ RO'YXAT SAQLANMAYDI, QAYTA HISOBLANADI. Yozuv yaratilgan
+       vaqt bilan yuborilgan vaqt orasida farq bo'lishi mumkin — jim
+       soatlar (D5-T4) xabarni ertalabgacha kechiktiradi. Saqlangan
+       ro'yxat o'shanda allaqachon javob olgan savollarni ko'rsatardi
+       va ekspertni bekorga yugurtirardi.
+
+    ⚠️ Ro'yxat BO'SHAB QOLSA bo'sh satr qaytadi va chaqiruvchi
+       yubormaydi: "javobsiz savol yo'q" degan xabar aynan botdan
+       chiqib ketishga olib keladigan shovqin.
+    """
+    from . import dayjest
+
+    ekspert = getattr(bildirishnoma.recipient, "ekspert_profili", None)
+    if ekspert is None:
+        # Ekspertlik dayjest yaratilgandan keyin bekor qilingan.
+        return ""
+
+    savollar = dayjest.savollar_uchun(ekspert)
+    if not savollar:
+        return ""
+
+    return dayjest.xabar_matni(ekspert=ekspert, savollar=savollar)
 
 
 @shared_task(
@@ -108,10 +136,17 @@ def telegram_yuborish(self, notification_id: int) -> str:
         )
         return "jim soat"
 
+    if bildirishnoma.turi == BildirishnomaTuri.DAYJEST:
+        matn = _dayjest_matni(bildirishnoma)
+        if not matn:
+            return "bo'shab qoldi"
+    else:
+        matn = _xabar_matni(bildirishnoma)
+
     try:
         xabar_yuborish(
             chat_id=oluvchi.telegram_id,
-            matn=_xabar_matni(bildirishnoma),
+            matn=matn,
             tugma_manzili=f"{settings.SAYT_MANZILI}{bildirishnoma.manzil}",
         )
     except TelegramBloklandi:
@@ -132,3 +167,37 @@ def telegram_yuborish(self, notification_id: int) -> str:
         return "xato"
 
     return "yuborildi"
+
+
+@shared_task(
+    name="apps.notifications.tasks.dayjest_yuborish",
+    # ⚠️ QAYTA URINISH YO'Q: vazifa haftada bir marta ishlaydi va u
+    #    yozuvlar YARATADI. Qayta urinish bir ekspertga ikkita dayjest
+    #    yuborardi — aynan ortiqcha bildirishnoma muammosi (D5-T4).
+    #    Har ekspertning Telegram xabari esa O'Z vazifasida qayta
+    #    urinadi (`telegram_yuborish`), ya'ni yo'qotish yo'q.
+    max_retries=0,
+)
+def dayjest_yuborish() -> str:
+    """Ekspertlarga haftalik «javobsiz savollar» dayjesti (D5-T5).
+
+    ⚠️ Yozuv HAR EKSPERT uchun alohida yaratiladi va Telegram xabari
+       `bildirishnoma_yaratish` ichidagi `on_commit` orqali O'Z
+       vazifasiga tushadi. Ya'ni bitta ekspertdagi nosozlik
+       qolganlarni to'xtatmaydi.
+
+    ⚠️ BEAT `crontab()` EMAS, oddiy interval (sozlama moduli celery'ni
+       import qilmasin — `base.py` dagi qoida). Bu vazifa haftaning
+       istalgan soatida ishga tushishi mumkin, LEKIN tunda kelgan
+       xabarni jim soatlar (D5-T4) ertalabgacha kechiktiradi. Ya'ni
+       aniq soat kerak emas — himoya allaqachon bor.
+    """
+    from .services import dayjest_bildirishnomasi
+
+    yuborildi = 0
+    for ekspert, savollar in dayjest.dayjestlar():
+        if dayjest_bildirishnomasi(ekspert=ekspert, savollar=savollar) is not None:
+            yuborildi += 1
+
+    log.info("dayjest: %s ekspertga yuborildi", yuborildi)
+    return f"{yuborildi} ta"

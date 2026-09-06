@@ -438,6 +438,24 @@ JIM_SOATLAR_OXIRI = _time(8, 0)
 
 
 # --------------------------------------------------------------------------
+# Ekspertlarga «javobsiz savollar» dayjesti (D5-T5)
+# --------------------------------------------------------------------------
+# ⚠️ BESHTA SAVOL. Ko'proq bo'lsa xabar Telegram'da "ko'proq" tugmasi
+#    ostiga tushadi va oxirgilari o'qilmaydi; ekspert esa ro'yxatni
+#    bajarib bo'lmaydigan ish deb qabul qiladi va umuman boshlamaydi.
+DAYJEST_SAVOL_SONI = 5
+
+# ⚠️ IKKI HAFTALIK OYNA, HAFTALIK YUBORISH bilan. Oyna yuborish
+#    davridan UZUNROQ: shunda javobsiz savol kamida ikki marta
+#    ko'rinadi va bitta o'tkazib yuborilgan hafta uni yo'qotmaydi.
+#
+#    Cheksiz bo'lmasligi ham shart — bir necha oy javobsiz turgan savol
+#    odatda dolzarbligini yo'qotgan va u ro'yxatni to'ldirib, yangi
+#    savollarni pastga surardi.
+DAYJEST_OYNA_KUNLARI = 14
+
+
+# --------------------------------------------------------------------------
 # Telegram kanaliga avto-post (D5-T3)
 # --------------------------------------------------------------------------
 # ⚠️ KUNIGA UCHTA. Ko'proq post kanalni "spam" qiladi va obunachi
@@ -581,6 +599,21 @@ CELERY_BEAT_SCHEDULE = {
     #
     # ⚠️ `expires` — vazifa kechiksa (worker band) uni bajarish
     #    ma'nosiz: ertaga yangi ro'yxat bilan qaytadan ishlaydi.
+    # ⚠️ HAFTADA BIR MARTA. Ko'proq yuborish ekspertni charchatadi va
+    #    ro'yxat o'zgarmagan bo'lardi (savollarga javob yozish vaqt
+    #    oladi); kamroq bo'lsa savol dolzarbligini yo'qotadi.
+    #
+    # ⚠️ Aniq SOAT kerak emas: tunda ishga tushsa ham xabarni jim
+    #    soatlar (D5-T4) ertalabgacha kechiktiradi.
+    #
+    # ⚠️ `expires` — bir necha soat kechikish zarar qilmaydi, lekin
+    #    bir kundan keyin bajarish ma'nosiz: keyingi hafta baribir
+    #    yangi ro'yxat bilan keladi.
+    "ekspert-dayjesti": {
+        "task": "apps.notifications.tasks.dayjest_yuborish",
+        "schedule": 604800.0,
+        "options": {"expires": 86400},
+    },
     "kanalga-post": {
         "task": "apps.complaints.tasks.kanalga_post",
         "schedule": 86400.0,

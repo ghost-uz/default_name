@@ -15,6 +15,8 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 
+from .models import TasdiqHolati
+
 User = get_user_model()
 
 
@@ -73,14 +75,50 @@ class TelegramUserFactory(UserFactory):
 
 
 class ExpertFactory(TelegramUserFactory):
-    """Tasdiqlangan ekspert.
+    """Tasdiqlangan ekspert (FAQAT keshlangan bayroq).
 
-    ⚠️ `is_expert` — keshlangan bayroq (D0-T2). Haqiqiy manba ExpertProfile
-       (D3-T5). Fabrika qo'shilgach, u ham shu yerda yaratiladi.
+    ⚠️ `is_expert` — keshlangan bayroq (D0-T2), haqiqiy manba
+       `ExpertProfile` (D3-T5). Bu fabrika PROFIL YARATMAYDI: profilga
+       tayanadigan test `ExpertProfileFactory` ni ishlatsin, aks holda
+       u bayroqni sinab, mantiqni sinamagan bo'lardi.
     """
 
     is_expert = True
     karma_cached = factory.Sequence(lambda n: 1000 + n * 100)
+
+
+class ExpertProfileFactory(factory.django.DjangoModelFactory):
+    """Tasdiqlangan ekspert PROFILI (D3-T5) — sohasi bilan.
+
+    ⚠️ `specialty` — `Category` ga FK, ya'ni "shu sohadagi
+       ekspertlar" so'rovi bepul (D5-T5 dayjesti aynan shunga tayanadi).
+
+    ⚠️ Standart holat TASDIQLANGAN: testlarning aksariyati ishlaydigan
+       ekspertni kutadi. Tasdiqlanmagan holat ochiq beriladi
+       (`verification_status=...`) — shunda u testda KO'RINADI.
+
+    ⚠️ `verified_at` HOLATDAN HOSIL QILINADI, qotirilmaydi. Baza
+       cheklovi (`ekspert_tasdiq_vaqtsiz_bolmaydi`) tasdiqlangan
+       profilda tasdiq vaqtini TALAB qiladi; qotirilgan sana esa
+       `verification_status` ni almashtirgan testda MAVJUD BO'LMAYDIGAN
+       holat yasardi (tasdiqlanmagan, lekin tasdiq vaqti bor).
+    """
+
+    class Meta:
+        model = "accounts.ExpertProfile"
+
+    user = factory.SubFactory(TelegramUserFactory, is_expert=True)
+    specialty = factory.SubFactory("apps.complaints.factories.CategoryFactory")
+    experience_years = 5
+    kasbiy_tavsif = "10 yil mehnat huquqi bo'yicha advokat."
+    verification_status = TasdiqHolati.TASDIQLANGAN
+    verified_at = factory.LazyAttribute(
+        lambda o: (
+            timezone.now()
+            if o.verification_status == TasdiqHolati.TASDIQLANGAN
+            else None
+        )
+    )
 
 
 class StaffFactory(UserFactory):

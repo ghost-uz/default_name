@@ -87,6 +87,28 @@ def bildirishnoma_yaratish(
     return bildirishnoma
 
 
+def dayjest_bildirishnomasi(*, ekspert, savollar) -> Notification | None:
+    """Ekspertga haftalik dayjest yozuvi (D5-T5).
+
+    ⚠️ `actor=None`: dayjestni ODAM yubormaydi, tizim yuboradi. Aktyor
+       qo'yish "kimdir sizga yozdi" degan yolg'on taassurot berardi.
+
+    ⚠️ `complaint` — ro'yxatning BIRINCHI savoli. U yagona savolni
+       bildirmaydi: `matn` va `manzil` undan faqat KATEGORIYANI oladi
+       (model docstring'i). Yon ta'siri foydali — savol haqiqiy
+       o'chirilsa (D2-T8) dayjest yozuvi ham CASCADE bilan ketadi va
+       yetim havola qolmaydi.
+    """
+    if not savollar:
+        return None
+
+    return bildirishnoma_yaratish(
+        recipient=ekspert.user,
+        turi=BildirishnomaTuri.DAYJEST,
+        complaint=savollar[0],
+    )
+
+
 def yangi_yechim_bildirishnomasi(*, solution) -> Notification | None:
     """Muammo egasiga "yechim keldi" deb xabar beradi (D1-T10 ulanishi).
 
@@ -177,9 +199,13 @@ def bildirishnomalar_royxati(*, user) -> models.QuerySet[Notification]:
     ⚠️ `select_related` — ro'yxatda har qator aktyor nomini va muammo
        sarlavhasini ko'rsatadi. Usiz 20 qator = 40 qo'shimcha so'rov
        (D1-T14 dagi bir xil sabab).
+
+    ⚠️ `complaint__category` — dayjest qatorining matni va manzili
+       kategoriyaga tayanadi (D5-T5). Usiz har dayjest qatori bitta
+       qo'shimcha so'rov qilardi.
     """
     return (
         Notification.objects.filter(recipient=user)
-        .select_related("actor", "complaint")
+        .select_related("actor", "complaint", "complaint__category")
         .order_by("-created_at", "-id")
     )
