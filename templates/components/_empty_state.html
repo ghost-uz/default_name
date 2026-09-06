@@ -11,6 +11,17 @@
     action_url -> tugma manzili (ixtiyoriy)
     action     -> tugma matni
     icon       -> "bookmark" | "search" | "plus" (standart: plus)
+    daraja     -> sarlavha darajasi (2 yoki 3; standart 2)
+
+  ⚠️⚠️ SARLAVHA DARAJASI PARAMETR — ATAYLAB.
+     Ilgari bu yerda qat'iy `<h3>` turardi. Lentada esa undan oldingi
+     yagona sarlavha `<h1>` — ya'ni `h2` SAKRAB o'tilardi va ekran
+     o'quvchi "ichma-ich bo'lim" deb noto'g'ri e'lon qilardi.
+     Lighthouse buni D7-T4 da topdi ("Heading elements are not in a
+     sequentially-descending order").
+
+     Komponent har xil chuqurlikda ishlatiladi, shuning uchun daraja
+     QAT'IY bo'la olmaydi: `h1` ostida — `h2`, `h2` ostida — `h3`.
 {% endcomment %}
 <div class="card flex flex-col items-center justify-center px-6 py-14 text-center">
   <span class="grid h-14 w-14 place-items-center rounded-full bg-surface-2 text-fg-muted">
@@ -23,7 +34,11 @@
     {% endif %}
   </span>
 
-  <h3 class="mt-4 text-lg font-bold">{{ title }}</h3>
+  {% if daraja == 3 %}
+    <h3 class="mt-4 text-lg font-bold">{{ title }}</h3>
+  {% else %}
+    <h2 class="mt-4 text-lg font-bold">{{ title }}</h2>
+  {% endif %}
   <p class="mt-2 max-w-sm text-[15px] leading-relaxed text-fg-muted">{{ text }}</p>
 
   {% if action_url %}

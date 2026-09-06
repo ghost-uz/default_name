@@ -191,11 +191,11 @@
           {% include "components/_complaint_card.html" with complaint=complaint index=forloop.counter0 %}
         {% empty %}
           {% if tab == "saqlanganlar" %}
-            {% include "components/_empty_state.html" with title="Hali hech narsa saqlanmagan" text="Keyinroq qaytib o'qimoqchi bo'lgan muammoni saqlang — kartadagi xatcho'p belgisini bosing." %}
+            {% include "components/_empty_state.html" with title="Hali hech narsa saqlanmagan" text="Keyinroq qaytib o'qimoqchi bo'lgan muammoni saqlang — kartadagi xatcho'p belgisini bosing."  daraja=3 %}
           {% elif ozimi %}
-            {% include "components/_empty_state.html" with title="Hali dard yozmagansiz" text="Muammoni yozing — jamoa javob beradi." %}
+            {% include "components/_empty_state.html" with title="Hali dard yozmagansiz" text="Muammoni yozing — jamoa javob beradi."  daraja=3 %}
           {% else %}
-            {% include "components/_empty_state.html" with title="Dard yo'q" text="Bu foydalanuvchi hali ochiq dard yozmagan." %}
+            {% include "components/_empty_state.html" with title="Dard yo'q" text="Bu foydalanuvchi hali ochiq dard yozmagan."  daraja=3 %}
           {% endif %}
         {% endfor %}
 
@@ -226,7 +226,7 @@
             </p>
           </article>
         {% empty %}
-          {% include "components/_empty_state.html" with title="Hali yechim yo'q" text="Birovning muammosiga javob bering — tajribangiz kimgadir juda kerak." %}
+          {% include "components/_empty_state.html" with title="Hali yechim yo'q" text="Birovning muammosiga javob bering — tajribangiz kimgadir juda kerak."  daraja=3 %}
         {% endfor %}
 
       {% elif tab == "karma" %}

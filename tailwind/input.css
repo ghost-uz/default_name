@@ -28,6 +28,19 @@
   --p-slate-200: #e2e8f0;
   --p-slate-500: #64748b;
   --p-slate-900: #0f172a;
+  /* ⚠️ SHKALADAN TASHQARI — ATAYLAB (D7-T4 a11y tuzatishi).
+     `slate-500` (#64748b) oq fonda 4.76:1 beradi (o'tadi), lekin
+     RANGLI fonlarda yiqiladi: `surface-2` da 4.34, PRO kartasida 4.23
+     — WCAG AA 4.5:1 talab qiladi va Lighthouse aynan shuni topdi.
+
+     `slate-600` ham o'tardi (6.92), lekin u sezilarli darajada
+     qorong'i: "muted" matn asosiy matndan deyarli farq qilmay
+     qolardi va vizual ierarxiya yo'qolardi.
+
+     #5a6a80 — eng KICHIK o'zgarish: 5.51 / 5.03 / 4.91 (hammasi
+     zaxira bilan o'tadi), ko'zga esa slate-500 dan deyarli farq
+     qilmaydi. */
+  --p-slate-550: #5a6a80;
 
   /* Brend */
   --p-blue-600: #2563eb;
@@ -55,7 +68,7 @@
   --c-surface: var(--p-white);
   --c-surface-2: var(--p-slate-100);
   --c-fg: var(--p-slate-900);
-  --c-fg-muted: var(--p-slate-500);
+  --c-fg-muted: var(--p-slate-550);
   --c-border: var(--p-slate-200);
   --c-border-strong: #cbd5e1;
 
@@ -93,12 +106,35 @@
   /* Django rangi emas — Telegram brend rangi (login tugmasi uchun) */
   --c-telegram: #229ed9;
   --c-telegram-hover: #1c8bc0;
+  /* ⚠️⚠️ MATN uchun ALOHIDA rang — brend rangi FON uchun qoladi.
+     Telegram ko'k rangi (#229ed9) oq fonda atigi 3.02:1 beradi, matn
+     esa 4.5:1 talab qiladi. Brend rangini o'zgartirish tugmani
+     tanib bo'lmaydigan qilardi, shuning uchun bo'linadi:
+       `bg-telegram`   -> brend rangi (fon, ikonka);
+       `text-telegram-ink` -> matn uchun qoraytirilgan variant (4.87:1).
+     Ikonka 3.02:1 bilan qoladi — u MATN emas va WCAG unga 3:1
+     talab qiladi. */
+  --c-telegram-ink: #177a9e;
 }
 
 .dark {
   --c-bg: #0b1220;
   --c-surface: #111a2c;
   --c-surface-2: #17223a;
+  /* ⚠️⚠️ QORONG'IDA MATN RANGI TESKARI YO'NALISHDA tuzatiladi.
+     Yorug' rejimda Telegram ko'ki JUDA OCH edi (3.02:1) va uni
+     QORAYTIRISH kerak bo'ldi; qorong'i fonda esa aynan o'sha
+     qoraytirilgan rang yiqiladi (3.57:1) — bu yerda rang OCHROQ
+     bo'lishi kerak.
+
+     Brend rangining O'ZI qorong'i fonda 5.25-5.92:1 beradi, ya'ni
+     alohida qiymat kerak emas.
+
+     ⚠️ Bu nuqson yorug' rejimni tuzatgandan KEYIN chiqdi: birinchi
+        Lighthouse ishga tushirishi CI'da (yorug' rejim) edi, lokal
+        brauzer esa qorong'i rejimda. Rang tuzatishlarini HAR IKKI
+        rejimda tekshirish SHART. */
+  --c-telegram-ink: var(--c-telegram);
   --c-fg: #e8edf5;
   --c-fg-muted: #94a3b8;
   --c-border: #1f2c45;
@@ -173,6 +209,7 @@
 
   --color-telegram: var(--c-telegram);
   --color-telegram-hover: var(--c-telegram-hover);
+  --color-telegram-ink: var(--c-telegram-ink);
 
   /* Tipografika — bitta oila, og'irlik orqali ierarxiya (Inter) */
   --font-sans: "Inter", ui-sans-serif, "Segoe UI", Roboto, system-ui, sans-serif;

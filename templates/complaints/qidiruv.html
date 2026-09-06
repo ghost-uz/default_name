@@ -72,6 +72,20 @@
       {% if filtr.status %}<input type="hidden" name="status" value="{{ filtr.status }}" />{% endif %}
     </form>
 
+    {% comment %}
+      ⚠️⚠️ `h1` HAR DOIM CHIQADI — so'rovsiz holatda ham.
+         Ilgari u `{% if q %}` ichida edi va bo'sh qidiruv sahifasida
+         sahifaning umuman NOMI yo'q edi: ekran o'quvchi «bu qaysi
+         sahifa?» degan savolga javob topa olmasdi (axe
+         `page-has-heading-one`).
+
+         D7-T4 a11y qo'riqchisi buni topdi — Lighthouse esa yo'q,
+         chunki u faqat `/` sahifasini tekshiradi.
+    {% endcomment %}
+    {% if not q %}
+      <h1 class="mb-4 text-xl font-extrabold sm:text-2xl">Qidiruv</h1>
+    {% endif %}
+
     {% if q %}
       <div class="mb-4">
         <h1 class="text-xl font-extrabold sm:text-2xl">
