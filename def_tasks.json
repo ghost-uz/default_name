@@ -2651,10 +2651,58 @@
         "D2-T3",
         "D4-T4"
       ],
-      "holat": "todo",
+      "holat": "done",
       "qabul_mezoni": [
         "sitemap visible() manageridan foydalanadi — test bilan qoplangan"
-      ]
+      ],
+      "tugatilgan": "2026-09-06",
+      "natija": {
+        "yaratilgan": [
+          "apps/complaints/sitemaps.py — MuammoSitemap, KategoriyaSitemap, StatikSitemap",
+          "apps/common/views.py — robots() ko'rinishi + TAQIQLANGAN_YOLLAR",
+          "config/urls.py — /sitemap.xml va /robots.txt (ILDIZDA)",
+          "apps/complaints/tests/test_sitemap.py — 20 test"
+        ],
+        "qabul_mezonlari": {
+          "sitemap_visible_manageridan_foydalanadi": "✅ `Complaint.objects.visible()`. Yashirilgan, TEKSHIRUVDAGI (PENDING) va o'chirilgan postlar chiqmasligi ochiq testlar bilan qoplangan; manba kodi skaneri (D2-T3) `visible()` siz so'rovni umuman yozdirmaydi."
+        },
+        "tekshirilgan": [
+          "🌐 JONLI: sitemap 39 muammo + 8 kategoriya + 8 statik sahifa berdi",
+          "🌐 JONLI: robots.txt sitemap mutlaq havolasi bilan",
+          "⭐⭐ SITEMAPDAGI HAR MANZIL O'Z KANONIGIGA TENG (integratsion test: har manzil ochiladi va kanonik solishtiriladi)",
+          "yashirilgan / PENDING / o'chirilgan post sitemapda yo'q",
+          "faol bo'lmagan kategoriya sitemapda yo'q",
+          "profil sahifalari sitemapda yo'q",
+          "qidiruv sahifasi sitemapda yo'q (u `noindex`)",
+          "yechilgan muammo ustuvorroq (0.8 va 0.5)",
+          "⭐ robots.txt ADMIN manzilini oshkor qilmaydi (sozlama o'zgartirilib tekshirildi)",
+          "robots.txt lentani taqiqlamaydi (`Disallow: /` yo'q)"
+        ],
+        "qarorlar": [
+          "⭐⭐ KATEGORIYA SITEMAPI QO'SHILDI — bu D4-T4 tufayli MUMKIN bo'ldi. Boshqa loyihada u OLIB TASHLANGAN edi: sitemap `/?category=moliya` ni bergan, kanonik esa faqat `request.path` dan qurilib bosh sahifani ko'rsatgan va Search Console hammasini 'Duplicate, not canonical' deb rad etgan. Bu yerda kanonik `?category=` ni ataylab saqlaydi, ya'ni manzillar o'z-o'ziga kanonik. Buni integratsion test qotiradi.",
+          "⭐⭐ robots.txt da ADMIN MANZILI YO'Q: u OMMAVIY fayl va `Disallow: /maxfiy-panel/` yozish admin manzilini butun dunyoga e'lon qilish degani. `DJANGO_ADMIN_URL` aynan shuning uchun sozlanadigan. Admin baribir indekslanmaydi — u login talab qiladi.",
+          "robots.txt STATIK FAYL EMAS, ko'rinish: sitemap manzili MUTLAQ bo'lishi kerak va domenga bog'liq (prod, staging, lokal). Statik faylda domen qotib qolardi.",
+          "`protocol` sitemap sinflarida QOTIRILMAGAN — Django uni so'rov sxemasidan oladi. `protocol='https'` dev'da yolg'on manzil berardi va kanonik bilan mos kelmasdi.",
+          "Statik sahifalar ro'yxati QO'LDA, URLconf'dan avtomatik EMAS: ommaviy yo'llarning ko'pi sitemapga tushmasligi kerak (kirish, hisob, moderatsiya, ovoz...) va avtomatik ro'yxatda istisnolar baribir qo'lda yuritilardi — faqat xato tomonga qarab.",
+          "PROFIL sahifalari yo'q: yupqa kontent, minglab bo'lishi mumkin va sitemap foydalanuvchi nomlarining to'liq ro'yxatini skraperlarga tayyor holda berardi.",
+          "`priority` — Google uni ko'pincha e'tiborsiz qoldiradi; asosiy qiymat `lastmod` da (u qayta skanerlash tartibini haqiqatan o'zgartiradi). Shunga qaramay yechilgan muammoga 0.8 berildi: unda savol ham, javob ham bor.",
+          "Sitemap `apps/complaints/` da: `common` eng quyi qatlam va boshqa ilovalarni import qilmaydi."
+        ],
+        "topilgan_xatolar": [
+          "⭐ `StatikSitemap` da `priority` HAM ATRIBUT, HAM METOD edi — metod atributni jimgina bosib ketardi va `priority = 0.4` o'lik kod bo'lib qolgandi (ruff F811 + mypy no-redef ushladi).",
+          "ruff S314: `xml.etree` bilan tahlil. XML tashqaridan emas, aynan sinalayotgan ko'rinishdan keladi — `defusedxml` faqat test uchun yangi bog'liqlik bo'lardi, shuning uchun izohlangan `# noqa`."
+        ],
+        "olchangan_holat": {
+          "testlar": 1109,
+          "qamrov_foiz": 95.29,
+          "d4_t5_testlari": 20
+        },
+        "keyingi_uchun_eslatma": [
+          "⚠️ Yangi ommaviy sahifa qo'shilsa `StatikSitemap.YOLLAR` ga qo'shish ESDA TUTILSIN — u avtomatik emas. D4-T4 dagi kanonik guardi yangi sahifani ushlaydi, sitemap esa ushlamaydi.",
+          "⚠️ Domen olingandan keyin: Search Console'ga `sitemap.xml` yuborilsin (DEPLOY.md).",
+          "⚠️ `KategoriyaSitemap` va `seo.py::KANONIK_PARAMETRLAR` BOG'LIQ: biri o'zgarsa ikkinchisi ham o'zgarishi kerak. Guard: `test_SITEMAPDAGI_HAR_MANZIL_OZ_KANONIGIGA_teng`."
+        ]
+      }
     },
     {
       "id": "D4-T6",

@@ -445,6 +445,7 @@ D2-T6 rasmiy ishonch telefonini talab qiladi, D2-T10 — yurist xulosasini.
 | D4-T2 | Lotin/kiril transliteratsiyasi va apostrof — to'qqiz yozuv usuli, bitta lexema |
 | D4-T3 | Qidiruv sahifasi `/qidiruv/` — ajratish, uch filtr, yaqin so'zlar takliflari |
 | D4-T4 | SEO asoslari — kanonik, Open Graph, avtomatik yasaladigan OG rasm |
+| D4-T5 | `sitemap.xml` va `robots.txt` — faqat ko'rinadigan kontent |
 
 ---
 
@@ -522,6 +523,41 @@ Ikkalasi ham `ComplaintQuerySet` da yopildi. Bu teshik tanlangan dizayndan
 kelib chiqadi: `search_vector` GENERATED ustun bo'lgani uchun uni unutish
 mumkin emas, lekin **normallashtirish baribir Python'da qoladi** — trigger
 bermaydigan bo'shliq aynan shu yerda.
+
+### `sitemap.xml` va `robots.txt` (D4-T5)
+
+Uch bo'lim: muammolar (`visible()`), faol kategoriyalar va statik
+sahifalar. Yashirilgan, tekshiruvdagi (`PENDING`) va o'chirilgan kontent
+**chiqmaydi** — bu D4-T5 ning butun ma'nosi: sitemap'ga tushgan yashirin
+post Google tomonidan indekslanadi va yashirishning ma'nosi qolmaydi.
+
+### ⚠️⚠️ Sitemap va kanonik bir-biriga bog'langan
+
+Kategoriya sahifalari sitemap'ga `/?category=moliya` shaklida tushadi —
+**aynan kanonik bergan shaklda**. Boshqa loyihada bu juftlik buzilgan va
+Search Console barcha kategoriya sahifalarini «Duplicate, not canonical»
+deb rad etgan: sitemap ish bermagan, faqat ogohlantirish yaratgan.
+
+Shuning uchun integratsion test **sitemapdagi har bir manzilni ochadi va
+uning kanonigi bilan solishtiradi** — biri o'zgarsa, ikkinchisi ham
+o'zgarishi kerak bo'ladi.
+
+### ⚠️ `robots.txt` da admin manzili YO'Q
+
+`robots.txt` — **ommaviy** fayl. Unga `Disallow: /maxfiy-panel/` deb
+yozish admin panel manzilini butun dunyoga e'lon qilish degani.
+`DJANGO_ADMIN_URL` aynan shuning uchun sozlanadigan qilingan: standart
+`/admin/` eng ko'p skanerlanadigan yo'l va uni o'zgartirish arzon himoya
+qatlami — robots.txt ga yozish o'sha himoyani bir qatorda yo'q qilardi.
+
+Admin baribir indekslanmaydi: u login talab qiladi.
+
+⚠️ `Disallow` — **yashirish emas, skanerlashni tejash**. Haqiqiy himoya
+har doim kodda (avtorizatsiya, `visible()`).
+
+⚠️ Yangi ommaviy sahifa qo'shilsa `StatikSitemap.YOLLAR` ga qo'lda
+qo'shiladi — u URLconf'dan avtomatik olinmaydi (sabab modul
+docstring'ida).
 
 ### SEO va ijtimoiy tarmoq kartasi (D4-T4)
 

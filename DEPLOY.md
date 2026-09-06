@@ -349,6 +349,24 @@ docker compose -f docker-compose.server.yml exec db     psql -U dard -d dard -c 
    yozilgan qatorlar indeksdan tashqarida qoladi — `qidiruvni_yangilash`
    ularni tuzatadi.
 
+### Google saytni ko'rmayapti
+
+```bash
+curl -s https://dard.uz/robots.txt
+curl -s https://dard.uz/sitemap.xml | head -5
+```
+
+Domen olingandan keyin **bir marta**: Search Console'da domen
+tasdiqlanadi va `https://dard.uz/sitemap.xml` yuboriladi.
+
+⚠️ Sitemap `Sitemap:` qatori orqali `robots.txt` da ham e'lon qilinadi,
+lekin Search Console'ga qo'lda yuborish indekslashni tezlashtiradi va
+xatolarni ko'rsatadi.
+
+⚠️ `sitemap.xml` **faqat ko'rinadigan** kontentni beradi. Yashirilgan
+post u yerda paydo bo'lsa — bu jiddiy nosozlik, `visible()` biror
+joyda unutilgan degani.
+
 ### Ijtimoiy tarmoqda karta rasmsiz chiqyapti
 
 OG rasmlarini **Celery worker** yozadi va ular `media_data` volumeda

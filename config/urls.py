@@ -8,14 +8,22 @@ Ilova URL'lari o'z fazasida shu yerga ulanadi.
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
+from django.contrib.sitemaps.views import sitemap
 from django.urls import include, path
 
-from apps.common.views import health
+from apps.common.views import health, robots
+from apps.complaints.sitemaps import SITEMAPLAR
 
 urlpatterns = [
     # Konteyner healthcheck'i (D0-T3). Autentifikatsiyasiz — Docker'ning
     # o'zi chaqiradi. D7-T2 da /health/deep/ qo'shiladi.
     path("health/", health, name="health"),
+    # SEO (D4-T5).
+    # ⚠️ Ikkalasi ham ILDIZDA bo'lishi SHART: qidiruv tizimlari ularni
+    #    aynan `/sitemap.xml` va `/robots.txt` da izlaydi, boshqa yo'lda
+    #    turgan fayl umuman topilmaydi.
+    path("sitemap.xml", sitemap, {"sitemaps": SITEMAPLAR}, name="sitemap"),
+    path("robots.txt", robots, name="robots"),
     # Admin manzili muhitdan — standart /admin/ eng ko'p skanerlanadigan yo'l
     path(f"{settings.ADMIN_URL}/", admin.site.urls),
 ]
