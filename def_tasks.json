@@ -3534,14 +3534,32 @@
             "app_css": "56 KB (byudjet 75 KB)",
             "htmx": "51 KB (byudjet 60 KB)",
             "app_js": "31 KB (byudjet 40 KB)"
-          }
+          },
+          "testlar_a11y_dan_keyin": 1395,
+          "qamrov_a11y_dan_keyin": 95.09,
+          "a11y_testlari": 19
         },
         "keyingi_uchun_eslatma": [
           "⚠️⚠️ Byudjetni OSHIRISH — ONGLI QAROR. `git blame` kim, qachon va NEGA oshirganini ko'rsatishi kerak; sababni commit xabariga yozing.",
           "⚠️ Yangi HOT sahifa qo'shsangiz uni `SAHIFALAR` jadvaliga qo'shing — aks holda u byudjetdan tashqarida qoladi.",
           "⚠️ Jadvalga MAKET sahifasini qo'ymang: u so'rov qilmaydi va byudjet u yerda hech narsani ushlamaydi.",
           "⚠️ Lighthouse ishi `continue-on-error` — uni qat'iy darvoza qilmang, aks holda CI yolg'on yiqila boshlaydi."
-        ]
+        ],
+        "byudjet_topgan_nuqsonlar": {
+          "izoh": "⭐⭐⭐ BYUDJETNING ENG QIMMATLI NATIJASI: Lighthouse ishi BIRINCHI ishga tushirishdayoq uchta HAQIQIY a11y nuqsonini topdi (Accessibility 89/90). Hammasi o'sha kuni tuzatildi (`a9459e5`) va QO'RIQCHI TESTLAR qo'shildi (`apps/common/tests/test_a11y.py`, 19 test).",
+          "topilgan": [
+            "nomsiz havola: «Kirish» matni `hidden lg:inline` bilan yashirilgan — mobilda `display:none` va kirish daraxtida YO'Q",
+            "sarlavha sakrashi: bo'sh holat qat'iy `h3` ishlatardi, lentada undan oldingi yagona sarlavha `h1` edi",
+            "rang kontrasti: `fg-muted` OQ fonda o'tardi (4.76) lekin RANGLI fonlarda yiqilardi (4.34 va 4.23)"
+          ],
+          "qoriqcha_qoshimcha_topgan": [
+            "«Dard yozish» havolasi ham nomsiz edi (bir xil naqsh)",
+            "qidiruv sahifasida so'rovsiz holatda `h1` UMUMAN yo'q edi — Lighthouse buni ko'rmadi, chunki u faqat `/` ni tekshiradi",
+            "⚠️ QORONG'I REJIM: yorug' uchun qoraytirilgan `telegram-ink` qorong'i fonda 3.57 ga tushdi — rang tuzatishi IKKI YO'NALISHDA"
+          ],
+          "natija": "Lighthouse 89 -> 100. CI ballari: Performance 93, Accessibility 100, Best Practices 96, SEO 100.",
+          "ochiq_qolgan": "Best Practices 96 — dev serverda `/favicon.ico` 404 beradi. a11y emas, chegaradan yuqori va prodda nginx hal qiladi; loyihada favicon fayli bor-yo'qligi TEKSHIRILMAGAN."
+        }
       }
     },
     {
