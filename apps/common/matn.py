@@ -285,3 +285,157 @@ def qidiruv_uchun(matn: str) -> str:
     matn = matn.translate(APOSTROFSIZ)
 
     return BOSH_JOYLAR.sub(" ", _aksentsiz(matn)).strip()
+
+
+# ---------------------------------------------------------------------------
+# To'xtash so'zlar (D4-T7)
+# ---------------------------------------------------------------------------
+# ⚠️⚠️ NEGA KERAK — O'LCHANGAN FARQ
+#    "O'xshash muammolar" ro'yxati sarlavhalardagi umumiy so'zlar tufayli
+#    shovqin bilan to'lardi: "nima", "bo'ladi", "oydan", "beri" kabi
+#    so'zlar deyarli har sarlavhada bor va ular mavzuviy yaqinlik haqida
+#    HECH NARSA aytmaydi.
+#
+#    Jonli ma'lumotda o'lchandi ("Ipoteka to'lovini kechiktirsam nima
+#    bo'ladi?" uchun eng yaqin uchtalik):
+#
+#        to'xtash so'zlar BILAN:  0.1277 (begona)  0.1216 (to'g'ri)
+#        to'xtash so'zlarSIZ:     0.1520 (to'g'ri)  0.0076 (begona)
+#
+#    Ya'ni to'g'ri natija birinchi o'ringa chiqdi va shovqingacha
+#    bo'lgan masofa 20 barobar oshdi.
+#
+# ⚠️ PostgreSQL'ning `simple` konfiguratsiyasida to'xtash so'zlar YO'Q
+#    (o'zbek lug'ati ham yo'q — D4-T1). Shuning uchun ro'yxat shu yerda.
+#
+# ⚠️ RO'YXAT FAQAT O'XSHASHLIK UCHUN, QIDIRUV UCHUN EMAS. Foydalanuvchi
+#    "nima qilay" deb qidirsa, u shu so'zlarni TOPISHNI kutadi —
+#    qidiruvdan ularni olib tashlash so'rovni buzardi.
+#
+# ⚠️ So'zlar NORMAL shaklda (apostrofsiz, kichik harfda): ular
+#    `qidiruv_uchun()` chiqishi bilan solishtiriladi.
+TOXTASH_SOZLAR = frozenset(
+    [
+        "men",
+        "sen",
+        "biz",
+        "siz",
+        "ular",
+        "meni",
+        "sening",
+        "bizning",
+        "sizning",
+        "ularning",
+        "ozim",
+        "ozi",
+        "ozini",
+        "ozimni",
+        "nima",
+        "nimaga",
+        "nega",
+        "qanday",
+        "qanaqa",
+        "qachon",
+        "qayer",
+        "qayerda",
+        "qaysi",
+        "necha",
+        "nechta",
+        "qancha",
+        "bor",
+        "yoq",
+        "bilan",
+        "uchun",
+        "ham",
+        "lekin",
+        "ammo",
+        "yoki",
+        "agar",
+        "chunki",
+        "keyin",
+        "oldin",
+        "hozir",
+        "endi",
+        "yana",
+        "faqat",
+        "juda",
+        "kop",
+        "kam",
+        "eng",
+        "har",
+        "hech",
+        "birga",
+        "boshqa",
+        "boshqacha",
+        "haqida",
+        "qilish",
+        "qilaman",
+        "qilay",
+        "qilsam",
+        "qildim",
+        "qilgan",
+        "qilib",
+        "qiladi",
+        "boladi",
+        "bolsa",
+        "bolgan",
+        "bolib",
+        "bolmasa",
+        "bolmaydi",
+        "bolishi",
+        "edi",
+        "ekan",
+        "emas",
+        "emasmi",
+        "kerak",
+        "kerakmi",
+        "mumkin",
+        "deb",
+        "degan",
+        "deyman",
+        "deysiz",
+        "beri",
+        "buyicha",
+        "yaqin",
+        "uzoq",
+        "kun",
+        "kuni",
+        "kunlik",
+        "oydan",
+        "oylik",
+        "yilda",
+        "yillik",
+        "hafta",
+        "bir",
+        "ikki",
+        "uch",
+        "tort",
+        "besh",
+        "olti",
+        "yetti",
+        "sakkiz",
+        "toqqiz",
+    ]
+)
+
+# ⚠️ Qisqa so'zlar ham tashlanadi: uch harfli o'zbekcha so'zlarning ko'pi
+#    qo'shimcha yoki bog'lovchi ("va", "ham", "shu") va ular mavzuni
+#    belgilamaydi. Chegara ro'yxatga qaraganda barqarorroq: yangi
+#    qo'shimcha paydo bo'lsa ro'yxatni yangilash kerak emas.
+ENG_QISQA_SOZ = 4
+
+
+def mavzuli_sozlar(matn: str) -> list[str]:
+    """Matndan MAVZUNI belgilaydigan so'zlarni ajratadi (D4-T7).
+
+    ⚠️ `qidiruv_sozlari()` (ajratish.py) bilan bir xil tokenizatsiyaga
+       tayanadi — tinish belgilari so'zga yopishib qolmasin
+       ("qiladi," -> "qiladi").
+    """
+    from apps.common.ajratish import qidiruv_sozlari
+
+    return sorted(
+        soz
+        for soz in qidiruv_sozlari(matn)
+        if len(soz) >= ENG_QISQA_SOZ and soz not in TOXTASH_SOZLAR
+    )

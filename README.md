@@ -447,6 +447,9 @@ D2-T6 rasmiy ishonch telefonini talab qiladi, D2-T10 — yurist xulosasini.
 | D4-T4 | SEO asoslari — kanonik, Open Graph, avtomatik yasaladigan OG rasm |
 | D4-T5 | `sitemap.xml` va `robots.txt` — faqat ko'rinadigan kontent |
 | D4-T6 | Schema.org QAPage (JSON-LD) — Google natijada javobni ko'rsatadi |
+| D4-T7 | O'xshash muammolar — fon vazifasida hisoblanadi, keshdan ko'rsatiladi |
+
+**M4 (qidiruv va SEO) TO'LIQ TUGADI** — 7/7 task.
 
 ---
 
@@ -524,6 +527,52 @@ Ikkalasi ham `ComplaintQuerySet` da yopildi. Bu teshik tanlangan dizayndan
 kelib chiqadi: `search_vector` GENERATED ustun bo'lgani uchun uni unutish
 mumkin emas, lekin **normallashtirish baribir Python'da qoladi** — trigger
 bermaydigan bo'shliq aynan shu yerda.
+
+### O'xshash muammolar (D4-T7)
+
+Detal sahifasining yon panelida uchta yaqin savol. **Hisoblash fon
+vazifasida**: selektor faqat keshdan o'qiydi va kesh bo'sh bo'lsa vazifani
+navbatga qo'yib, bo'sh ro'yxat qaytaradi.
+
+### ⚠️⚠️ Trigram o'rniga FTS — o'lchangan qaror
+
+Task tavsifida «trigram o'xshashligi» deb yozilgan va u birinchi bo'lib
+sinaldi, lekin jonli ma'lumotda ishlamadi: butun sarlavhalar bo'yicha
+`similarity()` **mavzuviy yaqinlikni emas, harflar ustma-ustligini**
+o'lchaydi.
+
+| Usul | To'g'ri natija | Begona |
+|---|---|---|
+| `similarity()` | 0.140 | 0.118 |
+| FTS + to'xtash so'zlar | **0.152** | **0.008** |
+
+Trigram D4-T1 da o'z joyini topgan — u yerda **qisqa** so'rov uzun
+sarlavha bilan solishtiriladi va aynan shunda ishlaydi.
+
+### ⚠️ To'xtash so'zlar — faqat o'xshashlik uchun
+
+PostgreSQL'ning `simple` konfiguratsiyasida to'xtash so'zlar yo'q (o'zbek
+lug'ati ham yo'q). Ro'yxatsiz «nima», «bo'ladi», «oydan», «beri» kabi
+so'zlar reytingni shishiradi.
+
+⚠️ Ro'yxat **qidiruvga qo'llanmaydi**: foydalanuvchi «nima qilay» deb
+qidirsa, u shu so'zlarni **topishni** kutadi.
+
+### ⚠️⚠️ Keshda `pk` lar turadi, ko'rsatish ma'lumoti emas
+
+Sarlavhani keshlash bitta so'rovni tejardi, lekin post keshlangandan
+**keyin** yashirilsa, yon panel unga havola berishda davom etardi —
+ko'rinish invarianti (D2-T3) kesh muddati (24 soat) davomida buzilardi.
+`pk` lar esa har so'rovda `visible()` dan qayta o'tadi.
+
+### ⚠️ Kesh so'rov-sanog'i testlarini buzadi (ikkinchi marta)
+
+`sorovlar()` birinchi so'rov bilan keshni ilitadi va ikkinchisini
+o'lchaydi. O'xshash post **topilgan** bo'lsa ikkinchi so'rovda bitta
+qo'shimcha `pk__in` so'rovi bo'ladi, topilmagan bo'lsa — yo'q. Ya'ni
+o'lchov yechimlar soniga emas, **kesh holatiga** bog'liq bo'lib qoladi.
+
+Yechim: test yordamchilari keshni **aniq holatga** qo'yadi.
 
 ### Schema.org QAPage (D4-T6)
 

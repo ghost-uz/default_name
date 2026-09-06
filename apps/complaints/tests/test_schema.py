@@ -6,12 +6,14 @@ import json
 import re
 
 import pytest
+from django.core.cache import cache
 from django.db import connection
 from django.test import Client
 from django.test.utils import CaptureQueriesContext
 
 from apps.common.models import ModerationStatus
 from apps.complaints.factories import ComplaintFactory
+from apps.complaints.tasks import oxshash_kesh_kaliti
 from apps.solutions.factories import SolutionFactory
 from apps.solutions.services import accept_solution
 
@@ -294,6 +296,11 @@ def test_JSONLD_yechimlar_soniga_QARAB_sorov_QOSHMAYDI(anonymous_client):
     muammo = ComplaintFactory(title="Savol")
     for i in range(2):
         SolutionFactory(complaint=muammo, content=f"Javob {i}")
+
+    # ⚠️ D4-T7 keshi ANIQ holatga qo'yiladi: usiz birinchi so'rov keshni
+    #    to'ldiradi va ikkinchisi boshqa yo'ldan ketadi — o'lchov
+    #    YECHIMLAR soniga emas, KESH holatiga bog'liq bo'lib qolardi.
+    cache.set(oxshash_kesh_kaliti(muammo.pk), [], 300)
 
     with CaptureQueriesContext(connection) as ikkita:
         anonymous_client.get(muammo.get_absolute_url())

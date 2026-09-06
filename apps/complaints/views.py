@@ -46,6 +46,7 @@ from .selectors import (
     filtrni_oqish,
     kursorni_oqish,
     lenta_sahifasi,
+    oxshash_muammolar,
     qidiruv_queryset,
     saqlangan_idlari,
     saqlanganlar_queryset,
@@ -409,6 +410,9 @@ def complaint_detail(
             "complaint": muammo,
             "solutions": yechimlar,
             "schema_json": schema,
+            # ⚠️ KESHDAN keladi va bo'sh bo'lsa blok chizilmaydi (D4-T7).
+            #    Hisoblash fon vazifasida — sabab `selectors` da.
+            "oxshashlar": oxshash_muammolar(muammo),
             "solution_form": solution_form or SolutionForm(),
             "muallifmi": ozinikimi,
             "tahrirlay_oladi": muammo.tahrirlay_oladimi(request.user),

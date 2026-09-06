@@ -210,3 +210,94 @@ def og_rasmni_yangilash(complaint_id: int) -> str:
     #    ishlaydi va shu orada post tahrirlangan bo'lishi mumkin.
     muammo.save(update_fields=["og_rasm"])
     return nom
+
+
+# ===========================================================================
+# O'xshash muammolar (D4-T7)
+# ===========================================================================
+def oxshash_kesh_kaliti(complaint_id: int) -> str:
+    return f"oxshash:{complaint_id}"
+
+
+def oxshash_ish_kaliti(complaint_id: int) -> str:
+    return f"oxshash:ish:{complaint_id}"
+
+
+@shared_task(
+    name="apps.complaints.tasks.oxshash_muammolarni_hisoblash",
+    # ⚠️ Yon paneldagi ro'yxat — KOSMETIKA. Hisoblanmasa sahifa baribir
+    #    ishlaydi va blok umuman chizilmaydi. Cheksiz qayta urinish
+    #    navbatni band qiladi va hech narsani tuzatmaydi.
+    max_retries=1,
+    default_retry_delay=120,
+)
+def oxshash_muammolarni_hisoblash(complaint_id: int) -> int:
+    """Muammoga o'xshash postlarni topib, KESHGA yozadi.
+
+    ⚠️⚠️ D4-T7 QABUL MEZONI: "hisoblash fon vazifasida, so'rov paytida
+       emas". Trigram/FTS bo'yicha butun jadvalni skanerlash detal
+       sahifasining har ochilishida bo'lmasligi kerak — sahifa esa
+       lentadan keyin eng ko'p ochiladigan sahifa.
+
+    ⚠️ KESHDA `pk` LAR SAQLANADI, KO'RSATISH MA'LUMOTI EMAS.
+       Sarlavhani keshda saqlash bitta so'rovni tejardi, lekin post
+       keshlangandan KEYIN yashirilsa yoki o'chirilsa, yon panel unga
+       havola berishda davom etardi — ya'ni ko'rinish invarianti (D2-T3)
+       kesh muddati davomida buzilardi. `pk` lar esa har so'rovda
+       `visible()` dan qayta o'tadi.
+
+    ⚠️ TRIGRAM O'RNIGA FTS. Task tavsifida "trigram o'xshashligi" deb
+       yozilgan va u birinchi bo'lib sinaldi, lekin jonli ma'lumotda
+       ishlamadi: butun sarlavhalar bo'yicha `similarity()` mavzuviy
+       yaqinlikni emas, HARFLAR ustma-ustligini o'lchaydi.
+
+           similarity: to'g'ri natija 0.140, begona 0.118  (farq yo'q)
+           FTS + to'xtash so'zlar: to'g'ri 0.152, begona 0.008
+
+       Trigram D4-T1 da o'z joyini topgan (xato yozilgan SO'ROV uchun) —
+       u yerda qisqa so'rov solishtiriladi va aynan shunda ishlaydi.
+    """
+    from django.conf import settings
+    from django.contrib.postgres.search import SearchQuery, SearchRank
+    from django.core.cache import cache
+    from django.db.models import F
+
+    from apps.common.matn import mavzuli_sozlar
+
+    # korinish-istisno: manba postning O'ZI ko'rsatilmaydi — undan faqat
+    # sarlavha olinadi. Yashirilgan post tiklanganda ro'yxati tayyor
+    # turishi kerak; NATIJALAR esa quyida `visible()` dan o'tadi.
+    muammo = Complaint.all_objects.filter(pk=complaint_id).first()
+    if muammo is None:
+        log.warning("oxshash: muammo topilmadi (id=%s)", complaint_id)
+        return 0
+
+    sozlar = mavzuli_sozlar(muammo.title)
+    if not sozlar:
+        # ⚠️ Bo'sh ro'yxat ham KESHLANADI: aks holda mavzuli so'zi yo'q
+        #    sarlavha (masalan "Nima qilay?") har ochilishida yangi
+        #    vazifa yaratardi.
+        cache.set(oxshash_kesh_kaliti(complaint_id), [], settings.OXSHASH_KESH_MUDDATI)
+        return 0
+
+    sorov = SearchQuery(" OR ".join(sozlar), config="simple", search_type="websearch")
+
+    natija = list(
+        Complaint.objects.visible()
+        .exclude(pk=complaint_id)
+        .filter(search_vector=sorov)
+        # ⚠️ Vaznlar [D, C, B, A]: sarlavhadagi moslik tavsifdagidan
+        #    ancha muhimroq — biz MAVZU yaqinligini qidiryapmiz, matn
+        #    ichida tasodifan uchragan so'zni emas.
+        .annotate(
+            oxshashlik=SearchRank(
+                F("search_vector"), sorov, weights=[0.0, 0.0, 0.05, 1.0]
+            )
+        )
+        .filter(oxshashlik__gte=settings.OXSHASH_CHEGARASI)
+        .order_by("-oxshashlik", "-id")
+        .values_list("pk", flat=True)[: settings.OXSHASH_SONI]
+    )
+
+    cache.set(oxshash_kesh_kaliti(complaint_id), natija, settings.OXSHASH_KESH_MUDDATI)
+    return len(natija)

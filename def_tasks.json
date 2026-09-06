@@ -2779,10 +2779,58 @@
       "bogliq": [
         "D4-T1"
       ],
-      "holat": "todo",
+      "holat": "done",
       "qabul_mezoni": [
         "hisoblash fon vazifasida, so'rov paytida emas"
-      ]
+      ],
+      "tugatilgan": "2026-09-06",
+      "natija": {
+        "yaratilgan": [
+          "apps/common/matn.py — TOXTASH_SOZLAR (~90 so'z) va mavzuli_sozlar()",
+          "apps/complaints/tasks.py — oxshash_muammolarni_hisoblash() Celery vazifasi + kesh kalitlari",
+          "apps/complaints/selectors.py — oxshash_muammolar() (keshdan, thundering herd himoyasi bilan)",
+          "config/settings/base.py — OXSHASH_SONI/CHEGARASI/KESH_MUDDATI/ISH_MUDDATI",
+          "templates/complaints/detail.html — yon paneldagi bloк (maketdagi joyiga)",
+          "apps/complaints/tests/test_oxshash.py — 20 test"
+        ],
+        "qabul_mezonlari": {
+          "hisoblash_fon_vazifasida_sorov_paytida_emas": "✅ Selektor faqat KESHDAN o'qiydi; kesh bo'sh bo'lsa BO'SH ro'yxat qaytaradi va vazifani navbatga qo'yadi (`cache.add()` bilan FAQAT BIR MARTA — thundering herd). Iliq keshda bitta indeksli `pk__in` so'rovi (test bilan qotirilgan)."
+        },
+        "tekshirilgan": [
+          "🌐 JONLI: yon panelda 'O'xshash dardlar' bloki to'g'ri chiqdi",
+          "sovuq keshda bo'sh ro'yxat + vazifa BIR MARTA navbatga tushadi",
+          "⭐ keshlangandan KEYIN yashirilgan/o'chirilgan post KO'RSATILMAYDI (keshda `pk` lar, har so'rovda `visible()`)",
+          "tartib keshdan keladi (`pk__in` tartibni saqlamaydi)",
+          "o'zini ro'yxatga qo'shmaydi; chegara va soni sozlamadan",
+          "mavzuli so'zi yo'q sarlavha ('Nima qilay?') BO'SH ro'yxat keshlaydi",
+          "bo'sh ro'yxatda blok umuman chizilmaydi",
+          "iliq keshda BITTA qo'shimcha so'rov"
+        ],
+        "qarorlar": [
+          "⭐⭐ TRIGRAM O'RNIGA FTS — O'LCHANGAN QAROR. Task tavsifida 'trigram o'xshashligi' deb yozilgan va u BIRINCHI bo'lib sinaldi, lekin jonli ma'lumotda ishlamadi: butun sarlavhalar bo'yicha `similarity()` mavzuviy yaqinlikni emas, HARFLAR ustma-ustligini o'lchaydi.\n    similarity:  to'g'ri 0.140, begona 0.118  (farq deyarli yo'q)\n    FTS + to'xtash so'zlar: to'g'ri 0.152, begona 0.008\nTrigram D4-T1 da o'z joyini topgan (xato yozilgan QISQA so'rov uchun) — u yerda aynan shunda ishlaydi.",
+          "⭐⭐ TO'XTASH SO'ZLAR RO'YXATI (`matn.py`). PostgreSQL'ning `simple` konfiguratsiyasida ular yo'q (o'zbek lug'ati ham yo'q — D4-T1). Ro'yxatsiz 'nima', 'bo'ladi', 'oydan', 'beri' kabi so'zlar reytingni shishirardi. ⚠️ Ro'yxat FAQAT o'xshashlik uchun, QIDIRUV uchun EMAS: foydalanuvchi 'nima qilay' deb qidirsa, u shu so'zlarni TOPISHNI kutadi.",
+          "⭐⭐ KESHDA `pk` LAR, KO'RSATISH MA'LUMOTI EMAS. Sarlavhani keshlash bitta so'rovni tejardi, lekin post keshlangandan KEYIN yashirilsa yon panel unga havola berishda davom etardi — ko'rinish invarianti (D2-T3) kesh muddati (24 soat) davomida buzilardi.",
+          "⭐ VAZIFA BIR MARTA navbatga tushadi (`cache.add()`): sovuq keshdagi mashhur postga bir vaqtda kelgan 100 ta so'rov 100 ta bir xil vazifa yaratardi.",
+          "Bo'sh ro'yxat HAM keshlanadi: aks holda mavzuli so'zi yo'q sarlavha har ochilishida yangi vazifa yaratardi.",
+          "Kesh bo'sh bo'lsa blok UMUMAN chizilmaydi (D3-T3 dagi reyting bloki bilan bir xil qaror: bo'sh ro'yxatli quti chalkash).",
+          "`ts_rank` qiymatlari so'rovlar orasida taqqoslanmaydi (so'z soniga bog'liq) — chegara 'sifat o'lchovi' emas, faqat pol. Sifatning asosiy manbai to'xtash so'zlar ro'yxati."
+        ],
+        "topilgan_xatolar": [
+          "⭐⭐ KESH SO'ROV-SANOG'I TESTLARINI BUZDI (ikkinchi marta shu turdagi xato): `sorovlar()` birinchi so'rov bilan keshni ilitadi va ikkinchisini o'lchaydi. O'xshash post TOPILGAN bo'lsa ikkinchi so'rovda bitta qo'shimcha `pk__in` so'rovi bo'ladi, topilmagan bo'lsa — yo'q. `ComplaintFactory` ketma-ket deyarli bir xil sarlavha yasagani uchun ikkinchi muammo birinchisini 'o'xshash' deb topardi (9 va 10). Tuzatish: `batafsil_toldirish()` va JSON-LD testi keshni ANIQ holatga qo'yadi — bo'sh emas, ya'ni `pk__in` yo'li o'lchovga KIRADI.",
+          "⚠️ Jonli tekshiruvda eski `runserver` jarayoni portni band qilib turgan va yangisi ishga tushmagan; log faqat GET qatorlari bo'yicha ko'rilgani uchun sabab darhol ko'rinmadi. Dev'da kesh ikki jarayon o'rtasida bo'lishishi uchun `USE_REDIS_IN_DEV=1` SHART."
+        ],
+        "olchangan_holat": {
+          "testlar": 1145,
+          "qamrov_foiz": 95.38,
+          "d4_t7_testlari": 20,
+          "toxtash_sozlar": 90
+        },
+        "keyingi_uchun_eslatma": [
+          "⚠️ Yangi post qo'shilganda ESKI postlarning ro'yxati eskiradi — to'liq qayta hisoblash O(n²) va unga arzimaydi. Kesh 24 soatda o'zi yangilanadi.",
+          "⚠️ DEV'da yon panel ko'rinishi uchun `USE_REDIS_IN_DEV=1` kerak (locmem jarayonlar orasida bo'lishilmaydi) VA Celery worker ishlab turishi kerak — aks holda vazifa navbatda qoladi.",
+          "⚠️ Sifat baza o'sishi bilan yaxshilanadi. Keyingi lever — to'xtash so'zlar ro'yxatini haqiqiy kontent asosida kengaytirish (`apps/common/matn.py`)."
+        ]
+      }
     },
     {
       "id": "D5-T1",

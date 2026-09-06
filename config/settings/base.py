@@ -384,6 +384,33 @@ QIDIRUV_TAKLIF_SONI = 5
 
 
 # --------------------------------------------------------------------------
+# O'xshash muammolar (D4-T7)
+# --------------------------------------------------------------------------
+# ⚠️ Maketda yon panelda AYNAN uchta joy bor. Ko'proq ko'rsatish sahifani
+#    uzaytiradi va asosiy kontentdan (yechimlardan) chalg'itadi.
+OXSHASH_SONI = 3
+
+# ⚠️ Eng kuchsiz shovqinni kesish uchun. Chegarani KO'TARISH ro'yxatni
+#    tez-tez BO'SH qoldiradi (kichik bazada o'xshashlik baribir past),
+#    tushirish esa aloqasiz havolalarni chiqaradi.
+#
+# ⚠️ `ts_rank` qiymatlari SO'ROVLAR ORASIDA taqqoslanmaydi: ular so'z
+#    soniga bog'liq. Shuning uchun bu chegara "sifat o'lchovi" emas,
+#    faqat pol. Sifatning asosiy manbai — to'xtash so'zlar ro'yxati
+#    (`apps/common/matn.py`).
+OXSHASH_CHEGARASI = 0.02
+
+# Kesh muddati. Yangi post qo'shilganda eski postlarning ro'yxati
+# eskiradi — to'liq qayta hisoblash O(n²) va unga arzimaydi.
+OXSHASH_KESH_MUDDATI = 60 * 60 * 24  # 24 soat
+
+# ⚠️ "Hisoblash navbatda" belgisi muddati (D4-T7). Busiz sovuq keshdagi
+#    mashhur postga bir vaqtda kelgan 100 ta so'rov 100 ta bir xil
+#    vazifani navbatga qo'yardi.
+OXSHASH_ISH_MUDDATI = 300
+
+
+# --------------------------------------------------------------------------
 # Autentifikatsiya
 # --------------------------------------------------------------------------
 AUTH_PASSWORD_VALIDATORS = [

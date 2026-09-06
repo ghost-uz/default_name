@@ -489,3 +489,62 @@ def taxminiy_natijalar(
         .filter(oxshashlik__gte=chegara)
         .order_by("-oxshashlik", "-id")[:limit]
     )
+
+
+# ===========================================================================
+# O'xshash muammolar (D4-T7)
+# ===========================================================================
+def oxshash_muammolar(muammo: Complaint) -> list[Complaint]:
+    """Yon paneldagi "O'xshash dardlar" ro'yxati — KESHDAN.
+
+    ⚠️⚠️ HISOBLASH BU YERDA EMAS (D4-T7 qabul mezoni). Kesh bo'sh bo'lsa
+       funksiya BO'SH ro'yxat qaytaradi va vazifani navbatga qo'yadi —
+       keyingi tashrifchi tayyor ro'yxatni ko'radi.
+
+       "Yo'q bo'lsa hisoblab, keshga solamiz" jozibali ko'rinadi, lekin
+       u qabul mezonini buzardi: butun jadval bo'ylab skanerlash detal
+       sahifasining HAR ochilishida bo'lardi (D3-T3 dagi reyting bilan
+       bir xil mantiq).
+
+    ⚠️ VAZIFA FAQAT BIR MARTA NAVBATGA TUSHADI. `cache.add()` faqat
+       kalit yo'q bo'lsa yozadi va `True` qaytaradi — ya'ni sovuq
+       keshdagi mashhur postga bir vaqtda kelgan 100 ta so'rovdan
+       FAQAT BIRINCHISI vazifa yaratadi (thundering herd).
+
+    ⚠️⚠️ KESHDA `pk` LAR TURADI VA ULAR HAR SAFAR `visible()` DAN
+       QAYTA O'TADI. Sarlavhani keshda saqlash bitta so'rovni tejardi,
+       lekin post keshlangandan KEYIN yashirilsa, yon panel unga
+       havola berishda davom etardi — ko'rinish invarianti (D2-T3)
+       kesh muddati (24 soat) davomida buzilardi.
+    """
+    from django.conf import settings
+    from django.core.cache import cache
+
+    from .tasks import (
+        oxshash_ish_kaliti,
+        oxshash_kesh_kaliti,
+        oxshash_muammolarni_hisoblash,
+    )
+
+    pklar = cache.get(oxshash_kesh_kaliti(muammo.pk))
+
+    if pklar is None:
+        if cache.add(oxshash_ish_kaliti(muammo.pk), 1, settings.OXSHASH_ISH_MUDDATI):
+            oxshash_muammolarni_hisoblash.delay(muammo.pk)
+        return []
+
+    if not pklar:
+        return []
+
+    # ⚠️ Tartib KESHDAN keladi (o'xshashlik bo'yicha), bazadan emas:
+    #    `pk__in` tartibni saqlamaydi va eng o'xshashi uchinchi o'ringa
+    #    tushib qolardi.
+    tartib = {pk: oringa for oringa, pk in enumerate(pklar)}
+
+    natijalar = list(
+        Complaint.objects.visible()
+        .filter(pk__in=pklar)
+        .only("slug", "title", "status", "solutions_count")
+    )
+    natijalar.sort(key=lambda m: tartib[m.pk])
+    return natijalar

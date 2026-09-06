@@ -18,12 +18,14 @@
 from __future__ import annotations
 
 import pytest
+from django.core.cache import cache
 from django.test import Client
 
 from apps.common.models import VoteValue
 from apps.common.voting import cast_vote
 from apps.complaints.factories import CategoryFactory, ComplaintFactory
 from apps.complaints.models import ComplaintVote, SavedComplaint
+from apps.complaints.tasks import oxshash_kesh_kaliti
 from apps.solutions.factories import ExpertSolutionFactory, SolutionFactory
 from apps.solutions.models import SolutionVote
 
@@ -163,6 +165,22 @@ def batafsil_toldirish(*, yechimlar: int, user=None):
                 user=user,
                 value=VoteValue.UP,
             )
+
+    # ⚠️⚠️ D4-T7 DA QO'SHILDI: o'xshashlar keshi ANIQ holatga qo'yiladi.
+    #
+    #    Usiz so'rov soni KESH HOLATIGA bog'liq bo'lib qolgandi va
+    #    testlar tasodifiy yiqilardi: `sorovlar()` birinchi so'rov bilan
+    #    keshni ilitadi, ikkinchisini o'lchaydi. Agar o'xshash post
+    #    TOPILGAN bo'lsa ikkinchi so'rovda bitta qo'shimcha `pk__in`
+    #    so'rovi bo'ladi, topilmagan bo'lsa — yo'q. `ComplaintFactory`
+    #    esa ketma-ket deyarli bir xil sarlavha yasaydi, ya'ni ikkinchi
+    #    muammo birinchisini "o'xshash" deb topardi va faqat u
+    #    qo'shimcha so'rov qilardi (9 va 10).
+    #
+    #    Kesh BO'SH EMAS qilib qo'yiladi — ya'ni `pk__in` yo'li
+    #    o'lchovga KIRADI: bu jonli holatga mos va chegara testi
+    #    haqiqiy narxni ko'rsatadi.
+    cache.set(oxshash_kesh_kaliti(muammo.pk), [ComplaintFactory().pk], 300)
     return muammo
 
 

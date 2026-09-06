@@ -311,10 +311,37 @@
         </section>
 
         {% comment %}
-          ⚠️ Maketdagi "O'xshash dardlar" bloki OLIB TASHLANDI — u qattiq
-             yozilgan namunalardan iborat edi. Haqiqiysi D4-T7 (trigram
-             o'xshashligi) da qo'shiladi.
+          ---------- O'xshash dardlar (D4-T7) ----------
+
+          ⚠️ Ro'yxat KESHDAN keladi va bu yerda HECH QANDAY hisoblash
+             yo'q (qabul mezoni). Kesh bo'sh bo'lsa blok UMUMAN
+             chizilmaydi — bo'sh ro'yxatli quti chalkash bo'lardi
+             (D3-T3 dagi reyting bloki bilan bir xil qaror).
+
+          ⚠️ Bu ichki havolalar SEO uchun ham ishlaydi: ular Google'ga
+             saytning mavzuviy tuzilishini ko'rsatadi va foydalanuvchini
+             javobsiz sahifadan boshqa savolga olib o'tadi.
         {% endcomment %}
+        {% if oxshashlar %}
+          <section class="card overflow-hidden" aria-labelledby="oxshash-h">
+            <h2 id="oxshash-h" class="border-b border-line px-4 py-3 text-sm font-bold">
+              O'xshash dardlar
+            </h2>
+            <ul class="divide-y divide-line">
+              {% for oxshash in oxshashlar %}
+                <li>
+                  <a href="{{ oxshash.get_absolute_url }}" class="block px-4 py-3 transition-colors hover:bg-surface-2">
+                    <span class="clamp-2 text-[14px] font-medium leading-snug">{{ oxshash.title }}</span>
+                    <span class="mt-1 flex items-center gap-2 text-[12px] text-fg-muted">
+                      {% if oxshash.is_solved %}<span class="badge-solved">Yechilgan</span>{% endif %}
+                      <span class="tnum">{{ oxshash.solutions_count }} yechim</span>
+                    </span>
+                  </a>
+                </li>
+              {% endfor %}
+            </ul>
+          </section>
+        {% endif %}
 
         <section class="card border-primary/30 bg-primary/5 p-4">
           <h2 class="text-sm font-bold">Sizda ham shunday muammo bormi?</h2>
