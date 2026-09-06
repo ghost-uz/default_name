@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% comment %}
+  Bildirishnoma sozlamalari (D5-T4).
+
+  ⚠️ Sahifa `noindex`: shaxsiy sozlama qidiruv tizimida turmasligi
+     kerak (bildirishnomalar ro'yxati bilan bir xil qaror).
+{% endcomment %}
+
+{% block title %}Bildirishnoma sozlamalari — Dard.uz{% endblock %}
+{% block description %}Qaysi bildirishnomalar Telegram'ga yuborilishini tanlang.{% endblock %}
+
+{% block head_extra %}
+  <meta name="robots" content="noindex, nofollow" />
+{% endblock %}
+
+{% block kanonik %}{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-2xl px-4 py-6 lg:px-6">
+  <main id="main">
+    <nav class="mb-4 text-sm text-fg-muted" aria-label="Yo'l">
+      <a href="{% url 'bildirishnomalar' %}" class="hover:text-fg hover:underline">Bildirishnomalar</a>
+      <span aria-hidden="true"> / </span>
+      <span class="text-fg">Sozlamalar</span>
+    </nav>
+
+    <h1 class="mb-2 text-2xl font-extrabold">Bildirishnoma sozlamalari</h1>
+
+    {% comment %}
+      ⚠️ Bu izoh FOYDALANUVCHI uchun ham muhim: u "o'chirsam umuman
+         bilmay qolaman" deb o'ylamasin. Aks holda hech kim hech
+         narsani o'chirmaydi va sozlama ma'nosiz bo'lib qoladi.
+    {% endcomment %}
+    <p class="mb-6 text-[15px] leading-relaxed text-fg-muted">
+      Bu sozlamalar faqat <strong class="font-semibold text-fg">Telegram</strong>ga
+      tegishli. O'chirilgan bildirishnoma ham
+      <a href="{% url 'bildirishnomalar' %}" class="text-primary hover:underline">markazda</a>
+      ko'rinadi — hech narsa yo'qolmaydi.
+    </p>
+
+    <form method="post" class="card divide-y divide-line">
+      {% csrf_token %}
+
+      <fieldset class="p-4">
+        <legend class="mb-3 text-sm font-bold">Telegram'ga yuborilsin</legend>
+        <div class="space-y-3">
+          {% for maydon in form.tur_maydonlari %}
+            <label class="flex cursor-pointer items-start gap-3">
+              {{ maydon }}
+              <span class="text-[15px] leading-snug">{{ maydon.label }}</span>
+            </label>
+          {% endfor %}
+        </div>
+      </fieldset>
+
+      <fieldset class="p-4">
+        <legend class="mb-3 text-sm font-bold">Tinchlik</legend>
+        <label class="flex cursor-pointer items-start gap-3">
+          {{ form.jim_soatlar }}
+          <span class="text-[15px] leading-snug">
+            {{ form.jim_soatlar.label }}
+            <span class="mt-0.5 block text-[13px] text-fg-muted">{{ form.jim_soatlar.help_text }}</span>
+          </span>
+        </label>
+      </fieldset>
+
+      <div class="p-4">
+        <button type="submit" class="btn-primary w-full sm:w-auto">Saqlash</button>
+      </div>
+    </form>
+  </main>
+</div>
+
+<div class="h-16 lg:hidden" aria-hidden="true"></div>
+{% endblock %}

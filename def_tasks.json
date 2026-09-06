@@ -3058,10 +3058,59 @@
       "bogliq": [
         "D5-T2"
       ],
-      "holat": "todo",
+      "holat": "done",
       "qabul_mezoni": [
         "standart holatda faqat muhim bildirishnomalar yoqiq"
-      ]
+      ],
+      "tugatilgan": "2026-09-06",
+      "natija": {
+        "yaratilgan": [
+          "apps/notifications/sozlama.py — MUHIM_TURLAR, standart_yoqilganmi(), jim_vaqtmi(), jim_oyna_tugashigacha()",
+          "apps/notifications/models.py — BildirishnomaSozlamasi + migratsiya 0002",
+          "apps/notifications/forms.py — SozlamaForm (maydonlar BildirishnomaTuri dan avtomatik quriladi)",
+          "apps/notifications/views.py — sozlamalar ko'rinishi; urls.py — /bildirishnomalar/sozlama/",
+          "apps/notifications/tasks.py — yetkazishdan oldin sozlama va jim soat tekshiruvi",
+          "templates/notifications/sozlamalar.html + royxat.html ga havola",
+          "config/settings/base.py — JIM_SOATLAR_BOSHI/OXIRI",
+          "apps/notifications/tests_sozlama.py — 20 test"
+        ],
+        "qabul_mezonlari": {
+          "standart_holatda_faqat_muhim_bildirishnomalar_yoqiq": "✅ `MUHIM_TURLAR` — ATAYLAB yopiq ro'yxat: yangi tur qo'shilganda u standart holatda O'CHIQ bo'ladi. Test HAR turni aylanib chiqadi, ya'ni yangi tur qo'shilsa test uni avtomatik qamrab oladi."
+        },
+        "tekshirilgan": [
+          "⭐⭐ o'chirilgan turda ham `Notification` YOZUVI yaratiladi — faqat Telegram xabari to'xtaydi",
+          "⭐ jim soatda xabar TASHLANMAYDI, `apply_async(countdown=)` bilan ertalabgacha kechiktiriladi",
+          "⭐ jim oyna YARIM TUNDAN o'tadi (22:00 -> 08:00) va chegaralari aniq (22:00 kiradi, 08:00 kirmaydi)",
+          "sozlama qatori YO'Q foydalanuvchida standart xulq ishlaydi",
+          "noma'lum kalit (olib tashlangan tur) xato bermaydi",
+          "sahifa kirish talab qiladi, `noindex`, markazdan havola bor",
+          "saqlash `update_or_create` bilan ishlaydi va holat qayta ko'rsatiladi",
+          "JONLI brauzerda: standart holat -> ikkita katakcha o'chirildi -> saqlandi -> server qayta ishga tushgach ham saqlangan holat qaytdi"
+        ],
+        "qarorlar": [
+          "⭐⭐ SOZLAMA YETKAZISHNI BOSHQARADI, YOZUVNI EMAS. O'chirilgan tur uchun ham `Notification` yaratiladi, faqat Telegram xabari yuborilmaydi. Sabab: ichki markaz (D5-T1) — ZAXIRA kanal. «Telegram'da bezovta qilmang» degan odam «menga umuman aytmang» demagan; u saytga kirganda nima bo'lganini ko'rishi kerak. Yozuvni ham to'xtatish tarixni yo'q qilardi va uni qaytarib bo'lmasdi.",
+          "⭐⭐ JIM SOATDA XABAR KECHIKTIRILADI, TASHLANMAYDI. «Tunda yubormaslik» ni «umuman yubormaslik» deb tushunish oson va noto'g'ri: foydalanuvchi tunda bezovta qilinmaslikni so'radi, xabardan voz kechishni emas.",
+          "⭐ Kechiktirish `apply_async(countdown=)` bilan, `self.retry()` bilan EMAS: jim soat XATO emas va u `max_retries=4` hisobini yeb qo'yardi — ertalab Telegram'da haqiqiy nosozlik bo'lsa urinish qolmasdi.",
+          "⭐ `MUHIM_TURLAR` ATAYLAB yopiq: yangi tur standart holatda O'CHIQ. Tanlov ehtiyotkor tomonga xato qiladi — unutib qo'yish hech kimni bezovta qilmaydi, teskarisi esa botdan chiqib ketishga olib kelardi.",
+          "Sozlama QATORI faqat foydalanuvchi formani saqlaganda yaratiladi; tegmaganda u umuman yo'q va standart xulq ishlaydi. `getattr(oluvchi, 'bildirishnoma_sozlamasi', None)` ishlaydi chunki `RelatedObjectDoesNotExist` `AttributeError` dan MEROS OLADI.",
+          "Forma maydonlari `BildirishnomaTuri` dan AVTOMATIK quriladi: yangi tur qo'shilganda forma o'zi kengayadi va uni yangilashni unutish mumkin emas. `ModelForm` emas — `turlar` JSON lug'at va uni bitta maydon qilib ko'rsatish foydalanuvchiga JSON yozdirish bo'lardi."
+        ],
+        "topilgan_xatolar": [
+          "⭐ O'Z TESTIM YOLG'ON EDI: «modul darajasidagi vidjet nusxasi maydonlar orasida ulashiladi» deb qo'riqchi test yozdim. Uni ATAYLAB buzganimda YIQILMADI — Django `Field.__init__` da berilgan vidjetni `copy.deepcopy` qiladi (`django/forms/fields.py`). Test olib tashlandi, izoh haqiqatga moslashtirildi. Yiqila olmaydigan test testsizlikdan yomonroq: u ishonch beradi, lekin hech narsani ushlamaydi.",
+          "Ikkita assertion `html.count('checked') >= 3` shaklida edi — zaif orakul (boshqa shablondagi tasodifiy so'zdan ham o'tardi). Aynan QAYSI katakcha belgilangani tekshiriladigan qilib almashtirildi.",
+          "Katakchalar loyiha konvensiyasidagi sinfsiz (`mt-0.5 h-4 w-4`) chiqayotgandi — shablon `{{ maydon }}` ni ishlatgani uchun sinf VIDJETGA qo'shildi."
+        ],
+        "olchangan_holat": {
+          "testlar": 1231,
+          "qamrov_foiz": 95.46,
+          "d5_t4_testlari": 20
+        },
+        "keyingi_uchun_eslatma": [
+          "⚠️ Yangi bildirishnoma turi qo'shsangiz u standart holatda O'CHIQ bo'ladi. Muhim deb hisoblasangiz `MUHIM_TURLAR` ga ONGLI ravishda qo'shing — forma va testlar o'zi moslashadi.",
+          "⚠️ Jim soat oynasi MAHALLIY vaqtda (`Asia/Tashkent`). UTC bilan solishtirish oynani besh soatga siljitardi.",
+          "⚠️ Jim soatda vazifa O'ZINI qayta navbatga qo'yadi — Celery worker ertalabgacha ishlab turishi kerak."
+        ]
+      }
     },
     {
       "id": "D5-T5",

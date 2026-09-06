@@ -15,6 +15,7 @@ from celery import shared_task
 from django.conf import settings
 
 from .models import Notification
+from .sozlama import jim_oyna_tugashigacha, jim_vaqtmi
 from .telegram import (
     TelegramBloklandi,
     TelegramVaqtinchalik,
@@ -73,7 +74,9 @@ def telegram_yuborish(self, notification_id: int) -> str:
        sanaydi va monitoring shovqinini oshiradi.
     """
     bildirishnoma = (
-        Notification.objects.select_related("recipient", "complaint")
+        Notification.objects.select_related(
+            "recipient", "complaint", "recipient__bildirishnoma_sozlamasi"
+        )
         .filter(pk=notification_id)
         .first()
     )
@@ -88,6 +91,22 @@ def telegram_yuborish(self, notification_id: int) -> str:
         return "telegram yo'q"
     if oluvchi.telegram_bloklandi:
         return "bloklangan"
+
+    # ⚠️ SOZLAMA (D5-T4). Yozuv ALLAQACHON yaratilgan — bu yerda faqat
+    #    YETKAZISH to'xtatiladi. Ichki markaz zaxira kanal bo'lib
+    #    qolaveradi (sabab `sozlama.py` docstring'ida).
+    sozlama = getattr(oluvchi, "bildirishnoma_sozlamasi", None)
+    if sozlama is not None and not sozlama.yoqilganmi(bildirishnoma.turi):
+        return "o'chirilgan"
+
+    # ⚠️ JIM SOATLAR: xabar TASHLANMAYDI, ertalabgacha KECHIKTIRILADI.
+    #    `countdown` bilan qayta navbatga qo'yiladi — `retry` EMAS,
+    #    chunki bu xato emas va `max_retries` ni yeb qo'ymasligi kerak.
+    if (sozlama is None or sozlama.jim_soatlar) and jim_vaqtmi():
+        telegram_yuborish.apply_async(
+            args=[notification_id], countdown=jim_oyna_tugashigacha()
+        )
+        return "jim soat"
 
     try:
         xabar_yuborish(

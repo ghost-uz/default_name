@@ -6,7 +6,7 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.http import HttpRequest, HttpResponse
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 
 from .services import bildirishnomalar_royxati, hammasini_oqilgan_deb_belgilash
 
@@ -48,4 +48,33 @@ def bildirishnomalar(request: HttpRequest) -> HttpResponse:
             "bildirishnomalar": bildirishnomalar_royxati_sahifasi,
             "sahifa": sahifa,
         },
+    )
+
+
+@login_required
+def sozlamalar(request: HttpRequest) -> HttpResponse:
+    """Bildirishnoma sozlamalari (D5-T4).
+
+    ⚠️ Sozlama YETKAZISHNI boshqaradi, yozuvni emas: o'chirilgan turda
+       ham bildirishnoma markazda ko'rinadi (sabab `sozlama.py` da).
+    """
+    from django.contrib import messages
+
+    from .forms import SozlamaForm
+
+    sozlama = getattr(request.user, "bildirishnoma_sozlamasi", None)
+
+    if request.method == "POST":
+        form = SozlamaForm(request.POST, sozlama=sozlama)
+        if form.is_valid():
+            form.saqlash(user=request.user)
+            messages.success(request, "Sozlamalar saqlandi.")
+            return redirect("bildirishnoma_sozlamalari")
+    else:
+        form = SozlamaForm(sozlama=sozlama)
+
+    return render(
+        request,
+        "notifications/sozlamalar.html",
+        {"active_nav": "profile", "form": form},
     )

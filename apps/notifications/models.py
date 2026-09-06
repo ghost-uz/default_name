@@ -160,3 +160,70 @@ class Notification(TimeStampedModel):
         if self.solution_id is not None:
             return f"{yol}#yechim-{self.solution_id}"
         return yol
+
+
+class BildirishnomaSozlamasi(TimeStampedModel):
+    """Foydalanuvchining yetkazish sozlamalari (D5-T4).
+
+    ⚠️⚠️ SOZLAMA YETKAZISHNI BOSHQARADI, YOZUVNI EMAS: o'chirilgan tur
+       uchun ham `Notification` yaratiladi, faqat Telegram xabari
+       yuborilmaydi. Sabab `apps/notifications/sozlama.py` da.
+
+    ⚠️ QATOR HAR FOYDALANUVCHI UCHUN YARATILMAYDI. Sozlamaga tegmagan
+       odamda bu yozuv umuman bo'lmaydi va standart xulq ishlatiladi
+       (`sozlama.standart_yoqilganmi`). Millionlab bo'sh qator yozish
+       bekorga joy va migratsiya yuki bo'lardi.
+    """
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        verbose_name="foydalanuvchi",
+        on_delete=models.CASCADE,
+        related_name="bildirishnoma_sozlamasi",
+    )
+
+    # ⚠️ JSON, ALOHIDA USTUNLAR EMAS — o'lchangan almashuv:
+    #    har yangi tur uchun migratsiya yozish kerak bo'lardi va u
+    #    ALLAQACHON kerak (`BildirishnomaTuri` — `choices`), ya'ni
+    #    ikkinchi migratsiya faqat takror bo'lardi.
+    #
+    #    ⚠️ Kalitlar `BildirishnomaTuri` qiymatlari. Noma'lum kalit
+    #    JIMGINA e'tiborsiz qoldiriladi (`yoqilganmi` ga qarang):
+    #    tur olib tashlangach eski sozlama xato bermasligi kerak.
+    turlar = models.JSONField(
+        "turlar bo'yicha",
+        default=dict,
+        blank=True,
+        help_text="{tur: yoqilganmi}. Berilmagan tur standart holatda.",
+    )
+
+    # ⚠️ Oynaning O'ZI global sozlamada (`JIM_SOATLAR_*`), bu yerda faqat
+    #    yoqish/o'chirish. Har foydalanuvchiga vaqt tanlatish sozlamalar
+    #    sahifasini murakkablashtirardi, foyda esa kichik: deyarli hamma
+    #    tunda uxlaydi.
+    jim_soatlar = models.BooleanField(
+        "jim soatlar",
+        default=True,
+        help_text="Kechasi kelgan xabar ertalabgacha kechiktiriladi.",
+    )
+
+    class Meta:
+        verbose_name = "bildirishnoma sozlamasi"
+        verbose_name_plural = "bildirishnoma sozlamalari"
+
+    def __str__(self) -> str:
+        return f"{self.user_id} sozlamasi"
+
+    def yoqilganmi(self, turi: str) -> bool:
+        """Shu tur Telegram'ga yuborilsinmi.
+
+        ⚠️ Sozlamada YO'Q tur standart holatga qaytadi — ya'ni yangi
+           tur qo'shilganda eski foydalanuvchilarda u o'zi paydo
+           bo'lmaydi (D5-T4 qabul mezoni: standartda faqat muhimlari).
+        """
+        from .sozlama import standart_yoqilganmi
+
+        qiymat = self.turlar.get(turi)
+        if isinstance(qiymat, bool):
+            return qiymat
+        return standart_yoqilganmi(turi)

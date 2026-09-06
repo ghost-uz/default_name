@@ -7,4 +7,9 @@ from . import views
 urlpatterns = [
     # Manzil o'zbekcha (config/urls.py qoidasi).
     path("bildirishnomalar/", views.bildirishnomalar, name="bildirishnomalar"),
+    path(
+        "bildirishnomalar/sozlama/",
+        views.sozlamalar,
+        name="bildirishnoma_sozlamalari",
+    ),
 ]

@@ -470,6 +470,7 @@ D2-T6 rasmiy ishonch telefonini talab qiladi, D2-T10 — yurist xulosasini.
 | D5-T1 | Bildirishnomalar markazi — ichki kanal, sarlavhada o'qilmaganlar belgisi |
 | D5-T2 | Telegram bot — fon vazifasi, qayta urinish, bloklanganni belgilash |
 | D5-T3 | Kanalga avto-post — kuniga 3 ta qaynoq savol, takrorsiz, muallifsiz |
+| D5-T4 | Bildirishnoma sozlamalari — tur bo'yicha yoqish/o'chirish, jim soatlar |
 
 ---
 
@@ -547,6 +548,43 @@ Ikkalasi ham `ComplaintQuerySet` da yopildi. Bu teshik tanlangan dizayndan
 kelib chiqadi: `search_vector` GENERATED ustun bo'lgani uchun uni unutish
 mumkin emas, lekin **normallashtirish baribir Python'da qoladi** — trigger
 bermaydigan bo'shliq aynan shu yerda.
+
+### Bildirishnoma sozlamalari (D5-T4)
+
+`/bildirishnomalar/sozlama/` — har tur uchun alohida katakcha va «jim
+soatlar» (`JIM_SOATLAR_BOSHI` -> `JIM_SOATLAR_OXIRI`, standart
+22:00-08:00, **mahalliy** vaqtda).
+
+Standart holatda faqat `MUHIM_TURLAR` yoqiq. Ro'yxat **ataylab yopiq**:
+yangi tur qo'shilganda u standart holatda **o'chiq** bo'ladi — tanlov
+ehtiyotkor tomonga xato qiladi, chunki ortiqcha bildirishnoma botdan
+chiqib ketishga olib keladi va **u qaytmaydi**.
+
+### ⚠️⚠️ Sozlama yetkazishni boshqaradi, yozuvni emas
+
+O'chirilgan tur uchun ham `Notification` **yaratiladi** — faqat Telegram
+xabari yuborilmaydi.
+
+Ichki markaz (D5-T1) — **zaxira** kanal. «Telegram'da bezovta qilmang»
+degan odam «menga umuman aytmang» demagan: u saytga kirganda nima
+bo'lganini ko'rishi kerak. Yozuvni ham to'xtatish tarixni yo'q qilardi
+va uni qaytarib bo'lmasdi.
+
+### ⚠️⚠️ Jim soatda xabar kechiktiriladi, tashlanmaydi
+
+«Tunda yubormaslik» ni «umuman yubormaslik» deb tushunish oson va
+noto'g'ri: foydalanuvchi tunda bezovta qilinmaslikni so'radi, xabardan
+voz kechishni emas.
+
+Kechiktirish `apply_async(countdown=...)` bilan, `self.retry()` bilan
+**emas**: jim soat xato emas va u `max_retries` hisobini yeb qo'yardi —
+ertalab Telegram'da haqiqiy nosozlik bo'lsa urinish qolmasdi.
+
+### ⚠️ Jim oyna yarim tundan o'tadi
+
+22:00 -> 08:00 oynasida oddiy `boshlanish <= hozir < tugash` taqqoslash
+**har doim `False`** beradi — va xato bermaydi, shunchaki jimgina «jim
+soat yo'q» deydi. `jim_vaqtmi()` ikkala holatni ham qaraydi.
 
 ### Kanalga avto-post (D5-T3)
 

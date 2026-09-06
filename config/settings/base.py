@@ -12,6 +12,7 @@ Muhit o'zgaruvchilari `.env` faylidan va `os.environ` dan o'qiladi
 """
 
 import os
+from datetime import time as _time
 from pathlib import Path
 from typing import Any
 
@@ -424,6 +425,16 @@ BILDIRISHNOMA_KESH_MUDDATI = 300  # 5 daqiqa
 BILDIRISHNOMA_BELGI_CHEGARASI = 99
 
 BILDIRISHNOMA_SAHIFA_HAJMI = 30
+
+# ⚠️ JIM SOATLAR (D5-T4) — MAHALLIY vaqt bo'yicha (`TIME_ZONE`).
+#    Oyna yarim tundan o'tadi (22:00 -> 08:00) va uni tekshirish oddiy
+#    `boshlanish <= hozir < tugash` bilan ISHLAMAYDI — sabab
+#    `apps/notifications/sozlama.py` da.
+#
+# ⚠️ Xabar TASHLANMAYDI, KECHIKTIRILADI: foydalanuvchi tunda bezovta
+#    qilinmaslikni so'radi, xabardan voz kechishni emas.
+JIM_SOATLAR_BOSHI = _time(22, 0)
+JIM_SOATLAR_OXIRI = _time(8, 0)
 
 
 # --------------------------------------------------------------------------
