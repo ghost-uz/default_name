@@ -3480,10 +3480,69 @@
       "bogliq": [
         "D1-T14"
       ],
-      "holat": "todo",
+      "holat": "done",
       "qabul_mezoni": [
         "byudjet oshsa CI ogohlantiradi"
-      ]
+      ],
+      "tugatilgan": "2026-09-06",
+      "natija": {
+        "yaratilgan": [
+          "apps/common/byudjet.py — SAHIFALAR va AKTIVLAR jadvali (yagona manba) + RENDER_MS/LIGHTHOUSE_BALL",
+          "apps/common/tests/test_byudjet.py — 17 test (so'rov, hajm, aktiv QAT'IY; render vaqti OGOHLANTIRADI)",
+          "apps/common/management/commands/byudjet.py — dasturchi hisoboti (HAQIQIY ma'lumot ustida)",
+          "apps/common/tests/test_byudjet_buyruq.py — 7 test",
+          ".github/workflows/ci.yml — Lighthouse ishi (continue-on-error) + CI holati sharti qayta yozildi"
+        ],
+        "qabul_mezonlari": {
+          "byudjet_oshsa_ci_ogohlantiradi": "✅ IKKI DARAJADA. Deterministik o'lchamlar (so'rov, javob hajmi, aktiv hajmi) `test` ishida QAT'IY yiqitadi; deterministik BO'LMAGANLARI (render vaqti, Lighthouse) `::warning::` annotatsiyasi va bosqich xulosasi bilan OGOHLANTIRADI. Mezon aynan «ogohlantiradi» deb yozilgan."
+        },
+        "tekshirilgan": [
+          "⭐⭐ `select_related` olib tashlanganda so'rov byudjeti YIQILDI (lenta 37/4, qidiruv 38/5) — xato xabari o'zi tashxis qo'yadi",
+          "⭐⭐ CSS ikki barobar qilinganda aktiv byudjeti YIQILDI (113 KB/75 KB)",
+          "⭐ render falokat chegarasi (10× ) ishlaydi — chegara pasaytirilganda test yiqildi",
+          "buyruq bo'sh bazada YIQILMAYDI («post yo'q», «foydalanuvchi yo'q»)",
+          "buyruq `kirgan` sahifani HAQIQATAN kirgan holda o'lchaydi (7 > 2 so'rov)",
+          "`--github` xulosaga yozadi va `::warning::` chiqaradi; `--qatiy` yiqitadi",
+          "CI YAML sintaksisi tekshirildi; Lighthouse `needs` da bor lekin yiqilish shartida YO'Q"
+        ],
+        "qarorlar": [
+          "⭐⭐⭐ QAYSI O'LCHAM YIQITADI, QAYSI BIRI OGOHLANTIRADI — taskning eng muhim qarori. So'rov soni va bayt DETERMINISTIK: ular yolg'on yiqitmaydi, ya'ni ularni qattiq ushlash MUMKIN va KERAK. Render vaqti va Lighthouse esa runner yukiga bog'liq (±5 ball) — ularni qat'iy darvoza qilish CI'ni haftada bir necha marta yolg'on yiqitardi, va UCHINCHI yolg'on ogohlantirishdan keyin hech kim natijaga qaramaydi.",
+          "⭐⭐ HAJM BYUDJETI LIGHTHOUSE'NING KATTA QISMINI DETERMINISTIK QOPLAYDI. Lighthouse «Performance» balli asosan bayt va so'rovlar funksiyasi — ya'ni CSS ikki barobar o'ssa yoki sahifaga ulkan inline SVG qo'shilsa, buni brauzersiz va tebranishsiz ushlaymiz. Lighthouse ustiga a11y/SEO/best-practices qo'shadi.",
+          "⭐⭐ BYUDJET BITTA JADVALDA. D1-T14 dan keyin sonlar testlar bo'ylab sochilib yotardi: har test o'z sahifasini bilardi, «sayt umuman qanchalik og'ir?» degan savolga javob beradigan joy yo'q edi. Jadval o'zgarishi `git diff` da KO'RINADI.",
+          "⭐ RENDER TESTIDA IKKI CHEGARA: ogohlantirish (300 ms) VA falokat (10×, qat'iy). Ikkinchisi ATAYLAB — chegarasiz test HECH QACHON yiqila olmasdi, bu esa shu seansda ikki marta uchragan «yiqila olmaydigan test» tuzog'i.",
+          "⭐ BUYRUQ CI'DA ISHLATILMAYDI. CI bazasi faqat migratsiyalardan iborat va BO'SH — u yerdagi o'lchov «2 so'rov, 24 KB» kabi ma'nosiz raqamlar berardi. CI'da byudjetni pytest tekshiradi (u realistik ma'lumot yaratadi), buyruq esa DASTURCHI vositasi.",
+          "⭐ `::warning::` STDOUT'ga emas, XULOSA FAYLIGA: pytest stdout'ni ushlaydi va annotatsiya GitHub'ga yetib bormasdi.",
+          "Byudjet YUQORI CHEGARA, aniq son emas: aniq sonni ushlash har begona o'zgarishda testni yiqitardi va odam uni «shunchaki yangilab» qo'yardi.",
+          "CI holati sharti `needs.*` dan HAR ISHNI ALOHIDA tekshirishga o'tkazildi: `needs.*` Lighthouse'ni ham qamrab olardi va `continue-on-error` ning butun ma'nosi yo'qolardi."
+        ],
+        "topilgan_xatolar": [
+          "⭐⭐ BIRINCHI JADVALDA `/kategoriyalar/` BOR EDI — u `apps/common/maket.py` dagi STATIK NAMUNA va **0 ta so'rov** qiladi. Ya'ni byudjet u yerda hech qachon hech narsani ushlamasdi va yashil bo'lib turaverardi. Haqiqiy va eng boy sahifa (dard batafsili) bilan almashtirildi.",
+          "⭐⭐ MONKEYPATCH NOTO'G'RI JOYDA: buyruq `RENDER_MS` ni MODUL YUKLANISHIDA import qiladi, ya'ni `apps.common.byudjet.RENDER_MS` ni almashtirish unga TA'SIR QILMAYDI. Test jimgina ogohlantirishsiz o'tardi. Bu seansdagi «mock ta'rif joyida, ishlatish joyida emas» tuzog'ining aynan takrori.",
+          "⭐ Birinchi o'lchov KESH tufayli yolg'on edi: to'rt sahifa BITTA testda o'lchanganda ikkinchisi birinchisining keshidan foydalanardi (`kategoriyalar` 0 so'rov ko'rsatdi). Har sahifa alohida testda o'lchandi.",
+          "Buyruq `kirgan` bayrog'ini e'tiborsiz qoldirardi — mehmon sifatida o'lchash 7 o'rniga 2 so'rov ko'rsatardi.",
+          "mypy: `hajm` o'zgaruvchisi `int` deb belgilangan siklda `int | None` bilan qayta ishlatildi."
+        ],
+        "olchangan_holat": {
+          "testlar": 1376,
+          "qamrov_foiz": 95.07,
+          "d7_t4_testlari": 24,
+          "byudjet_2026_09_06": {
+            "lenta_mehmon": "2 so'rov / 128 KB (byudjet 4 / 150 KB)",
+            "lenta_kirgan": "7 so'rov / 135 KB (byudjet 9 / 160 KB)",
+            "dard_batafsil": "5 so'rov / 44 KB (byudjet 8 / 60 KB)",
+            "qidiruv": "3 so'rov / 123 KB (byudjet 5 / 145 KB)",
+            "app_css": "56 KB (byudjet 75 KB)",
+            "htmx": "51 KB (byudjet 60 KB)",
+            "app_js": "31 KB (byudjet 40 KB)"
+          }
+        },
+        "keyingi_uchun_eslatma": [
+          "⚠️⚠️ Byudjetni OSHIRISH — ONGLI QAROR. `git blame` kim, qachon va NEGA oshirganini ko'rsatishi kerak; sababni commit xabariga yozing.",
+          "⚠️ Yangi HOT sahifa qo'shsangiz uni `SAHIFALAR` jadvaliga qo'shing — aks holda u byudjetdan tashqarida qoladi.",
+          "⚠️ Jadvalga MAKET sahifasini qo'ymang: u so'rov qilmaydi va byudjet u yerda hech narsani ushlamaydi.",
+          "⚠️ Lighthouse ishi `continue-on-error` — uni qat'iy darvoza qilmang, aks holda CI yolg'on yiqila boshlaydi."
+        ]
+      }
     },
     {
       "id": "D7-T5",

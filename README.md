@@ -474,6 +474,7 @@ D2-T6 rasmiy ishonch telefonini talab qiladi, D2-T10 — yurist xulosasini.
 | D5-T5 | Ekspertlarga «javobsiz savollar» dayjesti — haftada bir marta, faqat o'z sohasi |
 | D6-T1 | Obuna modeli va PRO cheklovlari — `user.has_pro` yagona manba |
 | D6-T5 | Kontakt almashinuvi — yopiq suhbat, ikki tomonlama rozilik |
+| D7-T4 | Ish faoliyati byudjeti — so'rov/hajm QAT'IY, vaqt ogohlantiradi |
 
 ---
 
@@ -551,6 +552,54 @@ Ikkalasi ham `ComplaintQuerySet` da yopildi. Bu teshik tanlangan dizayndan
 kelib chiqadi: `search_vector` GENERATED ustun bo'lgani uchun uni unutish
 mumkin emas, lekin **normallashtirish baribir Python'da qoladi** — trigger
 bermaydigan bo'shliq aynan shu yerda.
+
+### Ish faoliyati byudjeti (D7-T4)
+
+Byudjet **bitta jadvalda**: `apps/common/byudjet.py`. Uning o'zgarishi
+`git diff` da ko'rinadi va shu bilan «sekin o'sish» ko'rinadigan bo'ladi.
+
+```
+manage.py byudjet          # HAQIQIY ma'lumot ustida hisobot
+```
+
+| sahifa | so'rov | bayt |
+|---|---|---|
+| lenta (mehmon) | 2 / **4** | 128 KB / **150 KB** |
+| lenta (kirgan) | 7 / **9** | 135 KB / **160 KB** |
+| dard (batafsil) | 5 / **8** | 44 KB / **60 KB** |
+| qidiruv | 3 / **5** | 123 KB / **145 KB** |
+
+### ⚠️⚠️ Qaysi o'lcham yiqitadi, qaysi biri ogohlantiradi
+
+| O'lcham | Xulq | Sabab |
+|---|---|---|
+| so'rov soni | **yiqitadi** | to'liq deterministik |
+| javob hajmi | **yiqitadi** | to'liq deterministik |
+| aktiv hajmi | **yiqitadi** | to'liq deterministik |
+| render vaqti | ogohlantiradi | runner yuki tasodifiy |
+| Lighthouse | ogohlantiradi | ballar ±5 tebranadi |
+
+Deterministik o'lchamlar **yolg'on yiqitmaydi** — ya'ni ularni qattiq
+ushlash mumkin va kerak. Vaqtni qat'iy chegara qilish CI'ni haftada bir
+necha marta yolg'on yiqitardi, va **uchinchi yolg'on ogohlantirishdan
+keyin hech kim natijaga qaramaydi**.
+
+⚠️ Render testida **ikki chegara**: ogohlantirish (300 ms) va falokat
+(10×, qat'iy). Ikkinchisi ataylab — chegarasiz test hech qachon yiqila
+olmasdi.
+
+### ⚠️ Hajm byudjeti Lighthouse'ning katta qismini deterministik qoplaydi
+
+Lighthouse «Performance» balli asosan **bayt va so'rovlar** funksiyasi.
+CSS ikki barobar o'ssa yoki sahifaga ulkan inline SVG qo'shilsa — buni
+brauzersiz va tebranishsiz ushlaymiz. Lighthouse ishi uning ustiga
+a11y, SEO va best-practices baholarini qo'shadi (`continue-on-error`).
+
+### ⚠️ `manage.py byudjet` CI'da ishlatilmaydi
+
+CI bazasi faqat migratsiyalardan iborat va **bo'sh** — u yerdagi o'lchov
+ma'nosiz raqamlar berardi. CI'da byudjetni **pytest** tekshiradi (u
+realistik ma'lumot yaratadi); buyruq esa dasturchi vositasi.
 
 ### Kontakt almashinuvi — yopiq suhbat (D6-T5)
 
