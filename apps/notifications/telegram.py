@@ -96,7 +96,7 @@ def _javobni_tekshirish(tana: dict) -> None:
     raise TelegramXatosi(f"telegram xatosi: {kod} {tavsif}")
 
 
-def xabar_yuborish(*, chat_id: int, matn: str, tugma_manzili: str = "") -> None:
+def xabar_yuborish(*, chat_id: int | str, matn: str, tugma_manzili: str = "") -> None:
     """Telegram'ga xabar yuboradi.
 
     ⚠️ FAQAT SINXRON CHAQIRUV — uni ko'rinishdan TO'G'RIDAN-TO'G'RI
@@ -104,6 +104,10 @@ def xabar_yuborish(*, chat_id: int, matn: str, tugma_manzili: str = "") -> None:
        serverining javob tezligiga bog'lab qo'yardi (D5-T2 qabul
        mezoni: "yuborish sinxron EMAS"). Chaqiruvchi — Celery vazifasi
        (`apps/notifications/tasks.py`).
+
+    ⚠️ `chat_id` SON HAM, SATR HAM bo'lishi mumkin: shaxsiy chat raqamli
+       ID bilan (`User.telegram_id`), kanal esa `@nom` bilan beriladi
+       (D5-T3). Telegram ikkalasini ham qabul qiladi.
 
     ⚠️ Token bo'sh bo'lsa JIM o'tib ketadi: dev va test muhitida bot
        sozlanmagan va bu XATO EMAS. Istisno tashlash har testni

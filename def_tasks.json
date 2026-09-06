@@ -2992,11 +2992,60 @@
         "D1-T11",
         "D1-T6"
       ],
-      "holat": "todo",
+      "holat": "done",
       "qabul_mezoni": [
         "bitta post ikki marta chiqmaydi",
         "anonimlik testi kanal postini ham qoplaydi"
-      ]
+      ],
+      "tugatilgan": "2026-09-06",
+      "natija": {
+        "yaratilgan": [
+          "apps/complaints/kanal.py — nomzodlar(), post_matni(), belgilash()",
+          "apps/complaints/tasks.py — kanalga_post() Celery vazifasi",
+          "apps/complaints/models.py — Complaint.kanalga_yuborilgan_at + migratsiya 0008",
+          "config/settings/base.py — KANAL_{KUNLIK_SONI,OYNA_KUNLARI,PARCHA_UZUNLIGI} + beat jadvali",
+          "apps/complaints/tests/test_kanal.py — 19 test"
+        ],
+        "qabul_mezonlari": {
+          "bitta_post_ikki_marta_chiqmaydi": "✅ `kanalga_yuborilgan_at` belgisi. ⚠️ Belgi HAR POST uchun ALOHIDA va YUBORISHDAN KEYIN qo'yiladi — vazifa o'rtasida uzilsa yuborilganlar belgilangan, qolganlari belgilanmagan holda qoladi (uzilish testi bor).",
+          "anonimlik_testi_kanal_postini_ham_qoplaydi": "✅ Uchta test: matnda muallif yo'q (ochiq postda ham!), anonim postda yo'q, va uchidan-uchiga yuborilgan xabarda ham yo'q."
+        },
+        "tekshirilgan": [
+          "⭐⭐ kanalda MUALLIF UMUMAN ko'rsatilmaydi — na anonimda, na OCHIQDA",
+          "⭐ INQIROZ belgisi bor post kanalga CHIQMAYDI",
+          "yashirilgan, tekshiruvdagi (PENDING) va o'chirilgan post chiqmaydi",
+          "eski post chiqmaydi (oyna KANAL_OYNA_KUNLARI)",
+          "eng qaynog'i birinchi; kunlik soni chegaralangan",
+          "yuborish yiqilsa post BELGILANMAYDI (qayta urinish uchun qoladi)",
+          "uzilishda faqat yuborilganlar belgilanadi",
+          "kanal sozlanmagan bo'lsa hech narsa qilmaydi",
+          "HTML qochiriladi; uzun tavsif qisqartiriladi; sayt havolasi bor"
+        ],
+        "qarorlar": [
+          "⭐⭐ KANALDA MUALLIF YO'Q — hatto OCHIQ postda ham. Kanal posti QAYTARIB OLINMAYDI: u yuz minglab odamga bir zumda ko'rinadi va Telegram'da o'chirilgan xabar ham allaqachon o'qilgan bo'ladi. Shuning uchun matn `public_author` ga ham murojaat qilmaydi — kanal posti SAVOLNI ko'rsatadi, odamni emas.",
+          "⭐⭐ INQIROZ BELGISI BOR POST KANALGA CHIQMAYDI. D2-T6 siyosati aniqlangan postni o'chirmaydi va yashirmaydi — u saytda odatdagidek turadi. Lekin uni minglab odamga O'ZIMIZ tarqatish butunlay boshqa narsa: bu odamning eng og'ir daqiqasini ommaviy tomoshaga aylantirardi. Farq nozik: biz kontentni CHEKLAMAYMIZ, lekin KUCHAYTIRMAYMIZ ham.",
+          "⭐ BELGI HAR POSTDAN KEYIN, hammasidan keyin EMAS: vazifa o'rtasida uzilsa yuborilganlar belgilanmagan qolardi va keyingi kunda QAYTA chiqardi.",
+          "⭐ BELGI YUBORISHDAN KEYIN: teskarisida yuborish yiqilganda post 'chiqqan' deb qolib, hech qachon chiqmasdi. Ikki xatodan kamroq zararlisi tanlandi — takror emas, o'tkazib yuborish.",
+          "Birinchi xatoda TO'XTAYMIZ: kanal sozlamasi buzuq yoki Telegram tushgan bo'lsa qolganlarini urinish faqat vaqt yeydi; ular keyingi kunda qayta ko'riladi.",
+          "Vazifada QAYTA URINISH YO'Q (`max_retries=0`): u kuniga bir marta ishlaydi va qayta urinish allaqachon belgilangan postlarni ikki marta chiqarish xavfini tug'dirardi.",
+          "Faqat SO'NGGI kunlardagi postlar: `hot_score` eski postda ham yuqori bo'lishi mumkin, kanal esa 'bugun nima bo'lyapti' degan lenta.",
+          "Kuniga UCHTA: ko'proq post kanalni spam qiladi va obunachi ovozni o'chiradi; kamroq bo'lsa kanal jonsiz ko'rinadi."
+        ],
+        "topilgan_xatolar": [
+          "`complaints/tasks.py` da `settings` modul darajasida import qilinmagandi (OG vazifasi uni funksiya ichida olardi) — 9 test `NameError` bilan yiqildi.",
+          "mypy: `TELEGRAM_CHANNEL_ID` satr, `xabar_yuborish(chat_id: int)` esa son kutardi. Telegram ikkalasini ham qabul qiladi (kanal `@nom` bilan) — tur `int | str` ga kengaytirildi."
+        ],
+        "olchangan_holat": {
+          "testlar": 1211,
+          "qamrov_foiz": 95.37,
+          "d5_t3_testlari": 19
+        },
+        "keyingi_uchun_eslatma": [
+          "⚠️ DEPLOY: `TELEGRAM_CHANNEL_ID` (masalan `@dard_uz`) va bot kanalda ADMIN bo'lishi SHART — aks holda Telegram 403 qaytaradi.",
+          "⚠️ Celery BEAT ishlab turishi kerak (kuniga bir marta). Worker'siz vazifa umuman bajarilmaydi.",
+          "⚠️ Kanal posti matnini o'zgartirganda ANONIMLIK testlarini buzmang: `post_matni()` ga muallif QO'SHILMAYDI."
+        ]
+      }
     },
     {
       "id": "D5-T4",

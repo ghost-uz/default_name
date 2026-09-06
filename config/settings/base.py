@@ -427,6 +427,24 @@ BILDIRISHNOMA_SAHIFA_HAJMI = 30
 
 
 # --------------------------------------------------------------------------
+# Telegram kanaliga avto-post (D5-T3)
+# --------------------------------------------------------------------------
+# ⚠️ KUNIGA UCHTA. Ko'proq post kanalni "spam" qiladi va obunachi
+#    ovozni o'chiradi — o'chirilgan kanal esa o'lik kanal.
+#    Kamroq bo'lsa kanal jonsiz ko'rinadi va odam obuna bo'lmaydi.
+KANAL_KUNLIK_SONI = 3
+
+# ⚠️ Faqat SO'NGGI kunlardagi postlar. `hot_score` eski postda ham
+#    yuqori bo'lishi mumkin (ko'p ovoz yig'gan), kanal esa "bugun nima
+#    bo'lyapti" degan lenta.
+KANAL_OYNA_KUNLARI = 3
+
+# Telegram uzun xabarni yig'ib qo'yadi va "ko'proq" ostidagi matn
+# o'qilmaydi. Maqsad — qiziqtirish, to'liq javob berish emas.
+KANAL_PARCHA_UZUNLIGI = 280
+
+
+# --------------------------------------------------------------------------
 # Autentifikatsiya
 # --------------------------------------------------------------------------
 AUTH_PASSWORD_VALIDATORS = [
@@ -547,6 +565,16 @@ CELERY_BEAT_SCHEDULE = {
     #    hisoblansa, har ko'rish ikkita agregat so'rov qilardi (D3-T3).
     #    Kesh TTL (2 soat) bu oraliqdan uzunroq: bitta o'tkazib
     #    yuborilgan ish reytingni bo'shatmaydi.
+    # ⚠️ Kuniga BIR MARTA. Ko'proq ishga tushirish kanalni spam qiladi;
+    #    kamroq bo'lsa qaynoq postlar dolzarbligini yo'qotadi.
+    #
+    # ⚠️ `expires` — vazifa kechiksa (worker band) uni bajarish
+    #    ma'nosiz: ertaga yangi ro'yxat bilan qaytadan ishlaydi.
+    "kanalga-post": {
+        "task": "apps.complaints.tasks.kanalga_post",
+        "schedule": 86400.0,
+        "options": {"expires": 43200},
+    },
     "reytingni-yangilash": {
         "task": "apps.gamification.tasks.reytingni_yangilash",
         "schedule": 3600.0,

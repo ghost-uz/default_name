@@ -353,6 +353,23 @@ class Complaint(ContentModel, VotableModel):
     #    ham skanerlaydi, ikkinchisi faqat disk va yozish yukini oshirardi.
     hot_score = models.FloatField("qaynoqlik", default=0.0, db_index=True)
 
+    # -- Telegram kanaliga avto-post (D5-T3) -------------------------------
+    # ⚠️ SANA, BOOLEAN EMAS: "qachon chiqdi?" savoli tahlil uchun kerak
+    #    bo'ladi (qaysi post qancha trafik keltirdi) va bayroqdan uni
+    #    tiklab bo'lmaydi.
+    #
+    # ⚠️ BU MAYDONNING BUTUN VAZIFASI — TAKRORNI TO'XTATISH (D5-T3 qabul
+    #    mezoni). `hot_score` har 10 daqiqada qayta hisoblanadi, ya'ni
+    #    bitta post kunlar davomida eng tepada qolishi mumkin. Belgisiz
+    #    u kanalga har kuni qayta chiqardi va obunachilar ketardi.
+    kanalga_yuborilgan_at = models.DateTimeField(
+        "kanalga yuborilgan",
+        null=True,
+        blank=True,
+        editable=False,
+        db_index=True,
+    )
+
     # -- Open Graph rasmi (D4-T4) ------------------------------------------
     # ⚠️ MAYDON, chunki rasm FON VAZIFASIDA yasaladi (D4-T4 qabul mezoni):
     #    so'rov ichida yasash sahifani ~200 ms sekinlashtirardi va bu narx

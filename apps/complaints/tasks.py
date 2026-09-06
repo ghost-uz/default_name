@@ -12,6 +12,7 @@ import math
 from datetime import UTC, datetime, timedelta
 
 from celery import shared_task
+from django.conf import settings
 from django.core.files.base import ContentFile
 from django.utils import timezone
 
@@ -257,7 +258,6 @@ def oxshash_muammolarni_hisoblash(complaint_id: int) -> int:
        Trigram D4-T1 da o'z joyini topgan (xato yozilgan SO'ROV uchun) —
        u yerda qisqa so'rov solishtiriladi va aynan shunda ishlaydi.
     """
-    from django.conf import settings
     from django.contrib.postgres.search import SearchQuery, SearchRank
     from django.core.cache import cache
     from django.db.models import F
@@ -301,3 +301,62 @@ def oxshash_muammolarni_hisoblash(complaint_id: int) -> int:
 
     cache.set(oxshash_kesh_kaliti(complaint_id), natija, settings.OXSHASH_KESH_MUDDATI)
     return len(natija)
+
+
+# ===========================================================================
+# Telegram kanaliga avto-post (D5-T3)
+# ===========================================================================
+@shared_task(
+    name="apps.complaints.tasks.kanalga_post",
+    # ⚠️ Qayta urinish YO'Q: vazifa kuniga bir marta ishlaydi va
+    #    muvaffaqiyatsiz kun shunchaki o'tkazib yuboriladi. Qayta
+    #    urinish esa ALLAQACHON belgilangan postlarni ikki marta
+    #    chiqarish xavfini tug'dirardi.
+    max_retries=0,
+)
+def kanalga_post() -> str:
+    """Kunlik qaynoq postlarni Telegram kanaliga chiqaradi.
+
+    ⚠️⚠️ HAR POST ALOHIDA BELGILANADI — hammasi yuborilgandan KEYIN
+       emas. Sabab: vazifa o'rtasida uzilsa (worker o'ldi, Telegram
+       tushdi), yuborilganlar belgilanmagan qolardi va keyingi ishga
+       tushishda ULAR QAYTA CHIQARDI. D5-T3 qabul mezoni buni ochiq
+       taqiqlaydi.
+
+    ⚠️ BELGI YUBORISHDAN KEYIN QO'YILADI: teskarisida yuborish
+       yiqilganda post "chiqqan" deb qolib, hech qachon chiqmasdi.
+       Ya'ni ikki xatodan KAMROQ zararlisi tanlangan — takror emas,
+       o'tkazib yuborish.
+    """
+    from apps.notifications.telegram import (
+        TelegramXatosi,
+        xabar_yuborish,
+    )
+
+    from .kanal import belgilash, nomzodlar, post_matni
+
+    kanal = settings.TELEGRAM_CHANNEL_ID
+    if not kanal:
+        log.debug("kanal: TELEGRAM_CHANNEL_ID yo'q")
+        return "kanal sozlanmagan"
+
+    yuborildi = 0
+    for muammo in nomzodlar()[: settings.KANAL_KUNLIK_SONI]:
+        try:
+            xabar_yuborish(
+                chat_id=kanal,
+                matn=post_matni(muammo),
+                tugma_manzili=f"{settings.SAYT_MANZILI}{muammo.get_absolute_url()}",
+            )
+        except TelegramXatosi as xato:
+            # ⚠️ BIRINCHI xatoda TO'XTAYMIZ: agar kanal sozlamasi buzuq
+            #    yoki Telegram tushgan bo'lsa, qolganlarini urinish
+            #    faqat vaqt yeydi. Belgilanmaganlar keyingi kunda
+            #    qayta ko'rib chiqiladi.
+            log.warning("kanal: yuborilmadi (id=%s): %s", muammo.pk, xato)
+            break
+
+        belgilash(muammo)
+        yuborildi += 1
+
+    return f"yuborildi: {yuborildi}"

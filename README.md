@@ -469,6 +469,7 @@ D2-T6 rasmiy ishonch telefonini talab qiladi, D2-T10 — yurist xulosasini.
 |---|---|
 | D5-T1 | Bildirishnomalar markazi — ichki kanal, sarlavhada o'qilmaganlar belgisi |
 | D5-T2 | Telegram bot — fon vazifasi, qayta urinish, bloklanganni belgilash |
+| D5-T3 | Kanalga avto-post — kuniga 3 ta qaynoq savol, takrorsiz, muallifsiz |
 
 ---
 
@@ -546,6 +547,43 @@ Ikkalasi ham `ComplaintQuerySet` da yopildi. Bu teshik tanlangan dizayndan
 kelib chiqadi: `search_vector` GENERATED ustun bo'lgani uchun uni unutish
 mumkin emas, lekin **normallashtirish baribir Python'da qoladi** — trigger
 bermaydigan bo'shliq aynan shu yerda.
+
+### Kanalga avto-post (D5-T3)
+
+Celery beat kuniga bir marta eng qaynoq **3 ta** savolni Telegram
+kanaliga chiqaradi (`TELEGRAM_CHANNEL_ID`). Har post
+`kanalga_yuborilgan_at` bilan belgilanadi — bittasi ikki marta chiqmaydi.
+
+### ⚠️⚠️ Kanalda muallif ko'rsatilmaydi — hatto ochiq postda ham
+
+Kanal posti **qaytarib olinmaydi**: u yuz minglab odamga bir zumda
+ko'rinadi va Telegram'da o'chirilgan xabar ham allaqachon o'qilgan
+bo'ladi. Ya'ni bu yerdagi xato — anonimlik invariantining eng qimmat
+buzilishi.
+
+Shuning uchun `post_matni()` `public_author` ga **ham** murojaat
+qilmaydi: kanal posti **savolni** ko'rsatadi, odamni emas.
+
+### ⚠️⚠️ Inqiroz belgisi bor post kanalga chiqmaydi
+
+D2-T6 siyosati aniqlangan postni **o'chirmaydi va yashirmaydi** — u
+saytda odatdagidek turadi. Lekin uni minglab odamga **o'zimiz**
+tarqatish butunlay boshqa narsa: bu odamning eng og'ir daqiqasini
+ommaviy tomoshaga aylantirardi.
+
+Farq nozik va muhim: biz kontentni **cheklamaymiz**, lekin uni
+**kuchaytirmaymiz** ham.
+
+### ⚠️ Belgi har postdan keyin, yuborishdan keyin
+
+Ikki tartib qarori, ikkalasi ham xatoning narxi bo'yicha tanlangan:
+
+| Qaror | Aks holda |
+|---|---|
+| belgi **har post**dan keyin | vazifa o'rtasida uzilsa yuborilganlar belgilanmay qolardi va **qayta chiqardi** |
+| belgi **yuborishdan keyin** | yuborish yiqilganda post «chiqqan» deb qolib, **hech qachon chiqmasdi** |
+
+Ikki xatodan kamroq zararlisi tanlangan: takror emas, o'tkazib yuborish.
 
 ### Telegram bildirishnomasi (D5-T2)
 
