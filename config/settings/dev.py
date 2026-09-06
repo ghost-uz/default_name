@@ -45,7 +45,30 @@ if env_bool("USE_REDIS_IN_DEV", False) is False:
 if env_bool("SHOW_SQL", False):
     LOGGING["loggers"]["django.db.backends"]["level"] = "DEBUG"
 
-# Shablon o'zgarishi darhol ko'rinsin.
-# ⚠️ Dev'da keshlangan template loader ISHLATILMAYDI — u --noreload bilan
-#    birga shablon tahririni "yo'qoladi" qilib qo'yadi va vaqt yeydi.
+# Shablon xatolarida to'liq sahifa ko'rsatilsin.
 TEMPLATES[0]["OPTIONS"]["debug"] = True
+
+# ---------------------------------------------------------------------------
+# ⚠️⚠️ KESHLANGAN TEMPLATE LOADER OCHIQ O'CHIRILADI
+# ---------------------------------------------------------------------------
+# Ilgari bu yerda faqat `OPTIONS["debug"] = True` turardi va izohda
+# "keshlangan loader ishlatilmaydi" deb yozilgandi. NIYAT to'g'ri edi,
+# TA'SIRI esa yo'q: `debug` faqat xato sahifasiga tegadi, keshga emas.
+#
+# Django `loaders` berilmaganda `cached.Loader` ni O'ZI qo'shadi — ya'ni
+# shablon fayli BIR MARTA o'qiladi va jarayon tugagunicha xotirada
+# qoladi. `runserver --noreload` da esa jarayon qayta ishga tushmaydi,
+# demak shablon tahriri UMUMAN ko'rinmaydi.
+#
+# ⚠️ Bu jonli sinovda ikki marta vaqt yedi: o'zgarish qo'llanmadi deb
+#    o'ylanib, kod qayta-qayta tekshirildi. Empirik tasdiq: fayl
+#    tahrirlangandan keyin javob hajmi bayt-mabayt bir xil qoldi.
+#
+# ⚠️ `APP_DIRS` va `loaders` BIRGA BERILMAYDI (Django buni rad etadi),
+#    shuning uchun `APP_DIRS` o'chiriladi va uning ishini
+#    `app_directories.Loader` bajaradi.
+TEMPLATES[0]["APP_DIRS"] = False
+TEMPLATES[0]["OPTIONS"]["loaders"] = [
+    "django.template.loaders.filesystem.Loader",
+    "django.template.loaders.app_directories.Loader",
+]

@@ -129,6 +129,20 @@ birinchi kalitga yopishtirib yuboradi.
 
 ---
 
+### ⚠️⚠️ Dev'da shablon tahriri ko'rinmasligi (tuzatildi)
+
+`runserver --noreload` bilan shablonni tahrirlab, sahifani yangilaganda
+**hech narsa o'zgarmasdi**. Sabab: Django `loaders` berilmaganda
+`cached.Loader` ni o'zi qo'shadi — shablon fayli bir marta o'qiladi va
+jarayon tugagunicha xotirada qoladi.
+
+`OPTIONS["debug"] = True` buni **o'chirmaydi** (u faqat xato sahifasiga
+tegadi). Endi `config/settings/dev.py` loaderlarni **ochiq** belgilaydi
+(`APP_DIRS = False` + `filesystem` va `app_directories`).
+
+⚠️ Bu ikki marta vaqt yedi: o'zgarish qo'llanmadi deb o'ylanib, kod
+qayta-qayta tekshirildi.
+
 ### ⚠️ Statik fayl keshi (dev)
 
 Shablonlarda `{% static %}` emas, **`{% static_v %}`** ishlatiladi:
