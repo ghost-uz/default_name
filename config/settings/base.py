@@ -82,6 +82,7 @@ LOCAL_APPS = [
     "apps.gamification",
     "apps.notifications",
     "apps.payments",
+    "apps.suhbat",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -352,6 +353,12 @@ TEZLIK_CHEKLOVLARI = {
     # Xatcho'p — task ro'yxatida yo'q edi, lekin bu ham yozish amali va
     # xuddi ovoz kabi arzon. Ochiq qoldirish ma'nosiz.
     "saqlash": {"foydalanuvchi": "60/m", "ip": "200/m"},
+    # ⚠️ D6-T5: shaxsiy suhbat. So'rov QAT'IY cheklangan — u qarshi
+    #    tomonga bildirishnoma yuboradi va bezovtalik uchun eng qulay
+    #    vosita bo'lardi. Xabar esa yumshoqroq: suhbat ochilgandan
+    #    keyin ikki tomon allaqachon rozilik bergan.
+    "kontakt_sorovi": {"foydalanuvchi": "10/h", "ip": "30/h"},
+    "suhbat_xabar": {"foydalanuvchi": "60/h", "ip": "200/h"},
 }
 
 # ⚠️ Mijoz IP'sini aniqlash uchun ISHONCHLI proksilar soni.

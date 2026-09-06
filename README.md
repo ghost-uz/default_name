@@ -473,6 +473,7 @@ D2-T6 rasmiy ishonch telefonini talab qiladi, D2-T10 — yurist xulosasini.
 | D5-T4 | Bildirishnoma sozlamalari — tur bo'yicha yoqish/o'chirish, jim soatlar |
 | D5-T5 | Ekspertlarga «javobsiz savollar» dayjesti — haftada bir marta, faqat o'z sohasi |
 | D6-T1 | Obuna modeli va PRO cheklovlari — `user.has_pro` yagona manba |
+| D6-T5 | Kontakt almashinuvi — yopiq suhbat, ikki tomonlama rozilik |
 
 ---
 
@@ -550,6 +551,57 @@ Ikkalasi ham `ComplaintQuerySet` da yopildi. Bu teshik tanlangan dizayndan
 kelib chiqadi: `search_vector` GENERATED ustun bo'lgani uchun uni unutish
 mumkin emas, lekin **normallashtirish baribir Python'da qoladi** — trigger
 bermaydigan bo'shliq aynan shu yerda.
+
+### Kontakt almashinuvi — yopiq suhbat (D6-T5)
+
+Yechim qabul qilingandan keyin har ikki tomon **shaxsiy suhbat** taklif
+qila oladi. So'rov o'zi hech narsa ochmaydi — faqat qarshi tomonning
+roziligi ochadi (`/suhbatlar/`).
+
+### ⚠️⚠️ «Kontakt almashinuvi» emas, «yopiq suhbat»
+
+Task ikki yo'lni taklif qildi. Ikkinchisi tanlandi va sabab bitta so'z
+bilan: **qaytarib bo'lmaslik**.
+
+Telegram nomini bergan odam uni **orqaga ola olmaydi**. Uy zo'ravonligi
+yoki qarz haqida anonim yozgan odam uchun bu platformadagi eng xavfli
+amal bo'lardi — va D2-T11 dagi `UserBlock` ham foydasiz bo'lib qolardi:
+qarshi tomonda sizning nomingiz allaqachon bor.
+
+Yopiq suhbat esa **qaytariladi**: yopish, bloklash, shikoyat qilish
+mumkin. Qabul mezoni «chat moderatsiya qamrovida» ham faqat shu yo'lda
+bajariladi — Telegram'ga ko'chgan suhbatni moderatsiya qila olmaymiz.
+
+### ⚠️⚠️ Suhbat ichida ham anonimlik saqlanadi
+
+Anonim muallif suhbatda ham **«Anonim»** bo'lib qoladi. Ya'ni qabul
+mezoni «anonim muallifning kontakti roziligisiz ochilmaydi» eng kuchli
+shaklda bajariladi: kontakt **umuman ochilmaydi**, faqat taxallusli
+kanal ochiladi.
+
+Ism har doim kontentning `public_author` idan olinadi — bu anonimlik
+invariantining **to'rtinchi joyi** (shablon, OG, JSON-LD dan keyin) va
+eng oson unutiladiganlaridan biri: «baribir kim ekanini biladi» degan
+taxmin **noto'g'ri**, anonim muallifni qarshi tomon hech qachon
+bilmagan.
+
+⚠️ Shablonda `xabar.korsatiladigan_nom` ishlatiladi.
+`xabar.author.display_name` **yozmang**.
+
+### ⚠️ Chat moderatsiya qamrovida
+
+`Xabar` — `ContentModel`, ya'ni shikoyat (D2-T1), navbat (D2-T2), uch
+ogohlantirish (D2-T11), audit jurnali (D2-T7) va **inqiroz aniqlash**
+(D2-T6) bepul keladi. Oxirgisi bu yerda alohida qimmatli: eng og'ir gap
+aynan shaxsiy yozishmada aytiladi va u ommaviy lentada hech qachon
+ko'rinmaydi.
+
+`Report` va `ModerationAction` ga uchinchi FK (`xabar`) qo'shildi —
+ContentType emas, ochiq qaror Q1 bilan izchil.
+
+⚠️ Moderator navbatda **faqat shikoyat qilingan xabarni** ko'radi, butun
+suhbatni emas: shikoyat kirish sababi bo'lsa ham, u butun yozishmani
+ochish uchun asos bermaydi. Admin'da ham xabarlar `inline` qilinmagan.
 
 ### Obuna va PRO (D6-T1)
 

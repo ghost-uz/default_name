@@ -36,7 +36,13 @@ class AllaqachonShikoyatQilingan(ValidationError):
 
 @transaction.atomic
 def shikoyat_yuborish(
-    *, reporter, complaint=None, solution=None, reason: str, comment: str = ""
+    *,
+    reporter,
+    complaint=None,
+    solution=None,
+    xabar=None,
+    reason: str,
+    comment: str = "",
 ) -> tuple[Report, bool]:
     """Shikoyat yozadi. `(report, eskalatsiya_boldimi)` qaytaradi.
 
@@ -52,10 +58,14 @@ def shikoyat_yuborish(
     ⚠️ KONTENT AVTOMATIK YASHIRILMAYDI — sabab `Report` docstring'ida.
        Eskalatsiya faqat NAVBATDAGI o'rinni o'zgartiradi.
     """
-    if (complaint is None) == (solution is None):
+    # ⚠️ D6-T5: uchinchi maqsad turi (suhbat xabari). Sanoq bilan
+    #    tekshiriladi — ikkita `is None` taqqoslash uchinchi tur
+    #    qo'shilganda JIMGINA noto'g'ri ishlardi.
+    berilganlar = [x for x in (complaint, solution, xabar) if x is not None]
+    if len(berilganlar) != 1:
         raise ValueError("Aynan bitta maqsad berilishi kerak")
 
-    maqsad = complaint or solution
+    maqsad = berilganlar[0]
     if maqsad.author_id is not None and maqsad.author_id == getattr(
         reporter, "pk", None
     ):
@@ -65,6 +75,7 @@ def shikoyat_yuborish(
         with transaction.atomic():
             report = Report.objects.create(
                 reporter=reporter,
+                xabar=xabar,
                 complaint=complaint,
                 solution=solution,
                 reason=reason,
@@ -153,14 +164,22 @@ class BekorQilibBolmaydi(ValidationError):
 
 
 def _maqsad_kwargs(target) -> dict:
-    """`Complaint` yoki `Solution` ni FK nomiga aylantiradi."""
-    from apps.complaints.models import Complaint
+    """Obyektni FK nomiga aylantiradi.
 
-    return (
-        {"complaint": target, "solution": None}
-        if isinstance(target, Complaint)
-        else {"complaint": None, "solution": target}
-    )
+    ⚠️ D6-T5: uchinchi tur — `suhbat.Xabar` (chat moderatsiya
+       qamrovida). Yangi maqsad turi qo'shilganda SHU YERNI ham
+       yangilash SHART, aks holda shikoyat noto'g'ri FK ga tushardi
+       yoki cheklov uni rad etardi.
+    """
+    from apps.complaints.models import Complaint
+    from apps.solutions.models import Solution
+
+    bosh = {"complaint": None, "solution": None, "xabar": None}
+    if isinstance(target, Complaint):
+        return {**bosh, "complaint": target}
+    if isinstance(target, Solution):
+        return {**bosh, "solution": target}
+    return {**bosh, "xabar": target}
 
 
 def _karmani_moslash(target) -> None:

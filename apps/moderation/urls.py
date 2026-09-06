@@ -7,6 +7,9 @@ from . import views
 urlpatterns = [
     path("shikoyat/dard/<int:pk>/", views.dard_shikoyat, name="dard_shikoyat"),
     path("shikoyat/yechim/<int:pk>/", views.yechim_shikoyat, name="yechim_shikoyat"),
+    # ⚠️ D6-T5: shaxsiy xabarga shikoyat — faqat ishtirokchi uchun
+    #    (boshqasiga 404, sabab `views.xabar_shikoyat` da).
+    path("shikoyat/xabar/<int:pk>/", views.xabar_shikoyat, name="xabar_shikoyat"),
     # ⚠️ Moderatsiya navbati — staff bo'lmaganga 404 (views.moderator_kerak).
     #    Manzil chiroyli bo'lishi shart emas, lekin taxmin qilinadigan
     #    bo'lgani ma'qul: moderator uni yodda saqlaydi.
@@ -26,6 +29,11 @@ urlpatterns = [
         "moderatsiya/qaror/yechim/<int:pk>/",
         views.qaror_yechim,
         name="moderatsiya_qaror_yechim",
+    ),
+    path(
+        "moderatsiya/qaror/xabar/<int:pk>/",
+        views.qaror_xabar,
+        name="moderatsiya_qaror_xabar",
     ),
     path(
         "moderatsiya/bekor/<int:pk>/",

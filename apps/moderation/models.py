@@ -73,9 +73,18 @@ class ReportQuerySet(models.QuerySet):
             .filter(n__gte=ESKALATSIYA_CHEGARASI)
             .values_list("solution", flat=True)
         )
+        xabarlar = (
+            Report.objects.ochiq()
+            .filter(xabar__isnull=False)
+            .values("xabar")
+            .annotate(n=models.Count("pk"))
+            .filter(n__gte=ESKALATSIYA_CHEGARASI)
+            .values_list("xabar", flat=True)
+        )
         return self.filter(
             models.Q(complaint__in=list(muammolar))
             | models.Q(solution__in=list(yechimlar))
+            | models.Q(xabar__in=list(xabarlar))
         )
 
 
@@ -129,6 +138,18 @@ class Report(TimeStampedModel):
     solution = models.ForeignKey(
         "solutions.Solution",
         verbose_name="yechim",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="reports",
+    )
+    # ⚠️⚠️ D6-T5 QABUL MEZONI: «chat moderatsiya qamrovida».
+    #    Uchinchi FK qo'shish (ContentType o'rniga) — ochiq qaror Q1
+    #    bilan izchil: baza darajasidagi butunlik saqlanadi va
+    #    kontent o'chirilsa shikoyat ham CASCADE bilan ketadi.
+    xabar = models.ForeignKey(
+        "suhbat.Xabar",
+        verbose_name="suhbat xabari",
         on_delete=models.CASCADE,
         null=True,
         blank=True,
@@ -193,8 +214,21 @@ class Report(TimeStampedModel):
             #    bo'lardi — va navbat uni qayerga qo'yishni bilmasdi.
             models.CheckConstraint(
                 condition=(
-                    models.Q(complaint__isnull=False, solution__isnull=True)
-                    | models.Q(complaint__isnull=True, solution__isnull=False)
+                    models.Q(
+                        complaint__isnull=False,
+                        solution__isnull=True,
+                        xabar__isnull=True,
+                    )
+                    | models.Q(
+                        complaint__isnull=True,
+                        solution__isnull=False,
+                        xabar__isnull=True,
+                    )
+                    | models.Q(
+                        complaint__isnull=True,
+                        solution__isnull=True,
+                        xabar__isnull=False,
+                    )
                 ),
                 name="report_aynan_bitta_maqsad",
                 violation_error_message="Shikoyat aynan bitta obyektga tegishli bo'lishi kerak.",
@@ -215,6 +249,12 @@ class Report(TimeStampedModel):
                 name="report_bir_yechimga_bir_marta",
                 violation_error_message="Siz bu yechimga allaqachon shikoyat qilgansiz.",
             ),
+            models.UniqueConstraint(
+                fields=["reporter", "xabar"],
+                condition=models.Q(xabar__isnull=False),
+                name="report_bir_xabarga_bir_marta",
+                violation_error_message="Siz bu xabarga allaqachon shikoyat qilgansiz.",
+            ),
         ]
         indexes = [
             # Moderatsiya navbati: ochiqlari, eskisidan yangisiga (D2-T2).
@@ -226,14 +266,16 @@ class Report(TimeStampedModel):
 
     @property
     def target(self):
-        """Shikoyat qilingan obyekt (`Complaint` yoki `Solution`)."""
-        return self.complaint or self.solution
+        """Shikoyat qilingan obyekt (`Complaint`, `Solution` yoki `Xabar`)."""
+        return self.complaint or self.solution or self.xabar
 
     @property
     def target_nomi(self) -> str:
         if self.complaint_id:
             return f"muammo #{self.complaint_id}"
-        return f"yechim #{self.solution_id}"
+        if self.solution_id:
+            return f"yechim #{self.solution_id}"
+        return f"suhbat xabari #{self.xabar_id}"
 
     @property
     def shoshilinchmi(self) -> bool:
@@ -327,6 +369,15 @@ class ModerationAction(TimeStampedModel):
         blank=True,
         related_name="moderation_actions",
     )
+    # ⚠️ D6-T5: suhbat xabari ham chora ko'riladigan obyekt.
+    xabar = models.ForeignKey(
+        "suhbat.Xabar",
+        verbose_name="suhbat xabari",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="moderation_actions",
+    )
 
     target_author = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -368,8 +419,21 @@ class ModerationAction(TimeStampedModel):
         constraints = [
             models.CheckConstraint(
                 condition=(
-                    models.Q(complaint__isnull=False, solution__isnull=True)
-                    | models.Q(complaint__isnull=True, solution__isnull=False)
+                    models.Q(
+                        complaint__isnull=False,
+                        solution__isnull=True,
+                        xabar__isnull=True,
+                    )
+                    | models.Q(
+                        complaint__isnull=True,
+                        solution__isnull=False,
+                        xabar__isnull=True,
+                    )
+                    | models.Q(
+                        complaint__isnull=True,
+                        solution__isnull=True,
+                        xabar__isnull=False,
+                    )
                 ),
                 name="action_aynan_bitta_maqsad",
                 violation_error_message="Chora aynan bitta obyektga tegishli bo'lishi kerak.",
@@ -387,13 +451,15 @@ class ModerationAction(TimeStampedModel):
 
     @property
     def target(self):
-        return self.complaint or self.solution
+        return self.complaint or self.solution or self.xabar
 
     @property
     def target_nomi(self) -> str:
         if self.complaint_id:
             return f"muammo #{self.complaint_id}"
-        return f"yechim #{self.solution_id}"
+        if self.solution_id:
+            return f"yechim #{self.solution_id}"
+        return f"suhbat xabari #{self.xabar_id}"
 
     @property
     def bekor_qilinganmi(self) -> bool:

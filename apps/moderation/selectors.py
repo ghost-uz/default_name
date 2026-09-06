@@ -35,7 +35,7 @@ SLA = timedelta(hours=24)
 class Holat:
     """Bitta moderatsiya holati — obyekt + unga tushgan ochiq shikoyatlar."""
 
-    turi: str  # "muammo" | "yechim"
+    turi: str  # "muammo" | "yechim" | "xabar" (D6-T5)
     target: Any
     shikoyatlar: list[Report]
     birinchi_shikoyat: datetime
@@ -235,17 +235,27 @@ def navbat() -> list[Holat]:
             "solution",
             "solution__author",
             "solution__complaint",
+            # ⚠️ D6-T5: xabar kartasi suhbat va yechim orqali muallif
+            #    nomini oladi (`Suhbat.korinadigan_nom`).
+            "xabar",
+            "xabar__author",
+            "xabar__suhbat__sorov__solution__complaint",
+            "xabar__suhbat__sorov__solution__author",
         )
         .order_by("created_at")
     )
 
     guruhlar: dict[tuple[str, int], list[Report]] = {}
     for shikoyat in shikoyatlar:
-        kalit = (
-            ("muammo", shikoyat.complaint_id)
-            if shikoyat.complaint_id
-            else ("yechim", shikoyat.solution_id)
-        )
+        # ⚠️ D6-T5: uchinchi tur — suhbat xabari. Guruhlash OBYEKT
+        #    bo'yicha (D2-T2 qarori), ya'ni bitta xabarga tushgan
+        #    hamma shikoyat bitta holatga yig'iladi.
+        if shikoyat.complaint_id:
+            kalit = ("muammo", shikoyat.complaint_id)
+        elif shikoyat.solution_id:
+            kalit = ("yechim", shikoyat.solution_id)
+        else:
+            kalit = ("xabar", shikoyat.xabar_id)
         guruhlar.setdefault(kalit, []).append(shikoyat)
 
     maqsadlar = {kalit: guruh[0].target for kalit, guruh in guruhlar.items()}

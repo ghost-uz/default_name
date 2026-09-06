@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+
+{% comment %}
+  Yopiq suhbat (D6-T5).
+
+  ⚠️⚠️ ISM `Suhbat.korinadigan_nom()` DAN OLINADI, `xabar.author`
+     DAN EMAS. Bu anonimlik invariantining TO'RTINCHI joyi (shablon,
+     OG, JSON-LD dan keyin): anonim yozgan odam suhbatda ham "Anonim".
+     `{{ xabar.author.display_name }}` yozish uni bir zumda oshkor
+     qilardi va buni faqat qarshi tomon ko'rardi.
+{% endcomment %}
+
+{% block title %}Suhbat — Dard.uz{% endblock %}
+{% block description %}Shaxsiy suhbat.{% endblock %}
+
+{% block head_extra %}
+  <meta name="robots" content="noindex, nofollow" />
+{% endblock %}
+
+{% block kanonik %}{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-2xl px-4 py-6 lg:px-6">
+  <main id="main">
+    <nav class="mb-4 text-sm text-fg-muted" aria-label="Yo'l">
+      <a href="{% url 'suhbatlar' %}" class="hover:text-fg hover:underline">Suhbatlar</a>
+      <span aria-hidden="true"> / </span>
+      <span class="text-fg">Suhbat</span>
+    </nav>
+
+    <div class="mb-5 flex items-start justify-between gap-3">
+      <div class="min-w-0">
+        <h1 class="text-xl font-extrabold leading-snug">
+          <a href="{{ suhbat.muammo.get_absolute_url }}" class="hover:underline">{{ suhbat.muammo.title }}</a>
+        </h1>
+        {% if suhbat.yopiqmi %}
+          <p class="mt-1 text-[13px] text-fg-muted">Suhbat yopilgan — yangi xabar yozib bo'lmaydi.</p>
+        {% endif %}
+      </div>
+      {% if not suhbat.yopiqmi %}
+        <form method="post" action="{% url 'suhbatni_yopish' suhbat.pk %}" class="shrink-0">
+          {% csrf_token %}
+          <button type="submit" class="btn-outline btn-sm">Yopish</button>
+        </form>
+      {% endif %}
+    </div>
+
+    {% if xabarlar %}
+      <ul class="space-y-3">
+        {% for xabar in xabarlar %}
+          <li id="xabar-{{ xabar.pk }}" class="card p-4">
+            <div class="mb-1 flex items-baseline justify-between gap-3">
+              <span class="text-[13px] font-semibold">{{ xabar.korsatiladigan_nom }}</span>
+              <time class="tnum text-[12px] text-fg-muted" datetime="{{ xabar.created_at|date:'c' }}">{{ xabar.created_at|timesince }} oldin</time>
+            </div>
+            <p class="whitespace-pre-line text-[15px] leading-relaxed">{{ xabar.content }}</p>
+            <a href="{% url 'xabar_shikoyat' xabar.pk %}" class="mt-2 inline-block text-[12px] text-fg-muted hover:text-fg hover:underline">Shikoyat qilish</a>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="card p-4 text-[15px] text-fg-muted">Hali xabar yo'q — birinchi bo'lib yozing.</p>
+    {% endif %}
+
+    {% if not suhbat.yopiqmi %}
+      <form method="post" class="card mt-5 p-4">
+        {% csrf_token %}
+        <label for="matn" class="mb-2 block text-sm font-bold">Xabar</label>
+        <textarea id="matn" name="matn" rows="3" maxlength="2000" required
+                  class="w-full rounded-lg border border-line bg-surface p-3 text-[15px]"
+                  placeholder="Xabaringizni yozing..."></textarea>
+        <button type="submit" class="btn-primary mt-3">Yuborish</button>
+      </form>
+    {% endif %}
+  </main>
+</div>
+
+<div class="h-16 lg:hidden" aria-hidden="true"></div>
+{% endblock %}

@@ -39,6 +39,11 @@ class BildirishnomaTuri(models.TextChoices):
     #    kutgan) savoli turadi va u faqat KATEGORIYANI aniqlash uchun
     #    kerak. To'liq ro'yxat Telegram xabarida va lentada.
     DAYJEST = "dayjest", "Sohangizdagi javobsiz savollar"
+    # ⚠️ Shaxsiy suhbat (D6-T5). Uchalasi ham `kontakt_sorovi` ga
+    #    bog'lanadi — u so'rovning ham, suhbatning ham langari.
+    KONTAKT_SOROVI = "kontakt_sorovi", "Shaxsiy suhbat so'rovi"
+    KONTAKT_JAVOBI = "kontakt_javobi", "Suhbat so'rovingizga javob"
+    YANGI_XABAR = "yangi_xabar", "Suhbatda yangi xabar"
 
 
 class Notification(TimeStampedModel):
@@ -80,6 +85,19 @@ class Notification(TimeStampedModel):
         blank=True,
         related_name="+",
         help_text="Anonim manbada BO'SH — sabab model docstring'ida.",
+    )
+
+    # ⚠️ BITTA FK, ikkita emas: `KontaktSorovi` so'rovning ham,
+    #    suhbatning ham langari (`sorov.suhbat`). Ikkinchi FK qo'shish
+    #    «aynan bittasi to'ldirilgan» cheklovini talab qilardi va
+    #    hech narsa bermasdi.
+    kontakt_sorovi = models.ForeignKey(
+        "suhbat.KontaktSorovi",
+        verbose_name="kontakt so'rovi",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="bildirishnomalar",
     )
 
     turi = models.CharField(
@@ -153,6 +171,19 @@ class Notification(TimeStampedModel):
             if self.complaint is not None:
                 return f"{self.complaint.category.name} sohasida javobsiz savollar"
             return "Sohangizda javobsiz savollar"
+
+        # ⚠️⚠️ SUHBAT MATNIDA ISM YO'Q (D6-T5). Anonim muallif suhbatda
+        #    ham anonim qoladi; bildirishnoma matni uni oshkor qiladigan
+        #    yagona joy bo'lardi — u markazda VA Telegram'da ko'rinadi.
+        if self.turi == BildirishnomaTuri.KONTAKT_SOROVI:
+            return "Sizga shaxsiy suhbat taklif qilindi"
+        if self.turi == BildirishnomaTuri.KONTAKT_JAVOBI:
+            sorov = self.kontakt_sorovi
+            if sorov is not None and sorov.holat == "qabul_qilindi":
+                return "Suhbat so'rovingiz qabul qilindi"
+            return "Suhbat so'rovingiz rad etildi"
+        if self.turi == BildirishnomaTuri.YANGI_XABAR:
+            return "Suhbatda yangi xabar"
         return self.get_turi_display()
 
     @property
@@ -166,6 +197,16 @@ class Notification(TimeStampedModel):
         # ⚠️ `complaint_id` EMAS, obyektning O'ZI tekshiriladi: `None`
         #    bo'lgan FK uchun Django so'rov QILMAYDI, ya'ni narxi bir xil,
         #    lekin tip tekshiruvchi shartni tushunadi (mypy `union-attr`).
+        # ⚠️ Suhbat turlari `complaint` ga EMAS, `kontakt_sorovi` ga
+        #    bog'langan — shuning uchun ular quyidagi `complaint`
+        #    tekshiruvidan OLDIN ko'riladi.
+        sorov = self.kontakt_sorovi
+        if sorov is not None:
+            suhbat = getattr(sorov, "suhbat", None)
+            if suhbat is not None:
+                return suhbat.get_absolute_url()
+            return reverse("kontakt_sorovi", args=[sorov.pk])
+
         muammo = self.complaint
         if muammo is None:
             return reverse("bildirishnomalar")

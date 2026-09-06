@@ -33,6 +33,7 @@ def bildirishnoma_yaratish(
     actor=None,
     complaint=None,
     solution=None,
+    kontakt_sorovi=None,
 ) -> Notification | None:
     """Bildirishnoma yozadi. O'ZINGIZGA yozilmaydi.
 
@@ -62,6 +63,7 @@ def bildirishnoma_yaratish(
         turi=turi,
         complaint=complaint,
         solution=solution,
+        kontakt_sorovi=kontakt_sorovi,
     )
     _keshni_tozalash(recipient.pk)
 
@@ -106,6 +108,77 @@ def dayjest_bildirishnomasi(*, ekspert, savollar) -> Notification | None:
         recipient=ekspert.user,
         turi=BildirishnomaTuri.DAYJEST,
         complaint=savollar[0],
+    )
+
+
+def kontakt_sorovi_bildirishnomasi(*, sorov) -> Notification | None:
+    """«Sizga shaxsiy suhbat taklif qilindi» (D6-T5).
+
+    ⚠️⚠️ `actor` BERILMAYDI. So'ragan odam anonim yozgan bo'lishi
+       mumkin va `actor` bildirishnoma matnida uning ismini
+       chiqarardi — anonimlik invariantining SUHBATDAGI ko'rinishi.
+       Matn ismsiz ham to'liq ma'noli.
+    """
+    from apps.accounts.models import User
+
+    oluvchi = User.objects.filter(pk=sorov.qarshi_tomon_id).first()
+    return bildirishnoma_yaratish(
+        recipient=oluvchi,
+        turi=BildirishnomaTuri.KONTAKT_SOROVI,
+        kontakt_sorovi=sorov,
+    )
+
+
+def kontakt_javobi_bildirishnomasi(*, sorov) -> Notification | None:
+    """So'rov yuborgan odamga javob (qabul yoki rad).
+
+    ⚠️ RAD ETILGANDA HAM yuboriladi: javobsiz qolgan so'rov odamni
+       kutishda qoldirardi va u qayta-qayta tekshirib yurardi.
+    """
+    return bildirishnoma_yaratish(
+        recipient=sorov.soragan,
+        turi=BildirishnomaTuri.KONTAKT_JAVOBI,
+        kontakt_sorovi=sorov,
+    )
+
+
+def yangi_xabar_bildirishnomasi(*, xabar) -> Notification | None:
+    """Suhbatdagi yangi xabar haqida.
+
+    ⚠️⚠️ O'QILMAGAN BILDIRISHNOMA TURGANDA YANGISI YARATILMAYDI.
+       Aks holda faol suhbat o'nlab bildirishnoma va o'nlab Telegram
+       xabari berardi — aynan D5-T4 ogohlantirgan «ortiqcha
+       bildirishnoma botdan chiqib ketishga olib keladi» holati.
+
+       Ya'ni bir suhbat bir «o'qilmagan» to'lqinda BITTA bildirishnoma
+       beradi. Foydalanuvchi markazni ochib o'qigach, keyingi xabar
+       yana xabar beradi.
+
+    ⚠️ `actor` BERILMAYDI — sabab `kontakt_sorovi_bildirishnomasi` da.
+    """
+    from apps.accounts.models import User
+
+    suhbat = xabar.suhbat
+    oluvchi_id = next(
+        (pk for pk in suhbat.ishtirokchi_idlari() if pk != xabar.author_id), None
+    )
+    if oluvchi_id is None:
+        return None
+
+    sorov = suhbat.sorov
+    kutayotgan = Notification.objects.filter(
+        recipient_id=oluvchi_id,
+        turi=BildirishnomaTuri.YANGI_XABAR,
+        kontakt_sorovi=sorov,
+        okilgan_at__isnull=True,
+    ).exists()
+    if kutayotgan:
+        return None
+
+    return bildirishnoma_yaratish(
+        recipient=User.objects.filter(pk=oluvchi_id).first(),
+        turi=BildirishnomaTuri.YANGI_XABAR,
+        kontakt_sorovi=sorov,
     )
 
 
@@ -206,6 +279,14 @@ def bildirishnomalar_royxati(*, user) -> models.QuerySet[Notification]:
     """
     return (
         Notification.objects.filter(recipient=user)
-        .select_related("actor", "complaint", "complaint__category")
+        .select_related(
+            "actor",
+            "complaint",
+            "complaint__category",
+            # ⚠️ D6-T5: suhbat qatorining matni va manzili so'rovga
+            #    tayanadi (`sorov.holat`, `sorov.suhbat`).
+            "kontakt_sorovi",
+            "kontakt_sorovi__suhbat",
+        )
         .order_by("-created_at", "-id")
     )

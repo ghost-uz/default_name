@@ -16,6 +16,8 @@
 {% endcomment %}
 {% if holat.turi == 'muammo' %}
   {% url 'moderatsiya_qaror_muammo' holat.target.pk as qaror_url %}
+{% elif holat.turi == 'xabar' %}
+  {% url 'moderatsiya_qaror_xabar' holat.target.pk as qaror_url %}
 {% else %}
   {% url 'moderatsiya_qaror_yechim' holat.target.pk as qaror_url %}
 {% endif %}
@@ -43,7 +45,7 @@
   <div class="border-b border-line px-4 py-3">
     <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px]">
       <span class="font-bold">
-        {% if holat.turi == 'muammo' %}Muammo{% else %}Yechim{% endif %}
+        {% if holat.turi == 'muammo' %}Muammo{% elif holat.turi == 'xabar' %}Shaxsiy xabar{% else %}Yechim{% endif %}
         #{{ holat.target.pk }}
       </span>
 
@@ -105,6 +107,22 @@
         <a href="{{ holat.target.get_absolute_url }}" class="hover:text-primary">{{ holat.target.title }}</a>
       </h3>
       <div class="prose-body mt-1.5 max-h-64 overflow-y-auto text-[15px]">{{ holat.target.description|linebreaks }}</div>
+    {% elif holat.turi == 'xabar' %}
+      {% comment %}
+        ⚠️⚠️ SHAXSIY YOZISHMA (D6-T5). Moderator BU YERDA faqat
+           SHIKOYAT QILINGAN xabarni ko'radi, butun suhbatni EMAS:
+           shikoyat kirish sababi bo'lsa ham, u butun yozishmani
+           ochib berish uchun asos bermaydi.
+
+        ⚠️ Suhbat havolasi ATAYLAB yo'q — moderator uchun suhbat
+           sahifasi baribir 404 beradi (`views._suhbatni_olish`
+           faqat ISHTIROKCHIGA ochadi).
+      {% endcomment %}
+      <p class="mb-1.5 text-[13px] text-fg-muted">
+        Shaxsiy suhbatdagi xabar. Muammo:
+        <a href="{{ holat.target.suhbat.muammo.get_absolute_url }}" class="link">{{ holat.target.suhbat.muammo.title|truncatechars:70 }}</a>
+      </p>
+      <div class="prose-body max-h-64 overflow-y-auto text-[15px]">{{ holat.target.content|linebreaks }}</div>
     {% else %}
       <p class="mb-1.5 text-[13px] text-fg-muted">
         Javob:

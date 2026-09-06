@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% comment %}
+  Suhbatlar ro'yxati (D6-T5).
+
+  ⚠️ Sahifa `noindex`: shaxsiy yozishma qidiruv tizimida turmasligi
+     kerak (bildirishnomalar markazi bilan bir xil qaror).
+{% endcomment %}
+
+{% block title %}Suhbatlar — Dard.uz{% endblock %}
+{% block description %}Shaxsiy suhbatlaringiz.{% endblock %}
+
+{% block head_extra %}
+  <meta name="robots" content="noindex, nofollow" />
+{% endblock %}
+
+{% block kanonik %}{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-2xl px-4 py-6 lg:px-6">
+  <main id="main">
+    <h1 class="mb-5 text-2xl font-extrabold">Suhbatlar</h1>
+
+    {% if sorovlar %}
+      <section class="mb-6" aria-labelledby="sorovlar-sarlavha">
+        <h2 id="sorovlar-sarlavha" class="mb-2 text-sm font-bold text-fg-muted">Javob kutilmoqda</h2>
+        <ul class="card divide-y divide-line overflow-hidden">
+          {% for s in sorovlar %}
+            <li>
+              <a href="{% url 'kontakt_sorovi' s.pk %}" class="flex items-start gap-3 px-4 py-3.5 transition-colors hover:bg-surface-2">
+                <span class="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary text-on-primary" aria-hidden="true">
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                </span>
+                <span class="min-w-0 flex-1">
+                  <span class="block text-[15px] font-semibold leading-snug">Shaxsiy suhbat taklifi</span>
+                  <span class="clamp-2 mt-0.5 block text-[13px] text-fg-muted">{{ s.muammo.title }}</span>
+                </span>
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+      </section>
+    {% endif %}
+
+    {% if suhbatlar %}
+      <ul class="card divide-y divide-line overflow-hidden">
+        {% for s in suhbatlar %}
+          <li>
+            <a href="{{ s.get_absolute_url }}" class="flex items-start gap-3 px-4 py-3.5 transition-colors hover:bg-surface-2">
+              <span class="min-w-0 flex-1">
+                <span class="block text-[15px] font-semibold leading-snug">{{ s.muammo.title }}</span>
+                <span class="mt-0.5 block text-[13px] text-fg-muted">
+                  {% if s.yopiqmi %}Yopilgan{% else %}Ochiq{% endif %}
+                  · <time datetime="{{ s.updated_at|date:'c' }}">{{ s.updated_at|timesince }} oldin</time>
+                </span>
+              </span>
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
+    {% elif not sorovlar %}
+      {% include "components/_empty_state.html" with icon="bookmark" title="Hozircha suhbat yo'q" text="Yechimingiz qabul qilinganda yoki siz yechim qabul qilganingizda shaxsiy suhbat taklif qilish mumkin." action_url="/" action="Lentaga o'tish" %}
+    {% endif %}
+  </main>
+</div>
+
+<div class="h-16 lg:hidden" aria-hidden="true"></div>
+{% endblock %}

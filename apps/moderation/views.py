@@ -142,6 +142,37 @@ def yechim_shikoyat(request: HttpRequest, pk: int) -> HttpResponse:
     )
 
 
+@login_required
+@tezlik_cheklovi("shikoyat")
+def xabar_shikoyat(request: HttpRequest, pk: int) -> HttpResponse:
+    """Suhbat xabariga shikoyat (D6-T5 qabul mezoni).
+
+    ⚠️⚠️ FAQAT SUHBAT ISHTIROKCHISI. Boshqa hamma uchun 404 — shikoyat
+       manzili yozishmani begonaga ochib beradigan teshik bo'lmasin.
+       `visible()` bu yerda YETARLI EMAS: xabar ommaviy emas, u
+       IKKI KISHIGA tegishli.
+    """
+    from apps.suhbat.models import Xabar
+
+    # korinish-istisno: ruxsat ko'rinish holati bilan emas,
+    # ISHTIROKCHILIK bilan aniqlanadi (quyida) — shaxsiy yozishma
+    # `visible()` mantiqiga tushmaydi.
+    xabar = get_object_or_404(
+        Xabar.objects.select_related(
+            "suhbat__sorov__solution__complaint", "suhbat__sorov__solution"
+        ),
+        pk=pk,
+    )
+    if not xabar.suhbat.ishtirokchimi(request.user):
+        raise Http404
+    return _shikoyat_sahifasi(
+        request,
+        maqsad=xabar,
+        tur="xabar",
+        sarlavha=xabar.content[:80],
+    )
+
+
 # ===========================================================================
 # Moderatsiya navbati (D2-T2)
 # ===========================================================================
@@ -220,6 +251,11 @@ def _maqsadni_olish(*, turi: str, pk: int):
         # KO'RSATISHI kerak. Himoyasi `visible()` emas, `@moderator_kerak`
         # (staff bo'lmaganga Http404).
         return get_object_or_404(Complaint.all_objects, pk=pk)
+    if turi == "xabar":
+        # ⚠️ D6-T5: suhbat xabari (chat moderatsiya qamrovida).
+        from apps.suhbat.models import Xabar
+
+        return get_object_or_404(Xabar.all_objects, pk=pk)
     # korinish-istisno: yuqoridagi bilan bir xil sabab.
     return get_object_or_404(Solution.all_objects, pk=pk)
 
@@ -254,6 +290,13 @@ def qaror_muammo(request: HttpRequest, pk: int) -> HttpResponse:
 @require_POST
 def qaror_yechim(request: HttpRequest, pk: int) -> HttpResponse:
     return _qaror(request, turi="yechim", pk=pk)
+
+
+@moderator_kerak
+@require_POST
+def qaror_xabar(request: HttpRequest, pk: int) -> HttpResponse:
+    """D6-T5: suhbat xabari ustidan chora."""
+    return _qaror(request, turi="xabar", pk=pk)
 
 
 @moderator_kerak

@@ -352,7 +352,10 @@ def test_manba_kodida_visible_SIZ_sorov_YOQ():
     ulanmagan bo'lsa — u qamrab olinmaydi va bir kuni sitemap yoki
     API'ga ulanadi.
     """
-    NAZORATDAGI = {"Complaint", "Solution"}
+    # ⚠️ D6-T5: `Xabar` ham ro'yxatda. Suhbat SHAXSIY, lekin moderator
+    #    yashirgan xabar ishtirokchiga ham ko'rinmasligi kerak —
+    #    invariantning shakli bir xil.
+    NAZORATDAGI = {"Complaint", "Solution", "Xabar"}
     MENEJERLAR = {"objects", "all_objects"}
 
     buzuqlar: list[str] = []

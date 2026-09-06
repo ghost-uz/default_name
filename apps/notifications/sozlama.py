@@ -50,6 +50,21 @@ MUHIM_TURLAR = frozenset(
         #    dayjest sozlamalar sahifasini ochgan bir necha odamga
         #    yetardi, ya'ni taskning maqsadi bajarilmasdi.
         BildirishnomaTuri.DAYJEST,
+        # ⚠️⚠️ SUHBAT TURLARI (D6-T5) — uchalasi ham ONGLI ravishda.
+        #
+        #    So'rov va javob KAM UCHRAYDI (faqat qabul qilingan
+        #    yechimdan keyin, yechimga bitta) va ular JAVOB TALAB
+        #    QILADI — o'chiq bo'lsa odam so'rovni ko'rmay qolardi va
+        #    qarshi tomon «javob bermadi» deb o'ylardi.
+        #
+        #    `YANGI_XABAR` esa hajm bo'yicha xavfli ko'rinadi, lekin
+        #    `services.yangi_xabar_bildirishnomasi` uni CHEKLAYDI:
+        #    o'qilmagan bildirishnoma turganda YANGISI YARATILMAYDI.
+        #    Ya'ni bir suhbat bir «o'qilmagan» to'lqinda BITTA
+        #    bildirishnoma beradi, yuzta emas.
+        BildirishnomaTuri.KONTAKT_SOROVI,
+        BildirishnomaTuri.KONTAKT_JAVOBI,
+        BildirishnomaTuri.YANGI_XABAR,
     }
 )
 

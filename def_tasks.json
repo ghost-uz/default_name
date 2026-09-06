@@ -3332,12 +3332,77 @@
       "bogliq": [
         "D1-T10"
       ],
-      "holat": "todo",
+      "holat": "done",
       "qabul_mezoni": [
         "anonim muallifning kontakti roziligisiz OCHILMAYDI",
         "rad etish imkoniyati bor",
         "chat moderatsiya qamrovida"
-      ]
+      ],
+      "tugatilgan": "2026-09-06",
+      "natija": {
+        "yaratilgan": [
+          "apps/suhbat/ — YANGI app: models (KontaktSorovi, Suhbat, Xabar), services, selectors, views, urls, admin, factories",
+          "templates/suhbat/ — royxat.html, sorov.html, suhbat.html",
+          "apps/notifications/ — 3 yangi tur (KONTAKT_SOROVI, KONTAKT_JAVOBI, YANGI_XABAR) + kontakt_sorovi FK + 3 xizmat funksiyasi",
+          "apps/moderation/ — Report va ModerationAction ga `xabar` FK, cheklovlar, navbat, qaror ko'rinishi, shikoyat sahifasi, shablon",
+          "config/settings/base.py — TEZLIK_CHEKLOVLARI ga kontakt_sorovi va suhbat_xabar",
+          "apps/suhbat/tests_suhbat.py — 56 test"
+        ],
+        "qabul_mezonlari": {
+          "anonim_muallifning_kontakti_roziligisiz_ochilmaydi": "✅ ENG KUCHLI SHAKLDA: kontakt UMUMAN ochilmaydi. Telegram nomi hech qachon berilmaydi va anonim muallif SUHBAT ICHIDA ham «Anonim» bo'lib qoladi. So'rov o'zi suhbat ochmaydi — faqat qarshi tomon roziligi ochadi (test: so'rovdan keyin `Suhbat.objects.count() == 0`).",
+          "rad_etish_imkoniyati_bor": "✅ `sorovga_javob(qabul=False)` + interfeysda «Rad etaman». Rad etilgandan keyin QAYTA so'rab bo'lmaydi — aks holda «yo'q» javobi hech narsani anglatmasdi.",
+          "chat_moderatsiya_qamrovida": "✅ `Xabar` — `ContentModel`: shikoyat (D2-T1), navbat (D2-T2), uch ogohlantirish (D2-T11), audit (D2-T7) VA inqiroz aniqlash (D2-T6) BEPUL keladi. `Report`/`ModerationAction` ga uchinchi FK qo'shildi. JONLI tekshirildi: shikoyat → navbat → chora."
+        },
+        "tekshirilgan": [
+          "⭐⭐ so'rov O'ZI suhbat ochmaydi; so'ragan odam o'zi qabul qila olmaydi",
+          "⭐⭐ anonim muallif suhbatda ham «Anonim» — ismi sahifada YO'Q",
+          "⭐⭐ shikoyat qilingan xabar navbatga tushadi va moderator chora ko'radi",
+          "⭐ rad etilgandan keyin qayta so'rab bo'lmaydi",
+          "⭐ blok IKKI TOMONLAMA to'xtatadi (UserBlock o'zi bir tomonlama)",
+          "⭐ cheklangan odam suhbatda HAM yoza olmaydi",
+          "⭐ inqiroz belgisi shaxsiy xabarda ham ishlaydi va uni YASHIRMAYDI",
+          "⭐ so'rov soni xabarlar soniga bog'liq EMAS",
+          "qabul qilinmagan yechimda so'rab bo'lmaydi; begona so'rov yubora olmaydi",
+          "yopiq suhbatga yozib bo'lmaydi; yozishma QOLADI",
+          "yashirilgan xabar ISHTIROKCHIGA HAM ko'rinmaydi",
+          "begonaga 404 (403 EMAS) — so'rov, suhbat, shikoyat, yopish",
+          "YANGI_XABAR bildirishnomasi o'qilmagani turganda TAKRORLANMAYDI",
+          "JONLI brauzerda uchidan-uchiga: so'rov → rozilik → xabar → shikoyat → moderatsiya navbati"
+        ],
+        "qarorlar": [
+          "⭐⭐⭐ «KONTAKT ALMASHINUVI» EMAS, «YOPIQ SUHBAT» — task ikki yo'lni taklif qilgan, ikkinchisi tanlandi. Sabab QAYTARIB BO'LMASLIK: Telegram nomini bergan odam uni orqaga ola olmaydi, va D2-T11 dagi `UserBlock` ham foydasiz bo'lib qolardi (qarshi tomonda nomingiz allaqachon bor). Yopiq suhbat esa qaytariladi: yopish, bloklash, shikoyat. Qabul mezoni «chat moderatsiya qamrovida» ham FAQAT shu yo'lda bajariladi — Telegram'ga ko'chgan suhbatni moderatsiya qila olmaymiz.",
+          "⭐⭐ SUHBAT ICHIDA HAM ANONIMLIK SAQLANADI. Ism har doim kontentning `public_author` idan olinadi (D1-T6 yagona kirish nuqtasi) — bu invariantning TO'RTINCHI joyi (shablon, OG, JSON-LD dan keyin). «Baribir kim ekanini biladi» degan taxmin NOTO'G'RI: anonim muallifni qarshi tomon HECH QACHON bilmagan.",
+          "⭐⭐ SHAXSNI OSHKOR QILISH ATAYLAB QO'SHILMADI — u yagona qaytarib bo'lmaydigan amal va suhbat uni keraksiz qiladi. Kerak bo'lsa ALOHIDA, ikki tomonlama aniq rozilik bilan qo'shiladi.",
+          "⭐ ROZILIK XABARDOR: sahifada nima ochilishi VA nima ochilmasligi ochiq yozilgan («Telegram nomingiz berilmaydi»). Aks holda «roziman» xabardor rozilik bo'lmasdi.",
+          "⭐ RAD ETISH SABABSIZ: sabab so'rash rad etgan odamni o'zini oqlashga majbur qilardi. «Yo'q» yetarli javob.",
+          "⭐ FAQAT QABUL QILINGAN YECHIMDA. Task sharti, lekin u bezovtalikka ham qarshi: tasodifiy odam istalgan postga suhbat so'rab yura olmaydi — avval uning javobi TANLANGAN bo'lishi kerak.",
+          "⭐ BLOK IKKI TOMONLAMA tekshiriladi. `UserBlock` o'zi bir tomonlama (D2-T11) va bu to'g'ri, lekin shaxsiy kanal OCHISH boshqa gap.",
+          "YOPILGAN SUHBAT QAYTA OCHILMAYDI: qayta ochish tugmasi «yopish» ni yumshoq taklifga aylantirardi. Yozishma QOLADI — o'chirish shikoyat uchun dalilni yo'q qilardi.",
+          "YANGI_XABAR bildirishnomasi CHEKLANGAN: o'qilmagani turganda yangisi yaratilmaydi. Aks holda faol suhbat o'nlab Telegram xabari berardi (D5-T4 ogohlantirgan holat).",
+          "Admin'da xabarlar `inline` QILINMAGAN: shaxsiy yozishmani «shunchaki ochib ko'rish» oson bo'lmasligi kerak. Moderator uni SHIKOYAT orqali ko'radi va bu audit jurnalida qoladi.",
+          "Moderator navbatda FAQAT shikoyat qilingan xabarni ko'radi, butun suhbatni EMAS: shikoyat kirish sababi bo'lsa ham, u butun yozishmani ochish uchun asos bermaydi.",
+          "Begonaga 404, 403 EMAS: `403` kimning kim bilan yozishayotganini tasdiqlab berardi (D2-T2 dagi bir xil mulohaza)."
+        ],
+        "topilgan_xatolar": [
+          "⭐⭐ JONLI BRAUZER UX NUQSONINI FOSH QILDI: anonim muallif O'Z xabarini «Anonim (muammo muallifi)» deb ko'rdi — ikki kishilik suhbatda bu chalg'ituvchi. `Xabar.nom(kuzatuvchi)` qo'shildi: «Siz (anonim)» / «Siz». Anonim qavs ATAYLAB qoldirildi — odam o'z anonimligi saqlanayotganini ko'rib turishi kerak.",
+          "⭐⭐ `runserver --noreload` YANA CHALG'ITDI (xotiradagi gotcha): shablon o'zgarishi darhol ko'rindi (dev'da keshlangan yuklovchi o'chiq), KOD esa eskiligicha qoldi → shablon yangi maydonni so'radi, ko'rinish uni yozmadi va Django uni JIMGINA bo'sh satr qildi. Ism butunlay yo'qoldi, xato esa BERILMADI.",
+          "⭐ Django shabloni ARGUMENTLI METOD chaqira olmaydi: `{{ suhbat.korinadigan_nom:xabar.author }}` ishlamaydi va eng oson muqobil (`xabar.author.display_name`) aynan anonimlikni buzadigan yo'l. Yorliq ko'rinishda oldindan hisoblanadi.",
+          "D2-T3 ko'rinish guard'i `Xabar.objects.create(...)` ni ushladi — `# korinish-istisno` izohi qo'shildi. Guard `NAZORATDAGI` ro'yxatiga `Xabar` ham kiritildi.",
+          "Kesh so'rov-sanog'i testini yana buzdi (bu loyihada UCHINCHI marta): sarlavhadagi o'qilmagan bildirishnomalar sanog'i keshlanadi va birinchi so'rov uni hisoblaydi. Yechim: keshni oldindan ilitish.",
+          "`shikoyat_yuborish` da `(complaint is None) == (solution is None)` tekshiruvi uchinchi tur qo'shilganda JIMGINA noto'g'ri ishlardi — sanoq bilan almashtirildi."
+        ],
+        "olchangan_holat": {
+          "testlar": 1352,
+          "qamrov_foiz": 95.1,
+          "d6_t5_testlari": 56
+        },
+        "keyingi_uchun_eslatma": [
+          "⚠️⚠️ Suhbat shablonida ISM `xabar.korsatiladigan_nom` dan olinadi. `xabar.author.display_name` YOZMANG — u anonim muallifni bir zumda oshkor qiladi va buni faqat qarshi tomon ko'radi.",
+          "⚠️ Yangi moderatsiya maqsad turi qo'shsangiz: `Report` va `ModerationAction` FK, IKKALA cheklov, `target`/`target_nomi`, `eskalatsiya_qilinganlar`, `_maqsad_kwargs`, `navbat()` kaliti, `_maqsadni_olish`, URL, ko'rinish VA `_holat.html`.",
+          "⚠️ Shaxsni oshkor qilish (Telegram nomi) qo'shilsa — u QAYTARIB BO'LMAYDIGAN amal. Ikki tomonlama aniq rozilik SHART va u suhbat roziligidan ALOHIDA bo'lishi kerak.",
+          "⚠️ DEPLOY: yangi app `apps.suhbat` — `INSTALLED_APPS` va migratsiyalar (suhbat 0001, moderation 0008, notifications 0004)."
+        ]
+      }
     },
     {
       "id": "D6-T6",
