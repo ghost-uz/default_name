@@ -438,3 +438,79 @@ class VoteModel(TimeStampedModel):
 
     def __str__(self) -> str:
         return f"{self.user_id}: {self.value:+d}"
+
+
+# ===========================================================================
+# 6. O'zgarmas jurnal (append-only)
+# ===========================================================================
+class JurnalOzgarmas(Exception):
+    """Jurnal yozuvini o'zgartirish yoki o'chirishga urinish.
+
+    ⚠️ Bu `ValidationError` EMAS: forma xatosi emas, DASTUR xatosi.
+       Uni ushlab, foydalanuvchiga chiroyli xabar ko'rsatish noto'g'ri
+       bo'lardi — kod umuman bunday chaqiruv qilmasligi kerak.
+    """
+
+
+class OzgarmasJurnalQuerySet(models.QuerySet):
+    """⚠️ Ommaviy o'zgartirish va o'chirish YOPIQ.
+
+    Model darajasidagi `save()`/`delete()` ni chetlab o'tish oson:
+    `Jurnal.objects.filter(...).update(izoh="")` hech qanday model
+    metodini chaqirmaydi. Jurnal uchun bu teshik ochiq qolsa,
+    himoyaning ma'nosi yo'q.
+    """
+
+    def update(self, **kwargs):
+        raise JurnalOzgarmas(
+            "Jurnal o'zgartirilmaydi. Xato yozuv bo'lsa, uni TUZATUVCHI "
+            "yangi yozuv qo'shing."
+        )
+
+    def delete(self):
+        raise JurnalOzgarmas("Jurnal o'chirilmaydi.")
+
+    def _haqiqiy_ochirish(self):
+        """FAQAT test va ma'lumot saqlash siyosati uchun (D2-T8).
+
+        Nomi ataylab noqulay: tasodifan chaqirilmasin.
+        """
+        return super().delete()
+
+
+class OzgarmasJurnal(models.Model):
+    """FAQAT QO'SHILADIGAN yozuv uchun abstrakt asos.
+
+    ⚠️⚠️ NEGA UMUMIY ASOS, HAR JURNALDA ALOHIDA EMAS
+       O'zgarmaslik TO'RT qatlamda ta'minlanadi va uchinchisi
+       (`QuerySet.update`) eng oson unutiladigani (D2-T7 tajribasi).
+       Ikkinchi jurnalni (D6-T2 to'lov so'rovlari) qo'ldan yozish
+       aynan shu qatlamni tushirib qoldirish xavfini tug'dirardi —
+       va yo'qolgan qatlam TESTSIZ ko'rinmasdi, chunki qolgan
+       uchtasi ishlab turardi.
+
+    ⚠️ TO'RTINCHI QATLAM — ADMIN. U bu yerda emas, har jurnalning
+       `ModelAdmin` ida (`has_change_permission` / `has_delete_permission`
+       -> `False`), chunki admin sinfi model bilan meros orqali
+       bog'lanmagan.
+
+    ⚠️ CHEKLOV (bilib qo'yilgan): himoya ORM darajasida. To'g'ridan-
+       to'g'ri SQL (yoki `psql`) yozuvni baribir o'zgartira oladi.
+       Haqiqiy kafolat — `REVOKE UPDATE, DELETE` va u deploy
+       bosqichida beriladi (D2-T7 dagi bilan bir xil qaror).
+    """
+
+    class Meta:
+        abstract = True
+
+    def save(self, *args, **kwargs):
+        """⚠️ FAQAT QO'SHISH. Mavjud yozuvni saqlash — xato."""
+        if not self._state.adding:
+            raise JurnalOzgarmas(
+                f"{type(self).__name__} tahrirlanmaydi. Xato bo'lsa, uni "
+                "TUZATUVCHI yangi yozuv qo'shing."
+            )
+        return super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        raise JurnalOzgarmas(f"{type(self).__name__} o'chirilmaydi.")

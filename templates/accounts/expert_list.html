@@ -182,17 +182,33 @@
           </div>
 
           <div class="border-t border-line bg-surface-2/50 p-6 sm:p-8 lg:border-l lg:border-t-0">
-            <p class="text-[13px] font-semibold uppercase tracking-wider text-fg-muted">Oylik</p>
-            <p class="mt-2 flex items-baseline gap-1.5">
-              <span class="tnum text-4xl font-extrabold">149 000</span>
-              <span class="text-[15px] font-medium text-fg-muted">so'm/oy</span>
-            </p>
-            <p class="mt-2 text-[13px] text-fg-muted">Click yoki Payme orqali. Istalgan vaqtda bekor qilinadi.</p>
+            {% comment %}
+              ⚠️⚠️ NARX SOZLAMADAN (D6-T2). Bu yerda ilgari «149 000
+                 so'm/oy» QOTIRILGAN edi va haqiqiy to'lov sahifasi
+                 paydo bo'lgach jonli sahifada IKKITA boshqa narx
+                 ko'rinardi — odam bu yerda bir sonni ko'rib, to'lov
+                 sahifasida boshqasini ko'rardi.
 
-            <button type="button" class="btn-primary mt-5 w-full !min-h-12" data-toast="Beta: to'lov tizimi 4-bosqichda ulanadi">
-              PRO ni yoqish
-            </button>
-            <p class="mt-3 text-center text-[13px] text-fg-muted">Birinchi 14 kun bepul</p>
+              ⚠️ «Birinchi 14 kun bepul» OLIB TASHLANDI: sinov muddati
+                 kodda YO'Q. Bajarilmaydigan va'da sotib olish
+                 tugmasining yonida turishi — eng qimmat turdagi
+                 yolg'on.
+            {% endcomment %}
+            <p class="text-[13px] font-semibold uppercase tracking-wider text-fg-muted">Obuna</p>
+            <p class="mt-2 flex items-baseline gap-1.5">
+              <span class="tnum text-4xl font-extrabold">{{ narx|floatformat:"0g" }}</span>
+              <span class="text-[15px] font-medium text-fg-muted">so'm/{{ kun }} kun</span>
+            </p>
+            <p class="mt-2 text-[13px] text-fg-muted">Click orqali. Avtomatik yechish yo'q.</p>
+
+            {% comment %}
+              ⚠️ Tugma emas, HAVOLA: u haqiqiy sahifaga olib boradi.
+                 Ilgari bu yerda soxta `data-toast` ishlovchisi turgan
+                 (D2-T1 aynan shunday narsani fosh qilgandi).
+            {% endcomment %}
+            <a href="{% url 'pro' %}" class="btn-primary mt-5 w-full !min-h-12">
+              PRO haqida batafsil
+            </a>
           </div>
         </div>
       </section>

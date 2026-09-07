@@ -3281,11 +3281,85 @@
       "bogliq": [
         "D6-T1"
       ],
-      "holat": "todo",
+      "holat": "done",
       "qabul_mezoni": [
         "bir xil transaction_id ikki marta kelsa ikkinchisi e'tiborsiz qoldiriladi",
         "barcha so'rovlar jurnalga yoziladi"
-      ]
+      ],
+      "tugatilgan": "2026-09-08",
+      "natija": {
+        "yaratilgan": [
+          "apps/payments/click.py — Click protokol adapteri (imzo, xato kodlari, to'lov manzili). Django'siz sof funksiyalar (`accounts/telegram.py` naqshi)",
+          "apps/payments/models.py — Tolov, TolovSorovi, Provayder, TolovMaqsadi, TolovHolati (migratsiya payments/0002_tolov)",
+          "apps/payments/services.py — tolov_yaratish/tolovni_tayyorlash/tolovni_yakunlash/tolovni_bekor_qilish/sorovni_jurnalga + Sabab, TolovXatosi",
+          "apps/payments/views.py — pro / sotib_olish / natija + click_prepare / click_complete webhook'lari",
+          "apps/payments/urls.py, templates/payments/{pro,natija}.html",
+          "apps/common/models.py — OzgarmasJurnal, OzgarmasJurnalQuerySet, JurnalOzgarmas (D2-T7 dagi naqsh umumiy asosga chiqarildi; moderation.AuditLog undan meros oladi, MIGRATSIYA YARATMAYDI)",
+          "config/settings/base.py — CLICK_SERVICE_ID, CLICK_TOLOV_MANZILI, OBUNA_NARXI, CLICK_YOQILGANMI, TEZLIK_CHEKLOVLARI['tolov_boshlash']",
+          "apps/payments/tests_click.py — 52 test"
+        ],
+        "qabul_mezonlari": {
+          "bir_xil_transaction_id_ikki_marta_kelsa_ikkinchisi_etiborsiz": "✅ IDEMPOTENTLIK KALITI — `click_trans_id`, BUYURTMA RAQAMI EMAS. Bir xil `click_trans_id` bilan kelgan takroriy Complete obunani QAYTA uzaytirmaydi va `error = 0` qaytaradi (takrorga «xato» desak Click to'lovni bekor qilib, pulni QAYTARIB yuborardi — odam esa xizmatni olgan bo'lardi). BOSHQA `click_trans_id` to'langan buyurtmaga kelsa bu takror emas, IKKINCHI to'lov -> `-4`. Uchinchi qatlam — baza: `UniqueConstraint(provayder, provayder_trans_id)` TOCTOU poygasini yopadi (ikki webhook ayni paytda kelsa).",
+          "barcha_sorovlar_jurnalga_yoziladi": "✅ `TolovSorovi` — o'zgarmas jurnal. BARCHASI degani imzosi noto'g'rilari ham: `views._javob()` YAGONA chiqish nuqtasi, ya'ni jurnalsiz javob qaytarishning imkoni yo'q. ⚠️ `sign_string` SAQLANMAYDI (`services.MAXFIY_MAYDONLAR`) — u maxfiy kalit ishtirokidagi MD5 va uni xom saqlash bazani o'g'irlagan odamga kalitni oflayn tanlash uchun material berardi; o'rniga `imzo_togrimi` bayrogi."
+        },
+        "tekshirilgan": [
+          "⭐⭐ bir xil trans_id ikki marta -> obuna BIR MARTA uzayadi va javob 0",
+          "⭐⭐ boshqa trans_id to'langan buyurtmaga -> -4, muddat o'zgarmaydi",
+          "⭐⭐ imzosi noto'g'ri so'rov ham jurnalga tushadi (imzo_togrimi=False)",
+          "⭐⭐ jurnalda `sign_string` YO'Q, qolgan maydonlar bor",
+          "⭐ bir xil trans_id ikkita buyurtmaga yozilmaydi (baza cheklovi -> -4)",
+          "⭐ imzo buzilsa/kalit boshqa bo'lsa -> -1 va holat O'ZGARMAYDI",
+          "⭐ Prepare imzosi Complete uchun yaramaydi (merchant_prepare_id)",
+          "⭐ summa shakli imzoga ta'sir qiladi ('19000' != '19000.00')",
+          "⭐ webhook xatoda ham HTTP 200 (4xx Click uchun «javob yo'q»)",
+          "⭐ webhook CSRF tokensiz ishlaydi (enforce_csrf_checks=True bilan)",
+          "⭐ tasdiqlanmagan odam sotib OLOLMAYDI (Tolov yaratilmaydi)",
+          "⭐ summa formadan olinmaydi (POST amount=1 -> Tolov.summa = narx)",
+          "⭐ natija sahifasi HOLATNI O'ZGARTIRMAYDI (return_url'ga ishonilmaydi)",
+          "Complete `error<0` bilan kelsa BEKOR + obuna berilmaydi; to'langan buyurtmani esa TORTIB OLMAYDI",
+          "Prepare takrorlansa bir xil natija; boshqa trans_id bilan qayta tayyorlash MUMKIN (odam to'lovni tashlab ketib qaytadi)",
+          "uzaytirish qolgan muddat USTIGA qo'shiladi (D6-T1 qoidasi to'lov yo'lida ham saqlanadi)",
+          "tasdiqlanmagan ekspert to'lasa `has_pro` yoqiladi, lekin `pro_faolmi` YO'Q (D3-T5: pul bilan ishonch sotib olinmaydi)",
+          "PRO sahifasi mehmonga ochiq; narx `floatformat:\"0g\"` bilan guruhlanadi (uz lokali uzilmas bo'shliq qo'yadi)",
+          "a11y qo'riqchisiga `/pro/` qo'shildi (sarlavha darajalari, nomli havolalar, bitta h1)"
+        ],
+        "qarorlar": [
+          "⭐⭐ PROVAYDERDAN MUSTAQIL YADRO. `services.py` Click kodlarini BILMAYDI — u semantik `Sabab` qaytaradi, kodga aylantirish esa `views.SABAB_KODI` da. Aks holda D6-T3 (Payme, JSON-RPC va butunlay boshqa kodlar) xizmat funksiyalari ichiga `if provayder ==` tarmoqlarini olib kirardi va to'lov mantiqi ikki marta yozilardi.",
+          "⭐⭐ IDEMPOTENTLIK UCH QATLAMDA: `click_trans_id` taqqoslash (takror va ikkinchi to'lovni AJRATADI), `select_for_update` (poyga), baza noyobligi (TOCTOU). Faqat dasturiy tekshiruv qoldirilsa, ayni paytda kelgan ikki webhook ikkalasi ham «yo'q ekan» deb yozardi.",
+          "⭐⭐ TAKRORIY SO'ROVGA `error = 0`. Click manfiy kodni ko'rib tranzaksiyani muvaffaqiyatsiz deb yopadi va pulni qaytaradi — odam esa xizmatni allaqachon olgan bo'lardi. `-4` faqat BOSHQA tranzaksiya to'langan buyurtmaga kelganda.",
+          "⭐⭐ IMZO XOM SATRLAR USTIDAN. `amount` ni `Decimal` ga aylantirib qaytarish `\"19000.00\"` -> `\"19000\"` qilib, MD5 ni butunlay o'zgartirardi. Xato FAQAT kasr qismi nol bo'lganda chiqadi, ya'ni testda emas, prodda. `Decimal` faqat TAQQOSLASH uchun.",
+          "⭐⭐ `sign_string` JURNALGA TUSHMAYDI (yuqoriga qarang).",
+          "⭐ WEBHOOK'DA TEZLIK CHEKLOVI YO'Q — ataylab. 429 ni Click «javob yo'q» deb o'qiydi va bir necha urinishdan keyin tranzaksiyani bekor qiladi, ya'ni cheklov TO'LOVNI YO'QOTARDI. Himoya — imzo.",
+          "⭐ `csrf_exempt` — MAJBURIY va xavfsiz: Click brauzer emas, unda sessiya ham, cookie ham yo'q. Imzo esa CSRF tokenidan KUCHLIROQ — u so'rovning MAZMUNIGA (summa, buyurtma) bog'langan.",
+          "⭐ WEBHOOK HAR DOIM HTTP 200 (yuqoriga qarang).",
+          "⭐ XIZMAT WEBHOOK ICHIDA, O'SHA TRANZAKSIYADA beriladi. Celery'ga chiqarish «to'landi, lekin obuna yo'q» oynasini ochardi.",
+          "⭐ `TolovMaqsadi` — KENGAYISH NUQTASI. D6-T4 (boost) `_MAQSAD_BAJARUVCHILARI` ga bitta qator qo'shadi va Click kodiga tegmaydi. `dict`, `if/elif` EMAS: unutilgan maqsad `KeyError` beradi, zanjir esa jimgina hech narsa qilmasdi.",
+          "⭐ `Provayder` da «QO'LDA» YO'Q. Admin bergan obuna `Subscription` da yaratiladi (D6-T1); «qo'lda» provayder `Tolov` ni haqiqiy pul harakati yozuvi bo'lishdan to'xtatardi va hisobot qaror bilan pulni qo'shib yuborardi. `TolovAdmin` FAQAT-O'QISH.",
+          "⭐ D2-T7 NAQSHI UMUMIY ASOSGA CHIQARILDI (`common.OzgarmasJurnal`). O'zgarmaslik TO'RT qatlamda va uchinchisi (`QuerySet.update`) eng oson unutiladigani — ikkinchi jurnalni qo'ldan yozish aynan shu qatlamni tushirib qoldirardi. `moderation.AuditLog` endi undan meros oladi; maydonlar o'zgarmagani uchun MIGRATSIYA YARATILMAYDI.",
+          "⭐ NARX SOZLAMADA (`OBUNA_NARXI`), formadan OLINMAYDI: «PRO ni 1 so'mga sotib olish» to'lov integratsiyalaridagi eng klassik teshik."
+        ],
+        "topilgan_xatolar": [
+          "⭐⭐⭐ PRO AMALDA HECH NARSA BERMASDI (oddiy foydalanuvchiga). Bugungi kodda PRO ayni BITTA narsa beradi — `pro_faolmi` nishoni, u esa TASDIQLANGAN malakani talab qiladi. `ExpertProfile.contact_visible` yig'iladi, lekin HECH QAYERDA ishlatilmaydi; `suhbat.kontakt_sorash` PRO ni umuman tekshirmaydi. Ya'ni tasdiqlanmagan odam to'lasa MUTLAQO hech narsa olmasdi. Chora: `views.sotib_ololadimi()` sotib olishni tasdiqlangan ekspert bilan cheklaydi (hech narsa bermaydigan pulni olish — nuqson, hujjatlashtiriladigan cheklov emas). ⚠️ Bu MAHSULOT ochiq savoli: PRO imkoniyatlari kengaytirilsa cheklov bitta funksiyada olib tashlanadi.",
+          "⭐⭐ MAKETDAGI TO'RTTA VA'DA KODDA YO'Q EDI. `accounts/expert_list.html` (jonli sahifa) «Bog'lanish tugmasi», «yechimlar ro'yxat boshida», «Telegram bildirishnomasi», «Birinchi 14 kun bepul» deb va'da qilardi va «149 000 so'm/oy» narxini QOTIRGANDI. Haqiqiy sahifa paydo bo'lgach jonli saytda IKKITA boshqa narx ko'rinardi. Tuzatildi: narx sozlamadan, soxta `data-toast` tugmasi o'rniga `/pro/` ga havola, «14 kun bepul» olib tashlandi. (D2-T1 dagi «maket JS'ida soxta muvaffaqiyat ishlovchilari» bilan bir xil turdagi topilma.)",
+          "⭐ `_sahifa()` MAKET YORDAMCHISI KONTEKSTNI YOPILMA YARATILGANDA yig'adi — sozlama URLconf import qilinganda BIR MARTA o'qilardi va keyingi o'zgarish (test, `.env`) KO'RINMASDI. Shuning uchun ekspertlar sahifasi alohida ko'rinishga o'tkazildi (D6-T1 dagi teskari `OneToOne` keshi bilan bir xil turdagi jim eskirish).",
+          "⭐ `**umumiy` LUG'ATI mypy'ni KO'R QILGAN: heterogen `dict[str, object]` ni ochish har argument tipini yo'qotadi (15 ta xato). Yopilma bilan almashtirildi — DRY ham, tip ham saqlandi.",
+          "narx `floatformat:\"0\"` bilan `19000` bo'lib chiqardi; `floatformat:\"0g\"` `uz` lokalidagi UZILMAS BO'SHLIQNI qo'yadi (`19 000`) — ajratgichni qo'lda yozish lokal bilimini takrorlardi. Bu faqat JONLI ko'rishda ko'rindi.",
+          "dev konteyneri (`docker compose`) M4 dan beri QAYTA QURILMAGAN: `ModuleNotFoundError: No module named 'PIL'` bilan cheksiz qayta ishga tushmoqda. D6-T2 ga aloqasi yo'q, lekin dev muhiti hozircha faqat host'dan ishlaydi (`docker compose build web` kerak)."
+        ],
+        "olchangan_holat": {
+          "testlar": 1450,
+          "qamrov_foiz": 95.09,
+          "d6_t2_testlari": 52
+        },
+        "keyingi_uchun_eslatma": [
+          "⚠️⚠️ DEPLOY: Click merchant kabinetiga IKKITA manzil kiritiladi — `https://<domen>/tolov/click/prepare/` va `.../complete/`. Manzil o'zgarsa to'lovlar JIMGINA to'xtaydi (sayt ishlaydi, tugma ishlaydi, faqat obuna berilmaydi).",
+          "⚠️⚠️ DEPLOY: `CLICK_MERCHANT_ID`, `CLICK_SERVICE_ID`, `CLICK_SECRET_KEY` — UCHALASI ham bo'lmaguncha `CLICK_YOQILGANMI` False va «To'lash» tugmasi KO'RSATILMAYDI. Ya'ni kod prodga chiqarilsa ham hech kimdan pul olinmaydi.",
+          "⚠️ DEPLOY: nginx ortida `ISHONCHLI_PROKSILAR_SONI = 1` bo'lsin — jurnaldagi IP aks holda har doim nginx'niki bo'ladi.",
+          "⚠️ D6-T3 (Payme) `payme.py` ga tushsin va `services.py` ga TEGMASIN. Kerak bo'ladigani: `Provayder.PAYME`, `views` da ikkinchi `SABAB_KODI` jadvali, `MAXFIY_MAYDONLAR` ga Payme maxfiy maydoni. Payme JSON-RPC va Basic-auth ishlatadi — `sorovni_oqish` analogi boshqacha bo'ladi, lekin `tolovni_tayyorlash/yakunlash` AYNAN o'sha.",
+          "⚠️ D6-T4 (boost): `TolovMaqsadi.BOOST` + `_MAQSAD_BAJARUVCHILARI[BOOST]`. Click kodiga TEGILMAYDI.",
+          "⚠️ MAHSULOT SAVOLI: PRO hozircha faqat nishon beradi va shuning uchun faqat tasdiqlangan ekspertga sotiladi. Kengaytirish variantlari: `contact_visible` ni ishlatish (u allaqachon yig'iladi), yechimlarni ro'yxat boshida ko'rsatish, PRO'ga boost chegirmasi."
+        ]
+      }
     },
     {
       "id": "D6-T3",

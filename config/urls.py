@@ -39,6 +39,7 @@ urlpatterns += [
     path("", include("apps.moderation.urls")),
     path("", include("apps.notifications.urls")),
     path("", include("apps.suhbat.urls")),
+    path("", include("apps.payments.urls")),
     # Huquqiy sahifalar (D2-T10)
     path("", include("apps.common.huquqiy")),
 ]

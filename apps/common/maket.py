@@ -24,6 +24,7 @@ NEGA URL NOMLARI HOZIR QOTIRILADI
 
 from __future__ import annotations
 
+from django.conf import settings
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.urls import path
@@ -44,6 +45,33 @@ def _sahifa(shablon: str, active_nav: str = "", **qoshimcha):
     return korinish
 
 
+def ekspertlar(request: HttpRequest) -> HttpResponse:
+    """⚠️ EKSPERTLAR SAHIFASI — MAKET, LEKIN NARXI HAQIQIY (D6-T2).
+
+    Sahifadagi PRO bloki maketdan qolgan, endi esa HAQIQIY sotib
+    olish sahifasi bor (`/pro/`). Ikkita boshqa narx ko'rsatish —
+    jonli sahifadagi yolg'on: odam bu yerda bir sonni ko'rib,
+    to'lov sahifasida boshqasini ko'rardi.
+
+    ⚠️ NEGA `_sahifa()` YORDAMCHISI ISHLATILMAYDI
+       U kontekstni YOPILMA YARATILGANDA yig'adi, ya'ni sozlama
+       URLconf import qilinganda BIR MARTA o'qilardi. Sozlama
+       keyin o'zgarsa (test, `.env`) sahifa eski sonni ko'rsatib
+       turardi — D6-T1 dagi teskari `OneToOne` keshi bilan bir xil
+       turdagi JIM eskirish.
+    """
+    return render(
+        request,
+        "accounts/expert_list.html",
+        {
+            "active_nav": "experts",
+            "maket_rejimi": True,
+            "narx": settings.OBUNA_NARXI,
+            "kun": settings.OBUNA_MUDDATI_KUN,
+        },
+    )
+
+
 urlpatterns = [
     # ⚠️ BU YERDAN OLIB TASHLANGANLAR (haqiqiy ko'rinishga o'tdi):
     #      feed, complaint_create, complaint_detail -> apps/complaints/urls.py
@@ -56,9 +84,5 @@ urlpatterns = [
         _sahifa("complaints/category_list.html", "categories"),
         name="category_list",
     ),
-    path(
-        "ekspertlar/",
-        _sahifa("accounts/expert_list.html", "experts"),
-        name="expert_list",
-    ),
+    path("ekspertlar/", ekspertlar, name="expert_list"),
 ]

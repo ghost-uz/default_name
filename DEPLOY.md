@@ -416,7 +416,70 @@ kamaytiring (`--workers=2`) yoki droplet'ni kattalashtiring.
 
 ---
 
-## 9. Hali qilinmagan
+## 9. To'lov tizimi (Click) — D6-T2
+
+⚠️ **Kalitlarsiz hech kimdan pul olinmaydi.** `CLICK_MERCHANT_ID`,
+`CLICK_SERVICE_ID`, `CLICK_SECRET_KEY` — uchalasi ham to'ldirilmaguncha
+`/pro/` sahifasida «To'lash» tugmasi **ko'rsatilmaydi**. Ya'ni kodni
+prodga chiqarish xavfsiz; to'lov faqat ongli qadamdan keyin yoqiladi.
+
+### 9.1 Click merchant kabinetida
+
+Ikkita manzil kiritiladi (`https://` bilan, oxiridagi `/` **shart**):
+
+| Maydon | Qiymat |
+|---|---|
+| Prepare URL | `https://<domen>/tolov/click/prepare/` |
+| Complete URL | `https://<domen>/tolov/click/complete/` |
+
+⚠️ Manzil keyin o'zgarsa to'lovlar **jimgina** to'xtaydi: sayt ishlaydi,
+tugma ishlaydi, faqat obuna berilmaydi. Shuning uchun bu manzillar kodda
+qotirilgan va muhitdan olinmaydi.
+
+### 9.2 `.env`
+
+```bash
+CLICK_MERCHANT_ID=...      # kabinetdan
+CLICK_SERVICE_ID=...       # kabinetdan (xizmat, merchant EMAS)
+CLICK_SECRET_KEY=...       # kabinetdan
+OBUNA_NARXI=19000          # so'm / OBUNA_MUDDATI_KUN kun
+# Sandbox'da boshqa manzil beriladi:
+CLICK_TOLOV_MANZILI=https://my.click.uz/services/pay
+```
+
+⚠️ `ISHONCHLI_PROKSILAR_SONI=1` bo'lishini tekshiring (nginx ortida).
+Aks holda to'lov jurnalidagi IP har doim nginx'niki bo'ladi va nizoda
+so'rov qayerdan kelganini aytib bo'lmaydi.
+
+### 9.3 Tekshirish
+
+```bash
+# 1. Migratsiya qo'llanganmi
+docker compose -f docker-compose.prod.yml exec web   python manage.py showmigrations payments
+
+# 2. Webhook tashqaridan ochiqmi (imzosiz so'rov -1 qaytarishi KERAK)
+curl -s -X POST https://<domen>/tolov/click/prepare/ -d "action=0"
+# Kutilgan: {"...","error":-1,"error_note":"SIGN CHECK FAILED!"}
+# ⚠️ HTTP holati 200 bo'lishi SHART. 4xx/5xx Click uchun "javob yo'q"
+#    degani va u tranzaksiyani bekor qiladi.
+
+# 3. Jurnal to'lyaptimi (har so'rov yoziladi, imzosizlari ham)
+docker compose -f docker-compose.prod.yml exec web   python manage.py shell -c   "from apps.payments.models import TolovSorovi; print(TolovSorovi.objects.count())"
+```
+
+### 9.4 Nizo bo'lsa («pul yechildi, obuna yo'q»)
+
+Admin -> **To'lov so'rovlari jurnali** (`/…/payments/tolovsorovi/`).
+Buyurtma raqami yoki `click_trans_id` bo'yicha qidiring. Jurnal
+**o'zgarmas**: har so'rov, kelgan ma'lumot va bizning javobimiz turadi.
+Imzoning o'zi ataylab saqlanmaydi (maxfiy kalit ishtirokidagi hash).
+
+Obunani qo'lda berish: Admin -> **Obunalar** (`Tolov` emas — u faqat
+o'qish uchun, chunki u haqiqiy pul harakati yozuvi).
+
+---
+
+## 10. Hali qilinmagan
 
 | Nima | Faza |
 |---|---|

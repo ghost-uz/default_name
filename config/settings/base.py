@@ -359,6 +359,17 @@ TEZLIK_CHEKLOVLARI = {
     #    keyin ikki tomon allaqachon rozilik bergan.
     "kontakt_sorovi": {"foydalanuvchi": "10/h", "ip": "30/h"},
     "suhbat_xabar": {"foydalanuvchi": "60/h", "ip": "200/h"},
+    # ⚠️ D6-T2: to'lov BOSHLASH (buyurtma yaratish). Cheklov keng —
+    #    to'lov urinishi qonuniy ravishda takrorlanadi (karta rad
+    #    etadi, sessiya tugaydi, odam boshqa karta sinaydi). Tor
+    #    chegara to'lay olmagan odamni butunlay to'sib qo'yardi.
+    #
+    #    ⚠️ CLICK WEBHOOK'LARI BU YERDA YO'Q — ataylab. Ular tashqi
+    #       server so'rovlari va cheklovga tushishi to'lovni
+    #       YO'QOTARDI: Click 429 ni "javob yo'q" deb o'qiydi va bir
+    #       necha urinishdan keyin tranzaksiyani bekor qiladi.
+    #       Webhook himoyasi — IMZO, tezlik cheklovi emas.
+    "tolov_boshlash": {"foydalanuvchi": "20/h", "ip": "60/h"},
 }
 
 # ⚠️ Mijoz IP'sini aniqlash uchun ISHONCHLI proksilar soni.
@@ -684,9 +695,30 @@ SENTRY_TRACES_SAMPLE_RATE = float(env("SENTRY_TRACES_SAMPLE_RATE", "0.1"))
 
 # D6-T2 / D6-T3 — to'lov tizimlari
 CLICK_MERCHANT_ID = env("CLICK_MERCHANT_ID", "")
+CLICK_SERVICE_ID = env("CLICK_SERVICE_ID", "")
 CLICK_SECRET_KEY = env("CLICK_SECRET_KEY", "")
 PAYME_MERCHANT_ID = env("PAYME_MERCHANT_ID", "")
 PAYME_SECRET_KEY = env("PAYME_SECRET_KEY", "")
+
+# ⚠️ Click to'lov sahifasi. Sozlamada — chunki sandbox va prod
+#    manzillari boshqa, kod esa ikkalasida BIR XIL bo'lishi kerak.
+CLICK_TOLOV_MANZILI = env("CLICK_TOLOV_MANZILI", "https://my.click.uz/services/pay")
+
+# ⚠️⚠️ PRO NARXI SERVERDA. Formadan kelgan summaga ishonish "PRO ni
+#    1 so'mga sotib olish"ni so'rovni qo'lda yasash bilan ochardi —
+#    to'lov integratsiyalaridagi eng klassik teshik.
+#
+# ⚠️ `str` — `Decimal` ga o'girish `apps/payments/views.py` da.
+#    Sozlamada `Decimal` saqlash `float` bilan adashtirishga olib
+#    keladi: kimdir `OBUNA_NARXI * 2` yozsa va qiymat `float` bo'lsa,
+#    xato faqat tiyinlarda ko'rinardi.
+OBUNA_NARXI = env("OBUNA_NARXI", "19000")
+
+# ⚠️ To'lov provayderi TAYYORMI. Kalitlarsiz "To'lash" tugmasini
+#    ko'rsatish odamni Click'ning xato sahifasiga olib borardi va u
+#    buni SAYT nosozligi deb qabul qilardi.
+#    Ko'rinish shu bayroqqa qaraydi, kalitlarning o'ziga EMAS.
+CLICK_YOQILGANMI = bool(CLICK_MERCHANT_ID and CLICK_SERVICE_ID and CLICK_SECRET_KEY)
 
 
 # --------------------------------------------------------------------------

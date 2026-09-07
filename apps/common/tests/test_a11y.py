@@ -32,6 +32,11 @@ SAHIFALAR = (
     ("lenta", "/"),
     ("qidiruv (bo'sh)", "/qidiruv/"),
     ("qidiruv (natijali)", "/qidiruv/?q=ipoteka"),
+    # ⚠️ D6-T2: PRO — ommaviy NARX sahifasi, ya'ni u qidiruvdan ham,
+    #    maketdagi havoladan ham kiriladigan nuqta. Yangi ommaviy
+    #    sahifa qo'shilganda ro'yxatga qo'shilmasa, u qo'riqchidan
+    #    TASHQARIDA qolardi va buni hech narsa aytmasdi.
+    ("PRO obuna", "/pro/"),
 )
 
 

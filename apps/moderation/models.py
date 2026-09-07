@@ -13,7 +13,18 @@ from __future__ import annotations
 from django.conf import settings
 from django.db import models
 
-from apps.common.models import ModerationStatus, TimeStampedModel
+# ⚠️ `JurnalOzgarmas` shu modulda ISHLATILMAYDI — u QAYTA EKSPORT
+#    qilinadi. D2-T7 dan beri chaqiruvchilar (`tests_audit.py`, xizmat
+#    qatlami) uni `apps.moderation.models` dan import qiladi; asos
+#    `apps/common/models.py` ga ko'chganda ham ular o'zgarmasligi kerak.
+#    Ko'chirish REFAKTOR, API o'zgarishi EMAS.
+from apps.common.models import (
+    JurnalOzgarmas,  # noqa: F401
+    ModerationStatus,
+    OzgarmasJurnal,
+    OzgarmasJurnalQuerySet,
+    TimeStampedModel,
+)
 
 # ⚠️ MAHSULOT QARORI: nechta shikoyatdan keyin navbatda YUQORIGA ko'tariladi.
 #    3 — kichik jamoada bir odamning g'arazi yetarli bo'lmasligi uchun eng
@@ -480,10 +491,6 @@ class ModerationAction(TimeStampedModel):
 # ===========================================================================
 # Audit jurnali (D2-T7)
 # ===========================================================================
-class JurnalOzgarmas(Exception):
-    """Audit jurnalini o'zgartirishga urinish."""
-
-
 class AuditAction(models.TextChoices):
     """Jurnalga tushadigan harakatlar.
 
@@ -505,33 +512,17 @@ class AuditAction(models.TextChoices):
     EKSPERT_BEKOR_QILINDI = "ekspert_bekor_qilindi", "Ekspert maqomi bekor qilindi"
 
 
-class AuditQuerySet(models.QuerySet):
-    """⚠️ Ommaviy o'zgartirish va o'chirish YOPIQ.
+class AuditQuerySet(OzgarmasJurnalQuerySet):
+    """⚠️ Ommaviy o'zgartirish va o'chirish YOPIQ — asos ta'minlaydi.
 
-    Model darajasidagi `save()`/`delete()` ni chetlab o'tish oson:
-    `AuditLog.objects.filter(...).update(izoh="")` hech qanday model
-    metodini chaqirmaydi. Jurnal uchun bu teshik ochiq qolsa,
-    himoyaning ma'nosi yo'q.
+    Sinf o'zi bo'sh, lekin NOMI qoladi: `AuditLog.objects` ning tipi
+    kod bo'ylab shu nom bilan ma'lum (D2-T8 dagi `_haqiqiy_ochirish`
+    chaqiruvi ham shundan). Asosdagi mantiqni bu yerga takrorlash esa
+    aynan D6-T2 da oldini olmoqchi bo'lgan ikkinchi nusxa bo'lardi.
     """
 
-    def update(self, **kwargs):
-        raise JurnalOzgarmas(
-            "Audit jurnali o'zgartirilmaydi (D2-T7). Xato yozuv bo'lsa, "
-            "uni TUZATUVCHI yangi yozuv qo'shing."
-        )
 
-    def delete(self):
-        raise JurnalOzgarmas("Audit jurnali o'chirilmaydi (D2-T7).")
-
-    def _haqiqiy_ochirish(self):
-        """FAQAT test va ma'lumot saqlash siyosati uchun (D2-T8).
-
-        Nomi ataylab noqulay: tasodifan chaqirilmasin.
-        """
-        return super().delete()
-
-
-class AuditLog(models.Model):
+class AuditLog(OzgarmasJurnal):
     """Staff harakatlarining O'ZGARMAS jurnali.
 
     ⚠️ NEGA `ModerationAction` YETARLI EMAS
@@ -598,17 +589,7 @@ class AuditLog(models.Model):
     def __str__(self) -> str:
         return f"{self.get_action_display()} — {self.obyekt}"
 
-    def save(self, *args, **kwargs):
-        """⚠️ FAQAT QO'SHISH. Mavjud yozuvni saqlash — xato."""
-        if not self._state.adding:
-            raise JurnalOzgarmas(
-                "Audit yozuvi tahrirlanmaydi (D2-T7). Xato bo'lsa, uni "
-                "TUZATUVCHI yangi yozuv qo'shing."
-            )
-        return super().save(*args, **kwargs)
-
-    def delete(self, *args, **kwargs):
-        raise JurnalOzgarmas("Audit yozuvi o'chirilmaydi (D2-T7).")
+    # ⚠️ `save()` va `delete()` — `OzgarmasJurnal` asosida (D2-T7).
 
     @property
     def kim(self) -> str:

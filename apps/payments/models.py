@@ -36,7 +36,11 @@ from django.conf import settings
 from django.db import models
 from django.utils import timezone
 
-from apps.common.models import TimeStampedModel
+from apps.common.models import (
+    OzgarmasJurnal,
+    OzgarmasJurnalQuerySet,
+    TimeStampedModel,
+)
 
 
 class ObunaRejasi(models.TextChoices):
@@ -132,3 +136,214 @@ class Subscription(TimeStampedModel):
         """Necha kun qolgani (o'tib ketgan bo'lsa 0)."""
         qoldi = self.expires_at - timezone.now()
         return max(0, qoldi.days)
+
+
+# ===========================================================================
+# To'lov (D6-T2) — provayderdan MUSTAQIL yadro
+# ===========================================================================
+class Provayder(models.TextChoices):
+    """⚠️ FAQAT HAQIQIY TO'LOV TIZIMLARI.
+
+    Admin qo'lda bergan obuna bu yerga TUSHMAYDI: u `Subscription`
+    admin'ida yaratiladi (D6-T1 ataylab shunday qoldirgan — provayder
+    yiqilganda yoki apellyatsiyada odamga obunani berish yo'li kerak).
+
+    "Qo'lda" degan provayder qo'shish `Tolov` ni HAQIQIY pul harakati
+    yozuvi bo'lishdan to'xtatardi: qatorlarning bir qismi pulga,
+    bir qismi qarorga ishora qilardi va hisobot ikkalasini qo'shib
+    yuborardi.
+    """
+
+    CLICK = "click", "Click"
+    PAYME = "payme", "Payme"
+
+
+class TolovMaqsadi(models.TextChoices):
+    """Pul NIMA UCHUN to'landi.
+
+    ⚠️⚠️ BU MODELNING KENGAYISH NUQTASI. D6-T4 (boost) shu yerga
+       `BOOST` qo'shadi va `services._MAQSAD_BAJARUVCHILARI` ga bitta
+       funksiya — Click/Payme kodiga UMUMAN tegilmaydi.
+
+       Teskari yo'l (har maqsad uchun alohida webhook) ikkita imzo
+       tekshiruvi, ikkita idempotentlik va ikkita jurnal degani edi.
+    """
+
+    OBUNA = "obuna", "PRO obuna"
+
+
+class TolovHolati(models.TextChoices):
+    """⚠️ HOLATLAR KETMA-KETLIGI: YANGI -> TAYYOR -> TOLANDI.
+
+    `TAYYOR` (Click'ning "prepare"i) ATAYLAB alohida holat: usiz
+    "Complete keldi, lekin Prepare kelmagan" holatini ajratib
+    bo'lmasdi — u esa protokol buzilgani yoki so'rov soxtaligining
+    eng aniq belgisi.
+    """
+
+    YANGI = "yangi", "Yaratildi"
+    TAYYOR = "tayyor", "Tasdiqlashga tayyor"
+    TOLANDI = "tolandi", "To'landi"
+    BEKOR = "bekor", "Bekor qilindi"
+
+
+class Tolov(TimeStampedModel):
+    """Bitta to'lov urinishi = bitta buyurtma (D6-T2).
+
+    ⚠️⚠️ NEGA `Subscription` DAN ALOHIDA
+       `Subscription` — JORIY holat (bitta qator, bitta odam).
+       `Tolov` — TARIX (har urinish uchun qator). D6-T1 buni oldindan
+       yozib qo'ygan: «To'lovlar TARIXI bu yerda emas... idempotentlik
+       ham o'sha yerda ta'minlanadi».
+
+       Ikkalasini birlashtirish "obuna qachon va necha marta
+       uzaytirilgan?" savolini javobsiz qoldirardi — u esa nizoda
+       (mijoz: "men to'ladim") birinchi so'raladigan savol.
+
+    ⚠️⚠️ IDEMPOTENTLIK BAZA DARAJASIDA
+       `(provayder, provayder_trans_id)` — NOYOB. Qabul mezoni «bir xil
+       transaction_id ikki marta kelsa ikkinchisi e'tiborsiz
+       qoldiriladi» dasturiy tekshiruv bilan ham bajarilardi, lekin
+       ikkita webhook AYNI PAYTDA kelganda ikkalasi ham "yo'q ekan"
+       deb ko'rib, ikkalasi ham yozardi (TOCTOU). Baza cheklovi shu
+       poygani yopadi.
+
+       Bo'sh `provayder_trans_id` cheklovdan CHIQARILGAN: hali
+       Click'ga bormagan buyurtmalar ko'p bo'ladi va ular bir-biriga
+       xalaqit bermasin.
+
+    ⚠️ `user` CASCADE — `Subscription` bilan bir xil. Amalda u hech
+       qachon ishlamaydi: D2-T8 hisobni O'CHIRMAYDI, anonimlashtiradi.
+       To'lov so'rovlari jurnali (`TolovSorovi`) esa baribir ALOHIDA
+       yashaydi va hisob bilan ketmaydi.
+    """
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        verbose_name="foydalanuvchi",
+        on_delete=models.CASCADE,
+        related_name="tolovlar",
+    )
+    maqsad = models.CharField(
+        "maqsad",
+        max_length=16,
+        choices=TolovMaqsadi.choices,
+        default=TolovMaqsadi.OBUNA,
+    )
+    provayder = models.CharField("provayder", max_length=16, choices=Provayder.choices)
+    # ⚠️ `DecimalField`, `FloatField` EMAS. Pul ustidagi ikkilik kasr
+    #    arifmetikasi 0.1 + 0.2 != 0.3 beradi va bu farq hisobotda
+    #    yig'ilib boradi. So'm butun bo'lsa ham kasr o'rni QOLDIRILADI:
+    #    Click summani "10000.00" shaklida yuboradi.
+    summa = models.DecimalField("summa", max_digits=12, decimal_places=2)
+    holat = models.CharField(
+        "holat",
+        max_length=16,
+        choices=TolovHolati.choices,
+        default=TolovHolati.YANGI,
+        db_index=True,
+    )
+    provayder_trans_id = models.CharField(
+        "provayder tranzaksiyasi",
+        max_length=64,
+        blank=True,
+        help_text="Click: click_trans_id. Idempotentlik kaliti.",
+    )
+    tolangan_at = models.DateTimeField("to'langan vaqt", null=True, blank=True)
+    izoh = models.CharField("izoh", max_length=200, blank=True)
+
+    class Meta:
+        verbose_name = "to'lov"
+        verbose_name_plural = "to'lovlar"
+        ordering = ("-created_at", "-id")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["provayder", "provayder_trans_id"],
+                condition=~models.Q(provayder_trans_id=""),
+                name="tolov_provayder_trans_noyob",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["user", "-created_at"], name="tolov_odam_idx"),
+            models.Index(fields=["holat", "-created_at"], name="tolov_holat_idx"),
+        ]
+
+    def __str__(self) -> str:
+        return f"#{self.pk} {self.get_provayder_display()} {self.summa} — {self.holat}"
+
+    @property
+    def tolanganmi(self) -> bool:
+        return self.holat == TolovHolati.TOLANDI
+
+    @property
+    def yakunlanganmi(self) -> bool:
+        """Boshqa o'zgarmaydigan holatdami (to'langan yoki bekor)."""
+        return self.holat in {TolovHolati.TOLANDI, TolovHolati.BEKOR}
+
+
+class TolovSorovi(OzgarmasJurnal):
+    """Provayderdan kelgan HAR BIR so'rov — o'zgarmas jurnal (D6-T2).
+
+    ⚠️⚠️ QABUL MEZONI: «barcha so'rovlar jurnalga yoziladi».
+       BARCHASI degani imzosi noto'g'rilari ham, tanish bo'lmagan
+       buyurtmaga kelganlari ham. Nizoda ("pul yechildi, obuna
+       berilmadi") yagona dalil shu jadval bo'ladi va u yerda faqat
+       muvaffaqiyatli so'rovlar turgan bo'lsa, aynan kerakli qator
+       yo'q bo'lardi.
+
+    ⚠️⚠️ `sign_string` SAQLANMAYDI (`click.MAXFIY_MAYDONLAR`).
+       U maxfiy kalit ishtirokidagi MD5. Qolgan maydonlar shu qatorda
+       yotgani uchun, bazani qo'lga kiritgan odamga faqat kalitni
+       oflayn tanlash qolardi. O'rniga `imzo_togrimi` bayrogi qoladi —
+       nizo uchun kerakli ma'lumot aynan shu, xom hash emas.
+
+    ⚠️ `tolov` — `SET_NULL`. Jurnal to'lovdan MUSTAQIL yashashi kerak:
+       "qaysi buyurtmaga kelgani" `merchant_trans_id` satrida
+       nusxalangan (`AuditLog.actor_nomi` bilan bir xil qaror).
+    """
+
+    created_at = models.DateTimeField("vaqt", auto_now_add=True, db_index=True)
+    provayder = models.CharField("provayder", max_length=16, choices=Provayder.choices)
+    amal = models.CharField(
+        "amal",
+        max_length=32,
+        help_text="Click: prepare / complete. Payme: metod nomi.",
+    )
+    tolov = models.ForeignKey(
+        Tolov,
+        verbose_name="to'lov",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="sorovlar",
+    )
+    merchant_trans_id = models.CharField("buyurtma (nusxa)", max_length=64, blank=True)
+    provayder_trans_id = models.CharField(
+        "provayder tranzaksiyasi", max_length=64, blank=True
+    )
+    # ⚠️ `GenericIPAddressField` EMAS: proksi buzilganda bu yerga
+    #    umuman IP bo'lmagan satr kelishi mumkin va jurnalga YOZISH
+    #    validatsiya xatosi bilan yiqilardi — ya'ni dalil yo'qolardi.
+    ip = models.CharField("IP", max_length=45, blank=True)
+    imzo_togrimi = models.BooleanField("imzo to'g'ri", default=False)
+    natija = models.IntegerField("qaytarilgan kod", default=0)
+    xom = models.JSONField("kelgan ma'lumot", default=dict, blank=True)
+    javob = models.JSONField("qaytarilgan javob", default=dict, blank=True)
+
+    objects = OzgarmasJurnalQuerySet.as_manager()
+
+    class Meta:
+        verbose_name = "to'lov so'rovi"
+        verbose_name_plural = "to'lov so'rovlari jurnali"
+        ordering = ("-created_at", "-pk")
+        indexes = [
+            models.Index(
+                fields=["provayder", "-created_at"], name="tolovjurnal_prov_idx"
+            ),
+            models.Index(fields=["tolov", "-created_at"], name="tolovjurnal_tolov_idx"),
+        ]
+
+    def __str__(self) -> str:
+        return (
+            f"{self.provayder}/{self.amal} #{self.merchant_trans_id} -> {self.natija}"
+        )

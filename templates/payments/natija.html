@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% comment %}
+  To'lovdan qaytish sahifasi (D6-T2).
+
+  ⚠️⚠️ BU SAHIFA HOLATNI O'ZGARTIRMAYDI — u faqat KO'RSATADI.
+     Obunani webhook beradi (`views.click_complete`). Qaytish
+     manzilini brauzerda qo'lda ochish mumkin, ya'ni unga ishonish
+     "to'lamasdan PRO olish" degani bo'lardi.
+
+  ⚠️ `noindex`: bu shaxsiy buyurtma sahifasi.
+{% endcomment %}
+
+{% block title %}To'lov holati — Dard.uz{% endblock %}
+{% block description %}To'lov holati.{% endblock %}
+
+{% block head_extra %}
+  <meta name="robots" content="noindex, nofollow" />
+{% endblock %}
+
+{% block kanonik %}{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-lg px-4 py-8 lg:px-6">
+  <main id="main">
+
+    {% if tolov.tolanganmi %}
+      <div class="card border-l-4 border-l-solved px-5 py-5">
+        <h1 class="text-xl font-extrabold">To'lov qabul qilindi</h1>
+        <p class="mt-2 text-[15px] leading-relaxed text-fg-muted">
+          PRO obunangiz faollashtirildi. Rahmat.
+        </p>
+        <a href="{% url 'pro' %}" class="btn-primary mt-5 w-full !min-h-12">Obuna holatini ko'rish</a>
+      </div>
+
+    {% elif kutilmoqda %}
+      {% comment %}
+        ⚠️⚠️ "KUTILMOQDA", "XATO" EMAS. Webhook qaytish manzilidan
+           kechikishi mumkin. Muvaffaqiyatli to'lovni "xato" deb
+           ko'rsatish odamni yordam bo'limiga qo'ng'iroq qilishga
+           majbur qilardi — va u haq bo'lardi.
+      {% endcomment %}
+      <div class="card border-l-4 border-l-primary px-5 py-5">
+        <h1 class="text-xl font-extrabold">To'lov tasdiqlanmoqda</h1>
+        <p class="mt-2 text-[15px] leading-relaxed text-fg-muted">
+          Bank tasdiqini kutmoqdamiz. Odatda bu bir necha soniya oladi.
+          Sahifani yangilab ko'ring — obuna faollashgach «PRO» sahifasida
+          ko'rinadi.
+        </p>
+        <a href="{{ request.path }}" class="btn-outline mt-5 w-full !min-h-12">Yangilash</a>
+      </div>
+
+    {% else %}
+      <div class="card border-l-4 border-l-danger px-5 py-5">
+        <h1 class="text-xl font-extrabold">To'lov amalga oshmadi</h1>
+        <p class="mt-2 text-[15px] leading-relaxed text-fg-muted">
+          {% if tolov.izoh %}{{ tolov.izoh }}{% else %}To'lov bekor qilindi.{% endif %}
+          Pul yechilgan bo'lsa u avtomatik qaytariladi.
+        </p>
+        <a href="{% url 'pro' %}" class="btn-primary mt-5 w-full !min-h-12">Qayta urinish</a>
+      </div>
+    {% endif %}
+
+    <p class="mt-4 text-center text-[13px] text-fg-muted">
+      Buyurtma raqami: <span class="tnum">#{{ tolov.pk }}</span>
+    </p>
+
+  </main>
+</div>
+{% endblock %}
