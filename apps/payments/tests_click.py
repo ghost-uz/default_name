@@ -657,7 +657,7 @@ def test_NARX_sahifada_GURUHLANGAN_korinadi(client):
 def test_TASDIQLANGAN_ekspert_CLICK_ga_yuboriladi(client, ekspert):
     client.force_login(ekspert)
 
-    javob = client.post(reverse("pro_sotib_olish"))
+    javob = client.post(reverse("pro_sotib_olish", args=["click"]))
     buyurtma = Tolov.objects.get()
 
     assert javob.status_code == 302
@@ -677,7 +677,7 @@ def test_TASDIQLANMAGAN_odam_SOTIB_OLOLMAYDI(client, user):
     """
     client.force_login(user)
 
-    javob = client.post(reverse("pro_sotib_olish"))
+    javob = client.post(reverse("pro_sotib_olish", args=["click"]))
 
     assert javob.status_code == 302
     assert Tolov.objects.exists() is False
@@ -687,7 +687,9 @@ def test_SUMMA_FORMADAN_olinmaydi(client, ekspert, settings):
     """⚠️ "PRO ni 1 so'mga sotib olish" — eng klassik teshik."""
     client.force_login(ekspert)
 
-    client.post(reverse("pro_sotib_olish"), {"summa": "1", "amount": "1"})
+    client.post(
+        reverse("pro_sotib_olish", args=["click"]), {"summa": "1", "amount": "1"}
+    )
 
     assert Tolov.objects.get().summa == Decimal(settings.OBUNA_NARXI)
 
@@ -696,7 +698,7 @@ def test_KALITLAR_YOQ_bolsa_sotib_olish_TOXTAYDI(client, ekspert, settings):
     settings.CLICK_YOQILGANMI = False
     client.force_login(ekspert)
 
-    javob = client.post(reverse("pro_sotib_olish"))
+    javob = client.post(reverse("pro_sotib_olish", args=["click"]))
 
     assert javob.status_code == 302
     assert Tolov.objects.exists() is False
@@ -706,14 +708,14 @@ def test_sotib_olish_GET_bilan_ochilmaydi(client, ekspert):
     """⚠️ Sahifani oldindan yuklaydigan kengaytma buyurtma yasamasin."""
     client.force_login(ekspert)
 
-    javob = client.get(reverse("pro_sotib_olish"))
+    javob = client.get(reverse("pro_sotib_olish", args=["click"]))
 
     assert javob.status_code == 405
     assert Tolov.objects.exists() is False
 
 
 def test_sotib_olish_MEHMONGA_yopiq(client):
-    javob = client.post(reverse("pro_sotib_olish"))
+    javob = client.post(reverse("pro_sotib_olish", args=["click"]))
 
     assert javob.status_code == 302
     assert "/kirish/" in javob["Location"]

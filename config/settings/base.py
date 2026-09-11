@@ -698,7 +698,12 @@ CLICK_MERCHANT_ID = env("CLICK_MERCHANT_ID", "")
 CLICK_SERVICE_ID = env("CLICK_SERVICE_ID", "")
 CLICK_SECRET_KEY = env("CLICK_SECRET_KEY", "")
 PAYME_MERCHANT_ID = env("PAYME_MERCHANT_ID", "")
+# ⚠️ Bu Payme Merchant API'ning Basic-auth PAROLI
+#    (`Authorization: Basic base64("Paycom:<kalit>")`). Sandbox va
+#    prod uchun kalitlar BOSHQA — sandbox'ni prodga olib o'tish
+#    hamma so'rovni `-32504` bilan rad ettiradi.
 PAYME_SECRET_KEY = env("PAYME_SECRET_KEY", "")
+PAYME_CHECKOUT_MANZILI = env("PAYME_CHECKOUT_MANZILI", "https://checkout.paycom.uz")
 
 # ⚠️ Click to'lov sahifasi. Sozlamada — chunki sandbox va prod
 #    manzillari boshqa, kod esa ikkalasida BIR XIL bo'lishi kerak.
@@ -719,6 +724,7 @@ OBUNA_NARXI = env("OBUNA_NARXI", "19000")
 #    buni SAYT nosozligi deb qabul qilardi.
 #    Ko'rinish shu bayroqqa qaraydi, kalitlarning o'ziga EMAS.
 CLICK_YOQILGANMI = bool(CLICK_MERCHANT_ID and CLICK_SERVICE_ID and CLICK_SECRET_KEY)
+PAYME_YOQILGANMI = bool(PAYME_MERCHANT_ID and PAYME_SECRET_KEY)
 
 
 # --------------------------------------------------------------------------

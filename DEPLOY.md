@@ -416,7 +416,7 @@ kamaytiring (`--workers=2`) yoki droplet'ni kattalashtiring.
 
 ---
 
-## 9. To'lov tizimi (Click) — D6-T2
+## 9. To'lov tizimlari (Click, Payme) — D6-T2, D6-T3
 
 ⚠️ **Kalitlarsiz hech kimdan pul olinmaydi.** `CLICK_MERCHANT_ID`,
 `CLICK_SERVICE_ID`, `CLICK_SECRET_KEY` — uchalasi ham to'ldirilmaguncha
@@ -467,7 +467,52 @@ curl -s -X POST https://<domen>/tolov/click/prepare/ -d "action=0"
 docker compose -f docker-compose.prod.yml exec web   python manage.py shell -c   "from apps.payments.models import TolovSorovi; print(TolovSorovi.objects.count())"
 ```
 
-### 9.4 Nizo bo'lsa («pul yechildi, obuna yo'q»)
+### 9.4 Payme (D6-T3)
+
+Payme'da **bitta** manzil ko'rsatiladi — oltita metod ham shu yerga
+JSON-RPC bo'lib keladi:
+
+| Maydon | Qiymat |
+|---|---|
+| Endpoint URL | `https://<domen>/tolov/payme/` |
+| `account` maydoni | **`order_id`** |
+
+⚠️ `account` maydonining nomi kabinetda **aynan `order_id`** bo'lishi
+shart (`apps/payments/payme.py::ACCOUNT_MAYDONI`). Mos kelmasa har
+so'rov «buyurtma topilmadi» bilan qaytadi va sabab hech qayerda
+ko'rinmaydi — Payme foydalanuvchiga faqat umumiy xabar ko'rsatadi.
+
+```bash
+PAYME_MERCHANT_ID=...            # kabinetdagi kassa ID
+PAYME_SECRET_KEY=...             # Merchant API Basic-auth paroli
+PAYME_CHECKOUT_MANZILI=https://checkout.paycom.uz
+```
+
+⚠️⚠️ **Sandbox va prod kalitlari BOSHQA.** Sandbox kalitini prodga
+olib o'tish hamma so'rovni `-32504` («huquq yetarli emas») bilan rad
+ettiradi — sayt ishlaydi, to'lov esa umuman o'tmaydi.
+
+Tekshirish (avtorizatsiyasiz so'rov `-32504` qaytarishi KERAK):
+
+```bash
+curl -s -X POST https://<domen>/tolov/payme/   -H 'Content-Type: application/json'   -d '{"jsonrpc":"2.0","id":1,"method":"CheckPerformTransaction","params":{}}'
+# Kutilgan: {"...","error":{"code":-32504,...}}
+# ⚠️ HTTP holati 200 bo'lishi SHART (Click bilan bir xil sabab).
+```
+
+Sandbox (`test.paycom.uz`) ikkita ssenariyni yurgizadi: tasdiqlanmagan
+tranzaksiya (yaratish -> bekor) va tasdiqlangan tranzaksiya
+(yaratish -> bajarish -> bekor). Ikkalasi ham
+`apps/payments/tests_payme.py` da takrorlangan.
+
+⚠️ **Pul qaytarilsa obuna kunlari ham qaytarib olinadi.** Payme
+kabinetidan tranzaksiya bekor qilinsa (`state = -2`), `berilgan_kun`
+obunadan ayiriladi. Bu ONGLI qaror: aks holda «to'la -> PRO ol ->
+pulni qaytar -> PRO qolsin» yo'li ochiq qolardi.
+
+---
+
+### 9.5 Nizo bo'lsa («pul yechildi, obuna yo'q»)
 
 Admin -> **To'lov so'rovlari jurnali** (`/…/payments/tolovsorovi/`).
 Buyurtma raqami yoki `click_trans_id` bo'yicha qidiring. Jurnal

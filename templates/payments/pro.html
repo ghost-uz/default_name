@@ -124,15 +124,33 @@
           </p>
 
         {% else %}
-          <form method="post" action="{% url 'pro_sotib_olish' %}">
-            {% csrf_token %}
-            <button type="submit" class="btn-primary w-full !min-h-12">
-              {% if obuna and obuna.faolmi %}Muddatni uzaytirish{% else %}Click orqali to'lash{% endif %}
-            </button>
-          </form>
+          {% comment %}
+            ⚠️ HAR PROVAYDER ALOHIDA TUGMA va har biri o'z kaliti
+               bilan yoqiladi. Sozlanmagan tizim tugmasini
+               ko'rsatish odamni o'sha tizimning xato sahifasiga
+               olib borardi — va u buni DARD.UZ nosozligi deb
+               qabul qilardi.
+          {% endcomment %}
+          <p class="mb-3 text-[13px] font-semibold uppercase tracking-wider text-fg-muted">
+            {% if obuna and obuna.faolmi %}Muddatni uzaytirish{% else %}To'lov usuli{% endif %}
+          </p>
+          <div class="flex flex-col gap-2.5">
+            {% if click_yoqilganmi %}
+              <form method="post" action="{% url 'pro_sotib_olish' 'click' %}">
+                {% csrf_token %}
+                <button type="submit" class="btn-primary w-full !min-h-12">Click orqali to'lash</button>
+              </form>
+            {% endif %}
+            {% if payme_yoqilganmi %}
+              <form method="post" action="{% url 'pro_sotib_olish' 'payme' %}">
+                {% csrf_token %}
+                <button type="submit" class="btn-outline w-full !min-h-12">Payme orqali to'lash</button>
+              </form>
+            {% endif %}
+          </div>
           <p class="mt-3 text-center text-[13px] text-fg-muted">
-            To'lov Click sahifasida amalga oshadi. Karta ma'lumotlari
-            Dard.uz'ga kelmaydi.
+            To'lov tanlangan tizim sahifasida amalga oshadi. Karta
+            ma'lumotlari Dard.uz'ga kelmaydi.
           </p>
         {% endif %}
       </div>

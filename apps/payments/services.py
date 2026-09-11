@@ -105,6 +105,40 @@ def obunani_uzaytirish(
     return obuna
 
 
+@transaction.atomic
+def obunani_qisqartirish(*, user, kunlar: int) -> Subscription | None:
+    """Obunani `kunlar` ga QISQARTIRADI — pul qaytarilganda (D6-T3).
+
+    ⚠️⚠️ `obunani_uzaytirish` NING SIMMETRIK JUFTI. Uni "manfiy kun
+       bilan uzaytirish" deb yozish mumkin edi, lekin o'sha
+       funksiyadagi "muddati o'tgan bo'lsa `now` dan boshlanadi"
+       qoidasi bu yerda TESKARI ishlardi: qaytarilgan to'lov
+       obunani UZAYTIRIB yuborardi. Bu — bitta funksiyani ikki
+       maqsadga moslashtirishning klassik narxi.
+
+    ⚠️ MUDDAT O'TMISHGA TUSHISHI MUMKIN va bu TO'G'RI: pul
+       qaytarilgan bo'lsa obuna ham tugagan bo'lishi kerak.
+       `faolmi` buni o'zi hal qiladi (`expires_at > now`), ya'ni
+       qo'shimcha "faolmi?" tekshiruvi kerak emas.
+
+    ⚠️ `status` TEGILMAYDI: uni Celery vazifasi tozalaydi va
+       `faolmi` baribir muddatni o'zi tekshiradi (D6-T1). Bu yerda
+       uni qo'lda o'zgartirish ikkinchi haqiqat manbaini yasardi.
+    """
+    obuna = Subscription.objects.select_for_update().filter(user=user).first()
+    if obuna is None:
+        # To'lov bo'lgan, lekin obuna yo'q — mumkin emas, lekin
+        # qaytarish yo'li shu sababdan yiqilmasin.
+        log.warning("obuna: qisqartirish uchun qator yo'q (user=%s)", user.pk)
+        return None
+
+    obuna.expires_at = obuna.expires_at - timedelta(days=kunlar)
+    obuna.save(update_fields=["expires_at", "updated_at"])
+    log.info("obuna: qisqartirildi (user=%s, kun=%s)", user.pk, kunlar)
+    _keshni_yangilash(user, obuna)
+    return obuna
+
+
 def avto_yangilashni_ozgartirish(*, user, yoqilsin: bool) -> Subscription | None:
     """«Bekor qilish» — avtomatik yangilashni o'chirish.
 
@@ -180,6 +214,12 @@ class Sabab(StrEnum):
     ALLAQACHON = "allaqachon"
     TAYYORLANMAGAN = "tayyorlanmagan"
     BEKOR = "bekor"
+    # ⚠️ D6-T3: buyurtmada BOSHQA tranzaksiya kutib turibdi.
+    #    Payme'da bu xato (bir buyurtma — bir tranzaksiya), Click'da
+    #    esa normal hol (odam qaytadan urinadi) — shuning uchun u
+    #    sabab bo'lib qaytadi, xizmat qatlami esa qaysi biri
+    #    ekanini BILMAYDI.
+    BAND = "band"
 
 
 class TolovXatosi(Exception):
@@ -190,15 +230,52 @@ class TolovXatosi(Exception):
         super().__init__(sabab.value)
 
 
-def _obunani_berish(tolov: Tolov) -> None:
-    """PRO obunani uzaytiradi.
+def _obunani_berish(tolov: Tolov) -> int:
+    """PRO obunani uzaytiradi. Qaytaradi: BERILGAN KUN soni.
 
     ⚠️ `obunani_uzaytirish` QAYTA ISHLATILADI, nusxa olinmaydi: qolgan
        muddat ustiga qo'shish, tanaffusdan keyin `now` dan boshlash va
        `select_for_update` — hammasi allaqachon o'sha yerda va
        to'lovga xos sabab bilan yozilgan (D6-T1).
+
+    ⚠️⚠️ KUN SONI QAYTARILADI va `Tolov.berilgan_kun` ga yoziladi.
+       Pul qaytarilganda (D6-T3, Payme `-2`) AYNAN shuncha kun
+       qaytarib olinadi. Sozlamadagi joriy qiymatga tayanish xato
+       bo'lardi: muddat o'zgargan bo'lsa kompensatsiya berilgandan
+       boshqa songa teng bo'lardi.
     """
-    obunani_uzaytirish(user=tolov.user)
+    kunlar = settings.OBUNA_MUDDATI_KUN
+    obunani_uzaytirish(user=tolov.user, kunlar=kunlar)
+    return kunlar
+
+
+def _obunani_qaytarib_olish(tolov: Tolov) -> None:
+    """Pul qaytarildi — berilgan kunlar ham qaytarib olinadi.
+
+    ⚠️⚠️ NEGA BU AVTOMATIK, D6-T2 DAGI QOIDADAN FARQLI
+       D6-T2 da yozilgan: «to'langan buyurtma bekor qilinmaydi, pulni
+       qaytarish qarori odamniki». U CLICK ning `error < 0` bilan
+       kelgan ADASHGAN xabari haqida edi — Click'da "pulni qaytarish"
+       degan amal umuman yo'q.
+
+       Payme'ning `CancelTransaction` i esa bajarilgan tranzaksiyaga
+       kelganda bu ANIQ VA OSHKORA ko'rsatma: pul mijozga qaytarildi
+       (`state = -2`). Bunda obunani qoldirish "pulni qaytarib olib,
+       xizmatni ham saqlab qolish" yo'lini ochardi.
+
+    ⚠️ `berilgan_kun` YO'Q bo'lsa (D6-T3 dan OLDIN yaratilgan
+       qatorlar) sozlamadagi qiymat ishlatiladi — bu taxmin, lekin
+       hech narsa qaytarmaslikdan yaxshiroq va u jurnalga tushadi.
+    """
+    kunlar = tolov.berilgan_kun
+    if kunlar is None:
+        kunlar = settings.OBUNA_MUDDATI_KUN
+        log.warning(
+            "tolov: `berilgan_kun` yo'q, sozlama ishlatildi (id=%s, kun=%s)",
+            tolov.pk,
+            kunlar,
+        )
+    obunani_qisqartirish(user=tolov.user, kunlar=kunlar)
 
 
 # ⚠️⚠️ KENGAYISH NUQTASI. D6-T4 (boost) shu lug'atga bitta qator
@@ -211,8 +288,20 @@ def _obunani_berish(tolov: Tolov) -> None:
 # ⚠️ Annotatsiya SHART: `Tolov.maqsad` — `CharField`, ya'ni ish
 #    vaqtida oddiy `str`. Annotatsiyasiz mypy kalit tipini
 #    `TolovMaqsadi` deb chiqaradi va qidiruvni xato deb belgilaydi.
-_MAQSAD_BAJARUVCHILARI: dict[str, Callable[[Tolov], None]] = {
+_MAQSAD_BAJARUVCHILARI: dict[str, Callable[[Tolov], int]] = {
     TolovMaqsadi.OBUNA: _obunani_berish,
+}
+
+# ⚠️⚠️ HAR BERISHNING TESKARISI BO'LISHI SHART (D6-T3).
+#    Payme pulni qaytara oladi, ya'ni "berilgan narsani qaytarib olish"
+#    endi haqiqiy talab. Ikkala lug'at YONMA-YON turadi: yangi maqsad
+#    qo'shgan odam ikkinchisini ham to'ldirishi kerakligini KO'RADI.
+#
+#    Kalitlari bir xilligini test qo'riqlaydi — aks holda D6-T4 (boost)
+#    qo'shilib, qaytarish unutilsa, pul qaytarilgan boost ishlab
+#    qolaverardi va buni faqat mijoz payqardi.
+_MAQSAD_BEKOR_QILUVCHILARI: dict[str, Callable[[Tolov], None]] = {
+    TolovMaqsadi.OBUNA: _obunani_qaytarib_olish,
 }
 
 
@@ -269,7 +358,12 @@ def _tolovni_qulflab_olish(*, tolov_id: int, provayder: str, summa: Decimal) -> 
 
 @transaction.atomic
 def tolovni_tayyorlash(
-    *, tolov_id: int, provayder: str, summa: Decimal, provayder_trans_id: str
+    *,
+    tolov_id: int,
+    provayder: str,
+    summa: Decimal,
+    provayder_trans_id: str,
+    almashtirishga_ruxsat: bool = True,
 ) -> Tolov:
     """Prepare: "shunday buyurtma bormi, summa to'g'rimi?".
 
@@ -286,6 +380,19 @@ def tolovni_tayyorlash(
 
        Xavf yo'q: TO'LANGAN buyurtma bu yerga umuman yetib kelmaydi
        (pastdagi tekshiruv), ya'ni ikki marta pul yechilmaydi.
+
+    ⚠️⚠️ `almashtirishga_ruxsat=False` — PAYME UCHUN (D6-T3).
+       Payme'da bir buyurtmada bir vaqtda bitta tranzaksiya bo'ladi:
+       kutayotgan tranzaksiya ustiga ikkinchisini yaratish
+       `-31008` bilan rad etiladi. Click'da esa teskarisi TO'G'RI
+       (yuqoriga qarang) — shuning uchun bu XULQ, sozlama emas, va
+       uni chaqiruvchi ADAPTER tanlaydi.
+
+    ⚠️⚠️ `tayyorlangan_at` FAQAT BIR MARTA yoziladi. Payme uni
+       `create_time` sifatida qaytarib so'raydi va TAKRORIY so'rovda
+       ham AYNAN o'sha qiymat kelishi shart. Har chaqiruvda yangilash
+       "javob har safar boshqacha" degani bo'lardi va sandbox testi
+       aynan shuni ushlaydi.
     """
     tolov = _tolovni_qulflab_olish(tolov_id=tolov_id, provayder=provayder, summa=summa)
 
@@ -294,9 +401,22 @@ def tolovni_tayyorlash(
     if tolov.holat == TolovHolati.BEKOR:
         raise TolovXatosi(Sabab.BEKOR)
 
+    boshqa_tranzaksiya = (
+        tolov.holat == TolovHolati.TAYYOR
+        and tolov.provayder_trans_id != provayder_trans_id
+    )
+    if boshqa_tranzaksiya and not almashtirishga_ruxsat:
+        raise TolovXatosi(Sabab.BAND)
+
     tolov.holat = TolovHolati.TAYYOR
     tolov.provayder_trans_id = provayder_trans_id
-    _saqlash(tolov, ["holat", "provayder_trans_id", "updated_at"])
+    maydonlar = ["holat", "provayder_trans_id", "updated_at"]
+    if tolov.tayyorlangan_at is None or boshqa_tranzaksiya:
+        # Yangi tranzaksiya — yangi `create_time`. Takrorda esa
+        # eskisi QOLADI (yuqoridagi izoh).
+        tolov.tayyorlangan_at = timezone.now()
+        maydonlar.append("tayyorlangan_at")
+    _saqlash(tolov, maydonlar)
     log.info("tolov: tayyorlandi (id=%s, trans=%s)", tolov.pk, provayder_trans_id)
     return tolov
 
@@ -349,7 +469,11 @@ def tolovni_yakunlash(
     #    Celery vazifasiga chiqarish "to'landi, lekin obuna yo'q"
     #    oynasini ochardi — navbat to'lib qolsa u oyna soatlab
     #    cho'zilishi mumkin.
-    _MAQSAD_BAJARUVCHILARI[tolov.maqsad](tolov)
+    #
+    # ⚠️ Nima berilgani YOZIB QO'YILADI: pul qaytarilganda aynan
+    #    shuncha qaytarib olinadi (D6-T3).
+    tolov.berilgan_kun = _MAQSAD_BAJARUVCHILARI[tolov.maqsad](tolov)
+    _saqlash(tolov, ["berilgan_kun", "updated_at"])
 
     log.info(
         "tolov: YAKUNLANDI (id=%s, user=%s, maqsad=%s)",
@@ -362,7 +486,11 @@ def tolovni_yakunlash(
 
 @transaction.atomic
 def tolovni_bekor_qilish(
-    *, tolov_id: int, provayder: str, izoh: str = ""
+    *,
+    tolov_id: int,
+    provayder: str,
+    izoh: str = "",
+    bekor_kodi: int | None = None,
 ) -> Tolov | None:
     """Provayder to'lov amalga oshmaganini bildirdi.
 
@@ -382,8 +510,67 @@ def tolovni_bekor_qilish(
 
     tolov.holat = TolovHolati.BEKOR
     tolov.izoh = izoh[:200]
-    _saqlash(tolov, ["holat", "izoh", "updated_at"])
+    tolov.bekor_at = timezone.now()
+    tolov.bekor_kodi = bekor_kodi
+    _saqlash(tolov, ["holat", "izoh", "bekor_at", "bekor_kodi", "updated_at"])
     log.info("tolov: bekor qilindi (id=%s, izoh=%s)", tolov.pk, izoh)
+    return tolov
+
+
+@transaction.atomic
+def tolovni_qaytarish(
+    *, tolov_id: int, provayder: str, provayder_trans_id: str, bekor_kodi: int
+) -> Tolov:
+    """Pul QAYTARILDI: bajarilgan to'lov bekor qilindi (D6-T3).
+
+    ⚠️⚠️ BU `tolovni_bekor_qilish` DAN BOSHQA AMAL. Birinchisi
+       "to'lov amalga oshmadi" (pul umuman yechilmagan), bu esa
+       "pul yechilgandi va qaytarildi". Ikkalasi bir funksiyaga
+       siqilsa, xizmatni qaytarib olish sharti `if tolangan_at`
+       bo'lib qolardi — ya'ni MUHIM qaror bir qatorlik shartga
+       yashiringan bo'lardi.
+
+    ⚠️⚠️ IDEMPOTENT: Payme `CancelTransaction` ni qayta yuboradi.
+       Allaqachon qaytarilgan to'lov ikkinchi marta qaytarib
+       OLINMAYDI — aks holda obuna ikki barobar qisqarardi.
+
+    ⚠️ Hali bajarilmagan (TAYYOR) to'lov oddiy bekor bo'ladi va
+       xizmat qaytarib olinmaydi — berilmagan narsani olib bo'lmaydi.
+    """
+    tolov = (
+        Tolov.objects.select_for_update()
+        .select_related("user")
+        .filter(pk=tolov_id, provayder=provayder)
+        .first()
+    )
+    if tolov is None:
+        raise TolovXatosi(Sabab.TOPILMADI)
+
+    if tolov.holat == TolovHolati.BEKOR:
+        # Takroriy so'rov — hech narsa o'zgarmaydi.
+        return tolov
+
+    qaytarilsinmi = tolov.holat == TolovHolati.TOLANDI
+
+    tolov.holat = TolovHolati.BEKOR
+    tolov.bekor_at = timezone.now()
+    tolov.bekor_kodi = bekor_kodi
+    tolov.provayder_trans_id = provayder_trans_id
+    _saqlash(
+        tolov,
+        ["holat", "bekor_at", "bekor_kodi", "provayder_trans_id", "updated_at"],
+    )
+
+    if qaytarilsinmi:
+        _MAQSAD_BEKOR_QILUVCHILARI[tolov.maqsad](tolov)
+        log.info(
+            "tolov: PUL QAYTARILDI, xizmat qaytarib olindi (id=%s, user=%s, kod=%s)",
+            tolov.pk,
+            tolov.user_id,
+            bekor_kodi,
+        )
+    else:
+        log.info("tolov: bekor qilindi (id=%s, kod=%s)", tolov.pk, bekor_kodi)
     return tolov
 
 

@@ -249,7 +249,34 @@ class Tolov(TimeStampedModel):
         blank=True,
         help_text="Click: click_trans_id. Idempotentlik kaliti.",
     )
+    # ⚠️⚠️ UCHTA VAQT UCHTA BOSHQA SAVOLGA JAVOB BERADI va ularni
+    #    qo'shib yuborish mumkin emas:
+    #      `created_at`        — buyurtma yaratildi (odam tugmani bosdi)
+    #      `tayyorlangan_at`   — PROVAYDER tranzaksiyani ro'yxatga oldi
+    #                            (Click: Prepare, Payme: CreateTransaction)
+    #      `tolangan_at`       — pul yechildi
+    #    Ular orasida soatlar bo'lishi mumkin: odam buyurtma yaratib,
+    #    ertasiga to'lashi odatiy hol.
+    #
+    # ⚠️⚠️ Payme `create_time` ni `CheckTransaction` da QAYTARIB so'raydi
+    #    va u TAKRORIY so'rovda ham BIR XIL bo'lishi shart. Shuning
+    #    uchun u HISOBLANMAYDI — bazadan o'qiladi.
+    tayyorlangan_at = models.DateTimeField(
+        "provayder ro'yxatga oldi", null=True, blank=True
+    )
     tolangan_at = models.DateTimeField("to'langan vaqt", null=True, blank=True)
+    bekor_at = models.DateTimeField("bekor qilingan vaqt", null=True, blank=True)
+    # ⚠️ Provayderning bekor qilish SABABI (Payme: 1-5, `4` = taymaut).
+    #    Payme uni `CheckTransaction` javobida kutadi, ya'ni uni
+    #    saqlamasdan iloji yo'q — hisoblab topib bo'lmaydi.
+    bekor_kodi = models.IntegerField("bekor sababi (provayder)", null=True, blank=True)
+    # ⚠️⚠️ QANCHA KUN BERILGANI. Pul qaytarilganda AYNAN shuncha kun
+    #    qaytarib olinadi. Sozlamadagi joriy qiymatga tayanish xato
+    #    bo'lardi: narx yoki muddat o'zgargan bo'lsa, kompensatsiya
+    #    berilgandan boshqa songa teng bo'lardi va farq jimgina
+    #    yig'ilib borardi (D3-T1 karma kompensatsiyasidagi bilan bir
+    #    xil mulohaza).
+    berilgan_kun = models.IntegerField("berilgan kun", null=True, blank=True)
     izoh = models.CharField("izoh", max_length=200, blank=True)
 
     class Meta:
@@ -279,6 +306,18 @@ class Tolov(TimeStampedModel):
     def yakunlanganmi(self) -> bool:
         """Boshqa o'zgarmaydigan holatdami (to'langan yoki bekor)."""
         return self.holat in {TolovHolati.TOLANDI, TolovHolati.BEKOR}
+
+    @property
+    def qaytarilganmi(self) -> bool:
+        """Pul YECHILGANDAN KEYIN bekor qilinganmi (Payme `-2`).
+
+        ⚠️⚠️ ALOHIDA HOLAT MAYDONI QO'SHILMADI. "To'lovdan oldin bekor"
+           va "to'lovdan keyin bekor" farqi allaqachon ma'lumotda bor:
+           `tolangan_at` to'ldirilganmi. Ikkinchi maydon qo'shish uni
+           `holat` bilan sinxron saqlashni talab qilardi va bir kuni
+           ular bir-biriga zid bo'lib qolardi.
+        """
+        return self.holat == TolovHolati.BEKOR and self.tolangan_at is not None
 
 
 class TolovSorovi(OzgarmasJurnal):

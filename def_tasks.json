@@ -3372,10 +3372,79 @@
       "bogliq": [
         "D6-T1"
       ],
-      "holat": "todo",
+      "holat": "qisman",
       "qabul_mezoni": [
         "Payme sandbox testlari to'liq o'tadi"
-      ]
+      ],
+      "tugatilgan": "2026-09-08",
+      "natija": {
+        "yaratilgan": [
+          "apps/payments/payme.py — JSON-RPC protokol adapteri: Basic-auth tekshiruvi, xato kodlari, uch tilli xabarlar, tiyin<->so'm, vaqt<->millisekund, 12 soatlik muddat, checkout manzili",
+          "apps/payments/views.py — `payme_webhook` (bitta endpoint, 6 metod) + PAYME_SABAB_KODI jadvali + `_payme_holat` (bizning holat -> Payme state)",
+          "apps/payments/models.py — `Tolov` ga `tayyorlangan_at`, `bekor_at`, `bekor_kodi`, `berilgan_kun` (migratsiya payments/0003_tolov_hayot_sikli) + `qaytarilganmi` xossasi",
+          "apps/payments/services.py — `tolovni_qaytarish()`, `obunani_qisqartirish()`, `_MAQSAD_BEKOR_QILUVCHILARI`, `Sabab.BAND`, `tolovni_tayyorlash(almashtirishga_ruxsat=...)`",
+          "config/settings/base.py — PAYME_CHECKOUT_MANZILI, PAYME_YOQILGANMI",
+          "templates/payments/pro.html — har provayder uchun ALOHIDA tugma; URL endi `pro/sotib-olish/<provayder>/`",
+          "apps/payments/tests_payme.py — 57 test",
+          "DEPLOY.md 9-bo'limiga Payme qismi"
+        ],
+        "qabul_mezonlari": {
+          "payme_sandbox_testlari_toliq_otadi": "⚠️ QISMAN — KODDA YOPILMAYDI. Sandbox OCHIQ HTTPS endpoint va `TEST_KEY` talab qiladi (D0-T10 bilan bir xil to'siq: server yo'q). Kod tomon TAYYOR: `apps/payments/tests_payme.py` sandbox hujjatida tasvirlangan IKKALA ssenariyni takrorlaydi — (1) tasdiqlanmagan tranzaksiya: yaratish -> bekor, + noto'g'ri avtorizatsiya, noto'g'ri summa, mavjud bo'lmagan hisob; (2) tasdiqlangan tranzaksiya: yaratish -> bajarish -> bekor. Har metodning TAKRORIY chaqiruvi ham sinalgan. Ochiq qism: kalitlar olingach sandbox'ni ishga tushirish."
+        },
+        "tekshirilgan": [
+          "⭐⭐ takroriy `PerformTransaction` -> obuna BIR MARTA uzayadi, javob bir xil",
+          "⭐⭐ takroriy `CreateTransaction` -> AYNAN bir xil javob (`create_time` ham)",
+          "⭐⭐ bajarilgandan keyin `CancelTransaction` -> `state = -2` VA obuna kunlari QAYTARIB OLINADI (aniq sana arifmetikasi bilan)",
+          "⭐⭐ takroriy bekor -> obuna IKKI MARTA qisqarmaydi",
+          "⭐⭐ boshqa tranzaksiya bir buyurtmaga -> `-31008` (Click'dan FARQLI)",
+          "⭐⭐ 12 soatlik muddat: `Create` va `Perform` ikkalasida ham eskirgan tranzaksiya bekor qilinadi (`reason = 4`) va `-31008` qaytadi",
+          "⭐ noto'g'ri avtorizatsiya -> `-32504`, baza O'ZGARMAYDI",
+          "⭐ so'mda yuborilgan summa RAD etiladi (tiyin/so'm chalkashligi qo'riqchisi)",
+          "⭐ `GET` -> `-32300` (405 EMAS); buzuq JSON -> `-32700`; lug'at bo'lmagan tana -> `-32600`; nomalum metod -> `-32601`",
+          "⭐ `account` xatolarida `data` maydoni MAJBURIY va to'ldiriladi",
+          "⭐ xato xabari UCH TILDA (ru/uz/en) qaytadi",
+          "⭐ avtorizatsiyasiz so'rov HAM jurnalga tushadi; jurnalda kalit YO'Q",
+          "⭐ har maqsadning QAYTARISH yo'li borligi guard test bilan qotirilgan",
+          "`CheckPerformTransaction` bazaga HECH NARSA YOZMAYDI",
+          "`GetStatement` faqat Payme tranzaksiyalarini va faqat davr ichidagini beradi",
+          "`CheckTransaction` barcha vaqtlarni va `reason` ni to'g'ri qaytaradi",
+          "yaroqsiz `reason` bekor qilishni TO'XTATMAYDI (`0` bo'lib yoziladi)",
+          "nomalum provayder manzilda -> 500 EMAS, redirect va buyurtma yaratilmaydi",
+          "`/pro/` da faqat SOZLANGAN provayder tugmasi ko'rinadi"
+        ],
+        "qarorlar": [
+          "⭐⭐ `services.py` GA TEGILMADI (deyarli): Payme butunlay boshqa protokol bo'lsa ham, to'lov MANTIQI o'zgarmadi. Qo'shilgani — `Sabab.BAND` va `almashtirishga_ruxsat` argumenti. D6-T2 dagi provayderdan mustaqil `Sabab` qarori aynan shu yerda o'zini oqladi: Payme kodlari Click'nikidan BUTUNLAY boshqa (`-31050` vs `-5`).",
+          "⭐⭐ TIYIN AYLANTIRISH FAQAT `payme.py` DA, chegarada. `services.py` tiyin haqida umuman bilmaydi. 19 000 so'm = 1 900 000 tiyin va chalkashsa mijozdan 100 barobar kam/ko'p yechiladi — ikkala son ham 'to'g'ri ko'rinadi', ya'ni ko'z bilan ushlanmaydi.",
+          "⭐⭐ PAYME `state` BIZNING `holat` EMAS. Bizda «bekor» bitta, Payme'da ikkita: `-1` (pul yechilmagan) va `-2` (yechilgan va qaytarilgan). Farq `tolangan_at` da allaqachon yozilgan, shuning uchun ALOHIDA holat maydoni qo'shilmadi (`qaytarilganmi` xossasi) — ikkinchi maydon `holat` bilan sinxron tutilishi kerak bo'lardi va bir kuni ular bir-biriga zid bo'lib qolardi.",
+          "⭐⭐ PUL QAYTARILSA XIZMAT HAM QAYTARIB OLINADI. D6-T2 dagi «to'langan buyurtma bekor qilinmaydi» qoidasi CLICK ning ADASHGAN xabari haqida edi (Click'da 'pul qaytarish' degan amal umuman yo'q). Payme'ning bajarilgan tranzaksiyaga kelgan `CancelTransaction` i esa ANIQ ko'rsatma. Qoldirish 'to'la -> PRO ol -> pulni qaytar -> PRO qolsin' yo'lini ochardi.",
+          "⭐⭐ QANCHA KUN BERILGANI SAQLANADI (`berilgan_kun`). Kompensatsiya sozlamadagi JORIY qiymatga tayanmaydi: muddat o'zgargan bo'lsa farq jimgina yig'ilib borardi (D3-T1 karma kompensatsiyasidagi bilan bir xil mulohaza).",
+          "⭐⭐ `_MAQSAD_BEKOR_QILUVCHILARI` — `_MAQSAD_BAJARUVCHILARI` ning juftligi va kalitlari bir xilligi TEST bilan qotirilgan. D6-T4 (boost) qo'shilib qaytarish unutilsa, pul qaytarilgan boost ishlab qolaverardi.",
+          "⭐ `obunani_qisqartirish` ALOHIDA funksiya, 'manfiy kun bilan uzaytirish' EMAS: `obunani_uzaytirish` dagi «muddati o'tgan bo'lsa `now` dan boshlanadi» qoidasi bu yerda TESKARI ishlab, qaytarilgan to'lov obunani UZAYTIRIB yuborardi.",
+          "⭐ `-31007` («bajarilgan, bekor qilib bo'lmaydi») QAYTARILMAYDI: u yetkazilgan JISMONIY tovar uchun. Bizda xizmat qaytariladigan, mijozga pulini qaytara olmaslik mahsulot nuqsoni bo'lardi.",
+          "⭐ `require_POST` ISHLATILMAYDI: Payme bu holat uchun O'Z kodini belgilagan (`-32300`), `405` esa uning uchun «javob yo'q» degani.",
+          "⭐ TARTIB: POST -> JSON -> avtorizatsiya -> metod. Avtorizatsiya JSON'dan KEYIN — Click'dagi «imzo eng birinchi» qoidasidan ONGLI chekinish: JSON-RPC javobi so'rovning `id` sini qaytarishi kerak. Xavf yo'q: tanani Django allaqachon o'qigan, JSON tahlili esa hech qanday domen amalini bajarmaydi.",
+          "⭐ `CheckPerformTransaction` da `-31008` O'RNIGA `-31051` ishlatiladi: hujjatda o'sha metod uchun faqat `-31001` va `-31050..-31099` sanab o'tilgan.",
+          "⭐ Har provayder ALOHIDA yoqiladi (`CLICK_YOQILGANMI` / `PAYME_YOQILGANMI`) va `/pro/` da faqat sozlangani ko'rinadi."
+        ],
+        "topilgan_xatolar": [
+          "⭐⭐ `**dict` UNPACKING TUZOG'IGA IKKINCHI MARTA TUSHILDI. D6-T2 da u tuzatilgan va izohi ham yozilgan edi — baribir Payme webhook'ida takrorlandi (25 ta mypy xatosi). Xulosa: yozib qo'yilgan izoh takrorlanishni TO'XTATMAYDI. Ikkalasi ham yopilma bilan tuzatildi.",
+          "⭐⭐ `apps/common/tests/test_models.py::test_updated_at_saqlashda_yangilanadi` FLAKY EDI (D6-T3 ga aloqasi yo'q, ilgaridan). U ikkita ketma-ket `save()` ning HAQIQIY vaqtini `assertGreater` bilan taqqoslardi va sekinroq to'plam yurishida yiqildi (89s yurish yiqildi, 70s yurish o'tdi); yolg'iz ishlatilganda HAMISHA o'tardi. Tuzatildi: `timezone.now` mock qilinadi. Yangi shakl KUCHLIROQ ham — u `auto_now` aynan SAQLASH paytidagi `now()` ni olishini isbotlaydi. Bu loyihadagi D5-T4 tajribasining aynan takrori.",
+          "`Provayder` kalitli lug'atga `str` bilan murojaat qilish mypy'ni yiqitadi (`_provayder_yoqilganmi`) — `_MAQSAD_BAJARUVCHILARI` dagi bilan bir xil tuzoq, annotatsiya SHART.",
+          "`django.utils.timezone.utc` Django 5.0 da OLIB TASHLANGAN; eski kod namunalarida hamon uchraydi. `datetime.UTC` ishlatildi."
+        ],
+        "olchangan_holat": {
+          "testlar": 1507,
+          "qamrov_foiz": 95.11,
+          "d6_t3_testlari": 57
+        },
+        "keyingi_uchun_eslatma": [
+          "⚠️⚠️ DEPLOY: Payme kabinetida `Endpoint URL` = `https://<domen>/tolov/payme/` (BITTA manzil, oltita metod shu yerga keladi). `account` maydonining nomi `order_id` bo'lishi SHART — mos kelmasa hamma so'rov 'buyurtma topilmadi' bilan qaytadi va sabab hech qayerda ko'rinmaydi.",
+          "⚠️⚠️ DEPLOY: sandbox va prod uchun kalitlar BOSHQA. Sandbox kalitini prodga olib o'tish hamma so'rovni `-32504` bilan rad ettiradi.",
+          "⚠️ SANDBOX'NI ISHGA TUSHIRISH: kalitlar olingach test.paycom.uz da ikkala ssenariyni yurgizish qoladi — kod tomon tayyor va ular `tests_payme.py` da takrorlangan.",
+          "⚠️ D6-T4 (boost): `TolovMaqsadi.BOOST` + `_MAQSAD_BAJARUVCHILARI` VA `_MAQSAD_BEKOR_QILUVCHILARI` — IKKALASI ham. Guard test buni majburlaydi.",
+          "⚠️ Payme'ning O'Z `time` maydoni saqlanmaydi; `GetStatement` da `time` o'rniga `create_time` qaytariladi. Solishtirish `id` va `amount` bo'yicha boradi."
+        ]
+      }
     },
     {
       "id": "D6-T4",

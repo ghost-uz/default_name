@@ -7,6 +7,8 @@
    qilinganda ro'yxatga olinadi.
 """
 
+from unittest import mock
+
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.test import TestCase
@@ -99,12 +101,32 @@ class TimeStampedTests(SinovJadvalMixin, TestCase):
         self.assertEqual(obj.created_at, otgan)
 
     def test_updated_at_saqlashda_yangilanadi(self):
+        """⚠️⚠️ SOAT MOCK QILINADI — TEST DEVOR SOATIGA BOG'LIQ EMAS.
+
+        Avvalgi shakl ikkita ketma-ket `save()` ning HAQIQIY vaqtini
+        taqqoslardi (`assertGreater`) va 2026-09-08 da to'liq
+        to'plamda TASODIFAN yiqildi: kod ham, test ham
+        o'zgarmagan, faqat mashina sekinroq ishlagan. Yolg'iz
+        ishlatilganda esa hamisha o'tardi — ya'ni xato "sirli"
+        ko'rinardi.
+
+        Bu loyihada allaqachon yozilgan qoida (D5-T4, jim soatlar
+        tajribasi): test devor soatiga bog'liq bo'lmasin.
+
+        Mock shakl KUCHLIROQ ham: u `auto_now` aynan SAQLASH
+        paytidagi `now()` ni olishini isbotlaydi, "kattaroq
+        bo'lsa bo'ldi" demaydi.
+        """
         obj = SinovVaqt.objects.create(nom="a")
         birinchi = obj.updated_at
-        obj.nom = "b"
-        obj.save()
+        keyingi = birinchi + timezone.timedelta(minutes=1)
+
+        with mock.patch("django.utils.timezone.now", return_value=keyingi):
+            obj.nom = "b"
+            obj.save()
+
         obj.refresh_from_db()
-        self.assertGreater(obj.updated_at, birinchi)
+        self.assertEqual(obj.updated_at, keyingi)
 
     def test_created_at_tahrirlanmaydi(self):
         """editable=False -> formaga va admin tahririga tushmaydi."""
