@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+
+{% comment %}
+  Postni ko'tarish — qoidalar va sotib olish (D6-T4).
+
+  ⚠️⚠️ HAMMA QOIDA TO'LOVDAN OLDIN AYTILADI: qayerda chiqadi, kartada
+     qanday belgi turadi, qachon to'xtaydi va hozir nechta post
+     ko'tarilgan. Sotuv cheklanmagan (foydalanuvchi qarori, 2026-09-11)
+     — joylar navbat bilan bo'linishini odam PUL TO'LASHDAN OLDIN
+     bilishi kerak.
+
+  ⚠️ «Javob kafolati» VA'DA QILINMAYDI. Ko'tarish ko'rinishni oshiradi,
+     javobni emas; yolg'on va'da `/pro/` dagi maket xatosining takrori
+     bo'lardi (D6-T2).
+
+  ⚠️ `noindex`: muallifning shaxsiy sahifasi, begonaga 404.
+{% endcomment %}
+
+{% block title %}Postni ko'tarish — Dard.uz{% endblock %}
+{% block description %}Postni «Qaynoq» lentasining birinchi sahifasida ko'tarish.{% endblock %}
+
+{% block head_extra %}
+  <meta name="robots" content="noindex, nofollow" />
+{% endblock %}
+
+{% block kanonik %}{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-2xl px-4 py-6 lg:px-6">
+  <main id="main">
+
+    <h1 class="text-2xl font-extrabold tracking-tight">Postni ko'tarish</h1>
+    <p class="mt-3 text-[15px] leading-relaxed text-fg-muted">
+      <a href="{{ muammo.get_absolute_url }}" class="font-semibold text-fg hover:text-primary">{{ muammo.title }}</a>
+    </p>
+
+    {% comment %}
+      ⚠️ JORIY HOLAT BIRINCHI (`/pro/` bilan bir xil qaror). Muddat
+         shablonda HISOBLANMAYDI — `tugashi` ko'rinishda
+         `BoostOrder.objects.tugamagan()` dan keladi.
+    {% endcomment %}
+    {% if tugashi %}
+      <section class="card mt-6 border-l-4 border-l-solved px-4 py-3.5" aria-labelledby="holat-h">
+        <h2 id="holat-h" class="text-[15px] font-bold">Post ko'tarilgan</h2>
+        <p class="mt-1 text-[14px] text-fg-muted">
+          <time datetime="{{ tugashi|date:'c' }}" class="tnum text-fg">{{ tugashi|date:"j-F, H:i" }}</time> gacha.
+          Yana to'lasangiz, yangi muddat shu vaqtdan keyin davom etadi —
+          qolgan vaqtingiz yo'qolmaydi.
+        </p>
+      </section>
+    {% endif %}
+
+    <section class="card mt-6 overflow-hidden" aria-labelledby="narx-h">
+      <div class="border-b border-line px-5 py-5">
+        <h2 id="narx-h" class="text-[13px] font-semibold uppercase tracking-wider text-fg-muted">
+          Narxi
+        </h2>
+        <p class="mt-2 flex items-baseline gap-1.5">
+          <span class="tnum text-4xl font-extrabold">{{ narx|floatformat:"0g" }}</span>
+          <span class="text-[15px] font-medium text-fg-muted">so'm / {{ kun }} kun</span>
+        </p>
+      </div>
+
+      <div class="px-5 py-5">
+        <h3 class="text-[13px] font-semibold uppercase tracking-wider text-fg-muted">
+          Qanday ishlaydi
+        </h3>
+        <ul class="mt-3 space-y-2.5">
+          <li class="flex items-start gap-2.5 text-[14px]">
+            <svg class="mt-0.5 h-4 w-4 shrink-0 text-solved" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m20 6-11 11-5-5"/></svg>
+            <span>
+              «Qaynoq» lentasining birinchi sahifasida, ajratilgan joylarda:
+              {{ birinchi_joy }}-o'rin va keyin har {{ oraliq }} kartada bitta.
+            </span>
+          </li>
+          <li class="flex items-start gap-2.5 text-[14px]">
+            <svg class="mt-0.5 h-4 w-4 shrink-0 text-solved" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m20 6-11 11-5-5"/></svg>
+            <span>Kategoriya va avlod filtrlarida ham chiqadi — post o'sha filtrga mos bo'lsa.</span>
+          </li>
+          <li class="flex items-start gap-2.5 text-[14px]">
+            <svg class="mt-0.5 h-4 w-4 shrink-0 text-solved" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m20 6-11 11-5-5"/></svg>
+            <span>Kartada o'quvchilar uchun ochiq belgi turadi: «Ko'tarilgan — pullik joy».</span>
+          </li>
+          <li class="flex items-start gap-2.5 text-[14px]">
+            <svg class="mt-0.5 h-4 w-4 shrink-0 text-solved" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m20 6-11 11-5-5"/></svg>
+            <span>Savolingiz yechilsa yoki yopilsa, ko'tarish to'xtaydi.</span>
+          </li>
+        </ul>
+
+        {% comment %}
+          ⚠️⚠️ ROSTGO'YLIK BLOKI — sotuv cheklanmaganining narxi. Faol
+             boostlar joylardan ko'p bo'lsa, postingiz har ochilishda
+             chiqmaydi; buni bilmasdan to'lagan odam aldangan bo'lardi.
+        {% endcomment %}
+        <p class="mt-4 rounded-lg bg-surface-2 px-3.5 py-3 text-[13px] leading-relaxed text-fg-muted">
+          Hozir <strong class="tnum text-fg">{{ faol_soni }}</strong> ta post ko'tarilgan,
+          birinchi sahifada esa <strong class="tnum text-fg">{{ joylar_soni }}</strong> ta joy bor.
+          {% if faol_soni >= joylar_soni %}
+            Joylar ko'tarilgan postlar orasida navbat bilan bo'linadi —
+            postingiz har ochilishda ko'rinmasligi mumkin.
+          {% endif %}
+          Ko'tarish postni ko'proq odamga ko'rsatadi, lekin javobni kafolatlamaydi.
+        </p>
+      </div>
+
+      <div class="border-t border-line bg-surface-2/50 px-5 py-5">
+        {% if sabab %}
+          <p class="text-[14px] leading-relaxed">{{ sabab }}</p>
+
+        {% elif not yoqilganmi %}
+          <p class="text-[14px] leading-relaxed text-fg-muted">
+            To'lov tizimi hozircha ulanmagan. Ulanishi bilan bu yerda
+            «To'lash» tugmasi paydo bo'ladi.
+          </p>
+
+        {% else %}
+          <p class="mb-3 text-[13px] font-semibold uppercase tracking-wider text-fg-muted">
+            {% if tugashi %}Muddatni uzaytirish{% else %}To'lov usuli{% endif %}
+          </p>
+          <div class="flex flex-col gap-2.5">
+            {% if click_yoqilganmi %}
+              <form method="post" action="{% url 'kotarish_sotib_olish' muammo.pk 'click' %}">
+                {% csrf_token %}
+                <button type="submit" class="btn-primary w-full !min-h-12">Click orqali to'lash</button>
+              </form>
+            {% endif %}
+            {% if payme_yoqilganmi %}
+              <form method="post" action="{% url 'kotarish_sotib_olish' muammo.pk 'payme' %}">
+                {% csrf_token %}
+                <button type="submit" class="btn-outline w-full !min-h-12">Payme orqali to'lash</button>
+              </form>
+            {% endif %}
+          </div>
+          <p class="mt-3 text-center text-[13px] text-fg-muted">
+            To'lov tanlangan tizim sahifasida amalga oshadi. Karta
+            ma'lumotlari Dard.uz'ga kelmaydi.
+          </p>
+        {% endif %}
+      </div>
+    </section>
+
+  </main>
+</div>
+{% endblock %}

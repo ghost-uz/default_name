@@ -726,6 +726,30 @@ OBUNA_NARXI = env("OBUNA_NARXI", "19000")
 CLICK_YOQILGANMI = bool(CLICK_MERCHANT_ID and CLICK_SERVICE_ID and CLICK_SECRET_KEY)
 PAYME_YOQILGANMI = bool(PAYME_MERCHANT_ID and PAYME_SECRET_KEY)
 
+# --------------------------------------------------------------------------
+# Boost — postni ko'tarish (D6-T4)
+# --------------------------------------------------------------------------
+# ⚠️ Narx SERVERDA va `str` — `OBUNA_NARXI` bilan bir xil sabab.
+BOOST_NARXI = env("BOOST_NARXI", "5000")
+
+# ⚠️ Bitta to'lov necha kun beradi — SOATDA EMAS, KUNDA: `Tolov.berilgan_kun`
+#    pul qaytarilganda (D6-T3) nima berilganini yozib qo'yadi va u obuna
+#    bilan BIR XIL birlikda bo'lishi kerak.
+BOOST_MUDDATI_KUN = 1
+
+# ⚠️⚠️ LENTADAGI ULUSH — D6-T4 QABUL MEZONI.
+#    Ko'tarilgan postlar «Qaynoq»ning BIRINCHI sahifasida ajratilgan
+#    joylarda turadi: birinchisi `BOOST_BIRINCHI_JOY`-o'rinda, keyingilari
+#    har `BOOST_ORALIQ` kartada. Ya'ni ketma-ket istalgan 5 kartada ko'pi
+#    bilan BITTA ko'tarilgan post bo'ladi. Joylar SONI alohida sozlama
+#    emas — sahifa hajmidan HISOBLANADI (`payments.selectors`), aks holda
+#    u ulush qoidasiga zid kelib qolishi mumkin edi.
+#
+#    Birinchi joy 3 — foydalanuvchi qarori (2026-09-11): lenta pullik
+#    karta bilan BOSHLANMASIN, birinchi ikkita karta doim organik.
+BOOST_BIRINCHI_JOY = 3
+BOOST_ORALIQ = 5
+
 
 # --------------------------------------------------------------------------
 # Statik va media fayllar

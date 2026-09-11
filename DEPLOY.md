@@ -522,6 +522,37 @@ Imzoning o'zi ataylab saqlanmaydi (maxfiy kalit ishtirokidagi hash).
 Obunani qo'lda berish: Admin -> **Obunalar** (`Tolov` emas — u faqat
 o'qish uchun, chunki u haqiqiy pul harakati yozuvi).
 
+### 9.6 Postni ko'tarish (boost) — D6-T4
+
+Yangi webhook manzili **YO'Q**: boost Click/Payme'ning o'sha manzillari
+orqali to'lanadi (`TolovMaqsadi.BOOST`). Kerak bo'lgani — narx:
+
+```bash
+BOOST_NARXI=5000           # so'm / BOOST_MUDDATI_KUN kun (standart 1)
+```
+
+⚠️ **Sotuv cheklanmagan** (foydalanuvchi qarori, 2026-09-11):
+«Qaynoq»ning birinchi sahifasida 4 ta joy bor (3, 8, 13, 18-o'rinlar) va
+faol boost ko'p bo'lsa joylar navbat bilan bo'linadi. Sotib olish
+sahifasi hozir nechta post ko'tarilganini ochiq yozadi. Talab oshsa
+birinchi qadam — narxni oshirish (`BOOST_NARXI`), kodga tegish shart
+emas.
+
+⚠️ **Pul avtomatik qaytarilmaydigan holatlar.** To'lovdan OLDIN
+(Prepare / CreateTransaction) post yashirilgan, o'chirilgan, yechilgan
+yoki muallif cheklangan bo'lsa — provayderga xato ketadi va pul
+YECHILMAYDI. To'lovdan KEYIN esa:
+- post yashirilsa yoki o'chirilsa — boost lentada chiqmaydi, to'lov
+  esa bo'lgan;
+- Prepare bilan Complete orasidagi soniyalarda post yechilsa.
+
+Bu holatlarda pulni qaytarish qarori odamniki (Payme kabinetidan
+bekor qilish yoki qo'lda). Admin -> **Ko'tarishlar** faqat o'qish
+uchun: qo'lda «ko'tarib qo'yish» pulsiz pullik joy bo'lardi.
+
+⚠️ Payme'dan pul qaytarilsa (`state = -2`) o'sha to'lovning ko'tarish
+oralig'i darhol yopiladi (navbatdagisi — nol uzunlikka tushadi).
+
 ---
 
 ## 10. Hali qilinmagan

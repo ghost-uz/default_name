@@ -18,7 +18,10 @@ from django.conf import settings
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 
+from apps.complaints.models import Complaint, ComplaintStatus
+
 from .models import (
+    BoostOrder,
     ObunaHolati,
     ObunaRejasi,
     Subscription,
@@ -220,6 +223,10 @@ class Sabab(StrEnum):
     #    sabab bo'lib qaytadi, xizmat qatlami esa qaysi biri
     #    ekanini BILMAYDI.
     BAND = "band"
+    # ⚠️ D6-T4: buyurtma BOR, lekin u sotib oladigan narsani endi berib
+    #    bo'lmaydi (masalan ko'tarilayotgan post shu orada yashirildi yoki
+    #    yechildi). Tayyorlash bosqichida — PUL YECHILISHIDAN OLDIN — otiladi.
+    YAROQSIZ = "yaroqsiz"
 
 
 class TolovXatosi(Exception):
@@ -278,8 +285,183 @@ def _obunani_qaytarib_olish(tolov: Tolov) -> None:
     obunani_qisqartirish(user=tolov.user, kunlar=kunlar)
 
 
-# ⚠️⚠️ KENGAYISH NUQTASI. D6-T4 (boost) shu lug'atga bitta qator
-#    qo'shadi va Click/Payme kodiga UMUMAN tegmaydi.
+# ===========================================================================
+# Boost — postni ko'tarish (D6-T4)
+# ===========================================================================
+def kotarib_bolmaslik_sababi(*, user, muammo: Complaint) -> str | None:
+    """Postni ko'tarib BO'LMASLIK sababi; `None` — ko'tarish mumkin.
+
+    ⚠️⚠️ BITTA FUNKSIYA, UCH ISTE'MOLCHI: batafsil sahifadagi tugma,
+       sotib olish ko'rinishi va to'lovni TAYYORLASH bosqichi
+       (`_boost_hali_yaroqlimi`). Uchinchisi eng muhimi: buyurtma
+       yaratilgach post yashirilishi yoki yechilishi mumkin, pul esa hech
+       narsa bermaydigan narsa uchun yechilmasligi kerak (D6-T2 dagi
+       «PRO amalda hech narsa bermasdi» topilmasining o'zi).
+
+    ⚠️ BAZAGA BORMAYDI — faqat qo'ldagi obyektlar. Batafsil sahifaning
+       so'rov byudjeti (D1-T14) tugma uchun o'smasin.
+
+    ⚠️ `deleted_at` ALOHIDA tekshiriladi: `is_publicly_visible` faqat
+       moderatsiya holatiga qaraydi, FK orqali olingan post
+       (`boost.complaint`) esa yumshoq o'chirilgan bo'lsa ham keladi.
+
+    ⚠️⚠️ INQIROZ SABABI MATNDA AYTILMAYDI. D2-T6 siyosati: aniqlangan
+       post muallifi HECH QANDAY ogohlantirish olmaydi. «Postingizda
+       inqiroz belgisi bor» degan javob aynan shunday ogohlantirish
+       bo'lardi — shuning uchun matn umumiy.
+    """
+    if muammo.author_id != user.pk:
+        return "Faqat muallif o'z postini ko'tara oladi."
+    if muammo.deleted_at is not None or not muammo.is_publicly_visible:
+        return "Post hozir ommaga ko'rinmaydi."
+    if muammo.status != ComplaintStatus.OPEN:
+        return "Yechilgan yoki yopilgan savolni ko'tarib bo'lmaydi."
+    if user.is_currently_banned:
+        return "Cheklov davrida postni ko'tarib bo'lmaydi."
+    # ⚠️ D2-T10: shartlar yangilangach qayta rozilik bermagan odam PULLIK
+    #    xizmat ham sotib olmaydi — aks holda to'lov qaysi shartlar
+    #    asosida qilingani noaniq qolardi.
+    if not user.rozilik_bormi:
+        return "Avval foydalanish shartlarining joriy versiyasini qabul qiling."
+    if muammo.inqiroz_aniqlandi:
+        return "Bu post uchun ko'tarish mavjud emas."
+    return None
+
+
+def kotarish_taklif_qilinadimi(*, user, muammo: Complaint) -> bool:
+    """Batafsil sahifada «Ko'tarish» tugmasi chiqadimi. Bazaga bormaydi.
+
+    ⚠️ To'lov tizimi ulanmagan bo'lsa tugma YO'Q: u odamni «ulanmagan»
+       degan sahifaga olib borardi va u buni sayt nosozligi deb qabul
+       qilardi (D6-T2 dagi `CLICK_YOQILGANMI` qarori).
+    """
+    if not getattr(user, "is_authenticated", False):
+        return False
+    if not (settings.CLICK_YOQILGANMI or settings.PAYME_YOQILGANMI):
+        return False
+    return kotarib_bolmaslik_sababi(user=user, muammo=muammo) is None
+
+
+@transaction.atomic
+def boost_buyurtmasi_yaratish(
+    *, user, muammo: Complaint, provayder: str, summa: Decimal
+) -> Tolov:
+    """Ko'tarish buyurtmasi: `Tolov` + `BoostOrder` BITTA tranzaksiyada.
+
+    ⚠️ Ikkalasi birga yoki hech biri: `BoostOrder` siz webhook qaysi
+       postni ko'tarishni bilmasdi, pul esa yechilib bo'lardi.
+    """
+    tolov = tolov_yaratish(
+        user=user, provayder=provayder, summa=summa, maqsad=TolovMaqsadi.BOOST
+    )
+    BoostOrder.objects.create(tolov=tolov, complaint=muammo)
+    return tolov
+
+
+def _boostni_berish(tolov: Tolov) -> int:
+    """Ko'tarish oralig'ini belgilaydi. Qaytaradi: BERILGAN KUN soni.
+
+    ⚠️⚠️ YANGI ORALIQ SHU POSTNING OXIRGI BOOSTI TUGAYDIGAN JOYDAN
+       boshlanadi, `now` dan emas — `obunani_uzaytirish` bilan bir xil
+       qoida: faol boost ustiga to'lagan odam qolgan soatlarini
+       YO'QOTMASIN. Oldingisi tugagan bo'lsa — `now` dan.
+
+    ⚠️ SHU POSTNING BARCHA boost qatorlari qulflanadi (`select_for_update`,
+       `pk` tartibida — ikki tranzaksiya qulfni teskari tartibda olib
+       bir-birini kutib qolmasin). Bir vaqtda yakunlangan ikki to'lov
+       bir xil oxirni o'qisa, ikkalasi bir xil oraliqni olardi va
+       ikkinchisi to'lagan kunini yo'qotardi. Qatorlar buyurtma paytida
+       yaratilgani uchun qulflanadigan narsa BIRINCHI to'lovda ham bor.
+    """
+    complaint_id = (
+        BoostOrder.objects.filter(tolov=tolov)
+        .values_list("complaint_id", flat=True)
+        .first()
+    )
+    if complaint_id is None:
+        # To'lov bor, buyurtma yo'q — faqat post QATTIQ o'chirilganda
+        # (CASCADE). Pul yechilgan: jurnalga tushadi, qaror odamniki.
+        log.error("boost: buyurtma topilmadi (tolov=%s)", tolov.pk)
+        return 0
+
+    qatorlar = list(
+        BoostOrder.objects.select_for_update()
+        .filter(complaint_id=complaint_id)
+        .order_by("pk")
+    )
+    boost = next(q for q in qatorlar if q.tolov_id == tolov.pk)
+
+    kunlar = settings.BOOST_MUDDATI_KUN
+    boshlanish = max(
+        [timezone.now()]
+        + [q.ends_at for q in qatorlar if q.pk != boost.pk and q.ends_at is not None]
+    )
+    boost.starts_at = boshlanish
+    boost.ends_at = boshlanish + timedelta(days=kunlar)
+    boost.save(update_fields=["starts_at", "ends_at", "updated_at"])
+    log.info(
+        "boost: berildi (tolov=%s, muammo=%s, %s -> %s)",
+        tolov.pk,
+        complaint_id,
+        boost.starts_at,
+        boost.ends_at,
+    )
+    return kunlar
+
+
+def _boostni_qaytarib_olish(tolov: Tolov) -> None:
+    """Pul qaytarildi — SHU to'lovning oralig'i yopiladi (D6-T3 juftligi).
+
+    ⚠️ Oraliq `now` da KESILADI: faol bo'lsa darhol tugaydi, navbatda
+       turgan bo'lsa (`starts_at` kelajakda) nol uzunlikka tushadi va
+       hech qachon faollashmaydi. Qator O'CHIRILMAYDI — u tarix va
+       nizoda «qachon ko'tarilgan edi?» savoliga javob beradi.
+
+    ⚠️ Navbatdagi KEYINGI boostlar SURILMAYDI: ular o'z to'lovi bilan
+       olingan va o'z vaqtida boshlanadi. Oradagi bo'shliq — qaytarilgan
+       to'lovning to'g'ri oqibati; uni «tuzatish» keyingi to'lov sotib
+       olgan vaqtni jimgina o'zgartirardi.
+    """
+    boost = BoostOrder.objects.select_for_update().filter(tolov=tolov).first()
+    if boost is None or boost.starts_at is None or boost.ends_at is None:
+        log.warning("boost: qaytarishda oraliq yo'q (tolov=%s)", tolov.pk)
+        return
+
+    yangi_oxir = max(boost.starts_at, min(boost.ends_at, timezone.now()))
+    if yangi_oxir != boost.ends_at:
+        boost.ends_at = yangi_oxir
+        boost.save(update_fields=["ends_at", "updated_at"])
+    log.info("boost: pul qaytarildi, oraliq yopildi (tolov=%s)", tolov.pk)
+
+
+def _tekshiruv_shart_emas(tolov: Tolov) -> None:
+    """Obuna uchun tayyorlash bosqichida qo'shimcha shart yo'q.
+
+    ⚠️ Bo'sh funksiya lug'atda ATAYLAB turadi (`.get()` bilan tushirib
+       qoldirilmaydi): yangi maqsad qo'shgan odam «pul yechilishidan
+       oldin nimani tekshirish kerak?» savoliga javob berishga MAJBUR
+       bo'lsin — javob «hech narsa» bo'lsa ham.
+    """
+
+
+def _boost_hali_yaroqlimi(tolov: Tolov) -> None:
+    """Pul yechilishidan OLDIN: post hali ko'tarilishi mumkinmi.
+
+    ⚠️ Sabab matni faqat JURNALGA tushadi. Provayderga semantik
+       `YAROQSIZ` ketadi va u o'z kodiga aylantiriladi (`views`).
+    """
+    boost = BoostOrder.objects.select_related("complaint").filter(tolov=tolov).first()
+    if boost is None:
+        raise TolovXatosi(Sabab.YAROQSIZ)
+    sabab = kotarib_bolmaslik_sababi(user=tolov.user, muammo=boost.complaint)
+    if sabab is not None:
+        log.warning("boost: tayyorlashda rad etildi (tolov=%s): %s", tolov.pk, sabab)
+        raise TolovXatosi(Sabab.YAROQSIZ)
+
+
+# ⚠️⚠️ KENGAYISH NUQTASI. Har maqsad UCHTA lug'atga bittadan funksiya
+#    qo'shadi (D6-T4 boost aynan shunday qo'shildi) va Click/Payme
+#    protokol kodiga UMUMAN tegmaydi.
 #
 # ⚠️ `dict`, `if/elif` EMAS: yangi maqsad qo'shilib, bajaruvchisi
 #    unutilsa `KeyError` DARHOL chiqadi. `if/elif` zanjiri esa oxirida
@@ -290,19 +472,47 @@ def _obunani_qaytarib_olish(tolov: Tolov) -> None:
 #    `TolovMaqsadi` deb chiqaradi va qidiruvni xato deb belgilaydi.
 _MAQSAD_BAJARUVCHILARI: dict[str, Callable[[Tolov], int]] = {
     TolovMaqsadi.OBUNA: _obunani_berish,
+    TolovMaqsadi.BOOST: _boostni_berish,
 }
 
 # ⚠️⚠️ HAR BERISHNING TESKARISI BO'LISHI SHART (D6-T3).
 #    Payme pulni qaytara oladi, ya'ni "berilgan narsani qaytarib olish"
-#    endi haqiqiy talab. Ikkala lug'at YONMA-YON turadi: yangi maqsad
-#    qo'shgan odam ikkinchisini ham to'ldirishi kerakligini KO'RADI.
+#    endi haqiqiy talab. Lug'atlar YONMA-YON turadi: yangi maqsad
+#    qo'shgan odam qolganlarini ham to'ldirishi kerakligini KO'RADI.
 #
-#    Kalitlari bir xilligini test qo'riqlaydi — aks holda D6-T4 (boost)
-#    qo'shilib, qaytarish unutilsa, pul qaytarilgan boost ishlab
-#    qolaverardi va buni faqat mijoz payqardi.
+#    Kalitlari bir xilligini test qo'riqlaydi — qaytarish unutilsa, pul
+#    qaytarilgan xizmat ishlab qolaverardi va buni faqat mijoz payqardi.
 _MAQSAD_BEKOR_QILUVCHILARI: dict[str, Callable[[Tolov], None]] = {
     TolovMaqsadi.OBUNA: _obunani_qaytarib_olish,
+    TolovMaqsadi.BOOST: _boostni_qaytarib_olish,
 }
+
+# ⚠️⚠️ PUL YECHILISHIDAN OLDINGI TEKSHIRUV (D6-T4) — uchinchi lug'at.
+#    Buyurtma yaratilishi bilan to'lov orasida daqiqalar (ba'zan soatlar)
+#    o'tadi va shu orada sotib olinayotgan narsa yo'qolishi mumkin.
+#    Tekshiruv Prepare / CreateTransaction / CheckPerformTransaction da
+#    ishlaydi — u yerdagi xato provayderni pulni YECHMASDAN to'xtatadi.
+#
+#    Complete / Perform da ATAYLAB tekshirilmaydi: Prepare bilan orasi
+#    soniyalar, xizmat berish yo'li esa sodda va idempotent qolishi
+#    kerak. O'sha soniyalarda yashirilgan post baribir lentaga chiqmaydi
+#    (`lenta_boostlari` ko'rinishni o'zi tekshiradi); pulni qaytarish
+#    qarori — odamniki (DEPLOY.md 9.6).
+_MAQSAD_TEKSHIRUVCHILARI: dict[str, Callable[[Tolov], None]] = {
+    TolovMaqsadi.OBUNA: _tekshiruv_shart_emas,
+    TolovMaqsadi.BOOST: _boost_hali_yaroqlimi,
+}
+
+
+def tolov_yaroqliligini_tekshirish(tolov: Tolov) -> None:
+    """Maqsadga xos shartlar; buzilsa `TolovXatosi(Sabab.YAROQSIZ)`.
+
+    ⚠️ Alohida OCHIQ funksiya: Payme'ning `CheckPerformTransaction` i
+       `tolovni_tayyorlash` ni chaqirmaydi (u bazaga yozmaydi), lekin
+       tekshiruv u yerda ham kerak — odam to'lov sahifasini aynan shu
+       paytda ochib turibdi.
+    """
+    _MAQSAD_TEKSHIRUVCHILARI[tolov.maqsad](tolov)
 
 
 def tolov_yaratish(
@@ -400,6 +610,11 @@ def tolovni_tayyorlash(
         raise TolovXatosi(Sabab.ALLAQACHON)
     if tolov.holat == TolovHolati.BEKOR:
         raise TolovXatosi(Sabab.BEKOR)
+
+    # ⚠️ D6-T4: maqsadga xos shart PUL YECHILISHIDAN OLDIN (masalan
+    #    ko'tarilayotgan post shu orada yashirilgan). Takroriy Prepare ham
+    #    tekshiriladi — holat o'zgargan bo'lsa ikkinchisi ham rad etilsin.
+    tolov_yaroqliligini_tekshirish(tolov)
 
     boshqa_tranzaksiya = (
         tolov.holat == TolovHolati.TAYYOR

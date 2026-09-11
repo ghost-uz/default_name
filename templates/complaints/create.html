@@ -108,32 +108,14 @@
                maydon — ishlamaydigan tugmadan ham yomonroq: foydalanuvchi
                mehnat sarflaydi va natijasini ko'rmaydi.
 
-               "Boost" bloki esa QOLDIRILDI — u o'zi haqida "beta versiyada
-               faol emas" deb ochiq aytadi (M6, D6-T4).
+            ⚠️ "Boost" bloki ham D6-T4 da OLIB TASHLANDI. U SOXTA tugma edi
+               (`data-toast` — serverga hech narsa yubormasdi) va haqiqiy
+               oqimni bu yerga qo'yib bo'lmaydi: post hali YO'Q, to'lov esa
+               aniq postga bog'lanadi. Ko'tarish endi batafsil sahifada,
+               muallifga, post e'lon qilingandan KEYIN. Og'ir holatini
+               yozayotgan odamga yozish paytida pullik taklif ko'rsatmaslik
+               ham ataylab.
           {% endcomment %}
-          <details class="card group overflow-hidden">
-            <summary class="flex cursor-pointer list-none items-center gap-2 p-4 text-sm font-semibold transition-colors hover:bg-surface-2">
-              <svg class="h-4 w-4 text-fg-muted transition-transform duration-200 group-open:rotate-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
-              Qo'shimcha
-              <span class="ml-auto text-xs font-normal text-fg-muted">ixtiyoriy</span>
-            </summary>
-            <div class="space-y-4 border-t border-line p-4">
-              <div class="rounded-[var(--radius-input)] border border-karma-icon/40 bg-karma-bg p-3.5">
-                <div class="flex items-start gap-3">
-                  <svg class="mt-0.5 h-5 w-5 shrink-0 text-karma-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m13 2-9 12h7l-1 8 9-12h-7z"/></svg>
-                  <div class="min-w-0 flex-1">
-                    <p class="text-sm font-bold text-karma">Shoshilinch? Postni ko'taring</p>
-                    <p class="mt-1 text-[13px] leading-relaxed text-fg-muted">
-                      24 soat davomida «Qaynoq» ro'yxatining yuqorisida turadi.
-                    </p>
-                    <button type="button" class="btn-outline btn-sm mt-2.5 !border-karma-icon/50 !text-karma" data-toast="To'lov tizimi beta versiyada faol emas">
-                      5 000 so'm — Ko'tarish
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </details>
 
           <div class="flex flex-col-reverse gap-2 border-t border-line pt-5 sm:flex-row sm:items-center">
             <a href="{% if tahrirlash %}{{ complaint.get_absolute_url }}{% else %}{% url 'feed' %}{% endif %}" class="btn-outline sm:min-w-32">Bekor qilish</a>

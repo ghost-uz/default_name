@@ -96,6 +96,12 @@ BUYURTMA_TOPILMADI = -31050
 #    olinadi: kod hujjatga mos qoladi va odam aniq xabar ko'radi.
 BUYURTMA_YAKUNLANGAN = -31051
 
+# ⚠️ `account` (buyurtma) xatolari ORALIG'I — bu kodlarda javobga `data`
+#    (xato maydon nomi) qo'yish MAJBURIY. D6-T4 da shu oraliqdan ikkinchi
+#    kod ham webhook javobiga tushdi va bitta kod bilan taqqoslash
+#    yetmay qoldi.
+ACCOUNT_XATOLARI = range(-31099, -31049)
+
 # ⚠️ Bekor qilish sababi. Payme yuboradi, biz saqlaymiz va
 #    `CheckTransaction` da QAYTARAMIZ. `4` — taymaut bo'yicha bekor.
 SABAB_TAYMAUT = 4

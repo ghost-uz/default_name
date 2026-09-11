@@ -82,9 +82,11 @@ class Sahifa:
 #    va hech kim buni payqamaydi. `git blame` bu qatorlarda kim, qachon
 #    va NEGA oshirganini ko'rsatishi kerak.
 #
-# ⚠️ O'LCHANGAN HOLAT (2026-09-06, 20 postli sahifa):
-#      lenta (mehmon)   2 so'rov / 128 KB
-#      lenta (kirgan)   7 so'rov / 135 KB
+# ⚠️ O'LCHANGAN HOLAT (2026-09-06, 20 postli sahifa; lentaga D6-T4 da
+#    boost joylari uchun +1 so'rov qo'shildi — byudjet O'ZGARMADI, zaxira
+#    ichida):
+#      lenta (mehmon)   3 so'rov / 128 KB
+#      lenta (kirgan)   8 so'rov / 135 KB
 #      dard (batafsil)  5 so'rov /  44 KB
 #      qidiruv          3 so'rov / 123 KB
 #    Byudjet shundan ~2 so'rov va ~15% zaxira bilan qo'yilgan: u

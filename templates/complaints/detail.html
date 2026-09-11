@@ -152,6 +152,21 @@
                   </a>
                 {% endif %}
 
+                {% comment %}
+                  ⚠️ D6-T4: «Ko'tarish» FAQAT muallifga, to'lov tizimi
+                     ulangan bo'lsa va post ko'tarilishi mumkin bo'lsa
+                     (`payments.services.kotarish_taklif_qilinadimi` —
+                     bazaga bormaydi). Tugma to'lovga emas, QOIDALAR
+                     sahifasiga olib boradi: narx va post qayerda
+                     chiqishi pul to'lashdan OLDIN ko'rinsin.
+                {% endcomment %}
+                {% if kotarish_mumkin %}
+                  <a href="{% url 'kotarish' complaint.pk %}" class="btn-ghost btn-sm">
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m13 2-9 12h7l-1 8 9-12h-7z"/></svg>
+                    Ko'tarish
+                  </a>
+                {% endif %}
+
                 {% include "components/_save_button.html" with complaint=complaint korsatilsin=True %}
 
                 {% comment %}

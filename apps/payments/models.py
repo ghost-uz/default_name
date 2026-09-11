@@ -161,15 +161,18 @@ class Provayder(models.TextChoices):
 class TolovMaqsadi(models.TextChoices):
     """Pul NIMA UCHUN to'landi.
 
-    ⚠️⚠️ BU MODELNING KENGAYISH NUQTASI. D6-T4 (boost) shu yerga
-       `BOOST` qo'shadi va `services._MAQSAD_BAJARUVCHILARI` ga bitta
-       funksiya — Click/Payme kodiga UMUMAN tegilmaydi.
+    ⚠️⚠️ BU MODELNING KENGAYISH NUQTASI. D6-T4 (boost) shu yo'l bilan
+       qo'shildi: bu yerda bitta qiymat, `services` dagi UCHTA lug'atga
+       bittadan funksiya (berish, qaytarib olish, tayyorlashda tekshirish)
+       — `click.py`/`payme.py` protokol kodiga UMUMAN tegilmadi. Uchala
+       lug'at kalitlarining bir xilligini test qo'riqlaydi.
 
        Teskari yo'l (har maqsad uchun alohida webhook) ikkita imzo
        tekshiruvi, ikkita idempotentlik va ikkita jurnal degani edi.
     """
 
     OBUNA = "obuna", "PRO obuna"
+    BOOST = "boost", "Postni ko'tarish"
 
 
 class TolovHolati(models.TextChoices):
@@ -386,3 +389,112 @@ class TolovSorovi(OzgarmasJurnal):
         return (
             f"{self.provayder}/{self.amal} #{self.merchant_trans_id} -> {self.natija}"
         )
+
+
+# ===========================================================================
+# Boost — postni ko'tarish (D6-T4)
+# ===========================================================================
+class BoostOrderQuerySet(models.QuerySet):
+    def faol(self) -> BoostOrderQuerySet:
+        """HOZIR lentada joy olishi mumkin bo'lganlar.
+
+        ⚠️⚠️ YAGONA TA'RIF — `BoostOrder.faolmi` bilan aynan bir xil shart
+           va ikkalasining chegaralari test bilan qotirilgan: `starts_at`
+           KIRADI, `ends_at` KIRMAYDI (D6-T1 dagi `Subscription.faolmi`
+           naqshi).
+
+        ⚠️ HOLAT MAYDONI YO'Q — faqat vaqt oralig'i. To'lanmagan
+           buyurtmada ikkala sana `NULL` (hech qachon faol emas), pul
+           qaytarilganda oraliq `now` da YOPILADI
+           (`services._boostni_qaytarib_olish`). Alohida `holat` maydoni
+           ikkinchi haqiqat manbai bo'lardi.
+        """
+        hozir = timezone.now()
+        return self.filter(starts_at__lte=hozir, ends_at__gt=hozir)
+
+    def tugamagan(self) -> BoostOrderQuerySet:
+        """Hali tugamaganlar: faol VA navbatda turganlar (sotib olish sahifasi).
+
+        ⚠️ Nol uzunlikdagi oraliq CHIQARILADI: navbatda turganda puli
+           qaytarilgan boost (`starts_at == ends_at`, ikkalasi kelajakda)
+           «hali tugamagan» bo'lib ko'rinardi va sahifa hech narsa
+           ko'tarilmagan postga «ko'tarilgan ... gacha» deb yozardi.
+        """
+        return self.filter(ends_at__gt=timezone.now()).filter(
+            ends_at__gt=models.F("starts_at")
+        )
+
+
+class BoostOrder(TimeStampedModel):
+    """Postni «Qaynoq» lentasida ko'tarish buyurtmasi (D6-T4).
+
+    ⚠️⚠️ BOOST `hot_score` GA QO'SHILMAYDI — task tavsifidan ONGLI chekinish.
+       Tavsif: «faol boost hot_score'ga qo'shiladi». Qabul mezoni esa:
+       «lentada boost ulushi cheklangan (har 5 postdan 1 tasi)».
+       Qo'shimcha ball ulushni KAFOLATLAY OLMAYDI — o'nta boost bo'lsa,
+       o'ntasi ham tepaga chiqadi. Ulushni faqat AJRATILGAN JOYLAR
+       kafolatlaydi (`payments.selectors`).
+
+       Ikkinchi sabab: `hot_score` uch joyda qayta ishlatiladi — lenta
+       kursori (D1-T12), Telegram kanal avto-posti (D5-T3) va qayta
+       hisoblash vazifasi (D1-T11). Pullik ball kanalga BELGISIZ reklama
+       bo'lib tushardi, boost tugagach esa kursor chegaralari siljirdi.
+
+    ⚠️ `amount` VA `user` MAYDONLARI YO'Q (tavsifdagi ro'yxatdan
+       chekinish): ikkalasi `tolov` da bor (`tolov.summa`, `tolov.user`).
+       Nusxa — ikkinchi haqiqat manbai, to'lov yozuvi esa pul
+       harakatining YAGONA dalili (D6-T2).
+
+    ⚠️ Buyurtma TO'LOVDAN OLDIN yaratiladi (sanalar `NULL`): webhook
+       qaysi postni ko'tarishni aynan shu qatordan biladi. `Tolov` ga
+       `complaint` FK qo'shish esa provayderdan mustaqil yadroni bitta
+       maqsadga bog'lab qo'yardi.
+
+    ⚠️ HAR TO'LOV — ALOHIDA QATOR. Faol boost ustiga yana to'lansa, yangi
+       oraliq eskisining OXIRIDAN boshlanadi (obuna bilan bir xil qoida:
+       erta to'lagan odam vaqtini yo'qotmasin). Pul qaytarilsa FAQAT
+       o'sha to'lovning oralig'i yopiladi.
+    """
+
+    tolov = models.OneToOneField(
+        Tolov,
+        verbose_name="to'lov",
+        on_delete=models.CASCADE,
+        related_name="boost",
+    )
+    complaint = models.ForeignKey(
+        "complaints.Complaint",
+        verbose_name="muammo",
+        on_delete=models.CASCADE,
+        related_name="boostlar",
+    )
+    starts_at = models.DateTimeField("boshlanishi", null=True, blank=True)
+    ends_at = models.DateTimeField("tugashi", null=True, blank=True)
+
+    objects = BoostOrderQuerySet.as_manager()
+
+    class Meta:
+        verbose_name = "ko'tarish"
+        verbose_name_plural = "ko'tarishlar"
+        ordering = ("-created_at", "-id")
+        indexes = [
+            # Lenta so'rovi (`faol()`): hozir ochiq oraliqlar. `ends_at`
+            # birinchi — tugagan qatorlar vaqt o'tgan sari ko'payadi va
+            # indeks ularni birinchi ustunning o'zida kesib tashlaydi.
+            models.Index(fields=["ends_at", "starts_at"], name="boost_faol_idx"),
+        ]
+
+    def __str__(self) -> str:
+        return f"#{self.pk}: muammo {self.complaint_id}"
+
+    @property
+    def faolmi(self) -> bool:
+        """`BoostOrderQuerySet.faol()` bilan AYNAN bir xil shart."""
+        if self.starts_at is None or self.ends_at is None:
+            return False
+        return self.starts_at <= timezone.now() < self.ends_at
+
+    @property
+    def navbatdami(self) -> bool:
+        """To'langan, lekin shu postning oldingi boosti tugashini kutyapti."""
+        return self.starts_at is not None and self.starts_at > timezone.now()

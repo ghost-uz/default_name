@@ -248,6 +248,12 @@ class Complaint(ContentModel, VotableModel):
     #    avto-post, D5-T3) shablon "saqlangan" deb ko'rsatib qo'ymasin.
     saqlangan: bool = False
 
+    # ⚠️ MAYDON EMAS — lenta ko'rinishi to'ldiradigan vaqtinchalik atribut
+    #    (D6-T4): karta PULLIK JOYDA turibdimi. Faqat `payments.selectors`
+    #    tanlab joyga qo'ygan kartada `True`. Xuddi shu post ORGANIK
+    #    o'rnida turganda belgi YO'Q — u o'sha joyni pul bilan olmagan.
+    kotarilgan: bool = False
+
     # ⚠️ MAYDON EMAS — qidiruv ko'rinishi to'ldiradigan vaqtinchalik
     #    atributlar (D4-T3), `user_vote` va `saqlangan` bilan bir xil
     #    naqsh. Ichida `<mark>` teglari bo'lgan XAVFSIZ HTML: matn

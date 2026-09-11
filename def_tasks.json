@@ -3458,11 +3458,84 @@
         "D1-T11",
         "D6-T2"
       ],
-      "holat": "todo",
+      "holat": "done",
       "qabul_mezoni": [
         "boost belgisi ochiq ko'rinadi",
         "lentada boost ulushi cheklangan (masalan har 5 postdan 1 tasi)"
-      ]
+      ],
+      "tugatilgan": "2026-09-12",
+      "natija": {
+        "yaratilgan": [
+          "apps/payments/models.py — `BoostOrder` (tolov OneToOne, complaint FK, starts_at, ends_at), `BoostOrderQuerySet.faol()` / `tugamagan()`, `faolmi` / `navbatdami`; `TolovMaqsadi.BOOST` (migratsiya payments/0004_boostorder)",
+          "apps/payments/selectors.py — YANGI: `lenta_boostlari`, `boostlarni_joylash`, `boost_joyi_bormi`, `boost_joylari_soni`",
+          "apps/payments/services.py — `kotarib_bolmaslik_sababi`, `kotarish_taklif_qilinadimi`, `boost_buyurtmasi_yaratish`, `_boostni_berish`, `_boostni_qaytarib_olish`, uchinchi lug'at `_MAQSAD_TEKSHIRUVCHILARI` + `tolov_yaroqliligini_tekshirish`, `Sabab.YAROQSIZ`",
+          "apps/payments/views.py — `/kotarish/<pk>/` (qoidalar, joriy holat, to'lov tugmalari) va `/kotarish/<pk>/sotib-olish/<provayder>/`; natija sahifasi maqsadga qarab; `YAROQSIZ` ikkala kod jadvalida",
+          "apps/payments/payme.py — `ACCOUNT_XATOLARI` oralig'i (javobda `data` majburiy kodlar)",
+          "apps/complaints/views.py — lentaga joylash (kursor olingandan KEYIN) va batafsil sahifadagi «Ko'tarish» tugmasi",
+          "templates/payments/kotarish.html (YANGI), payments/natija.html, components/_complaint_card.html (belgi), complaints/detail.html (tugma), complaints/create.html (maketdagi soxta boost bloki olib tashlandi)",
+          "config/settings/base.py — BOOST_NARXI, BOOST_MUDDATI_KUN, BOOST_BIRINCHI_JOY, BOOST_ORALIQ; .env.example; DEPLOY.md 9.6; README",
+          "apps/payments/tests_boost.py — 69 test"
+        ],
+        "qabul_mezonlari": {
+          "boost_belgisi_ochiq_korinadi": "✅ Joydagi kartada «Ko'tarilgan — pullik joy» (aria-hidden emas). Jonli brauzerda o'lchangan kontrast: yorug' 4.84, qorong'i 9.58. Xuddi shu post ORGANIK o'rnida turganda belgi YO'Q — u o'sha joyni pul bilan olmagan. Testlar: `test_JOYDAGI_kartada_PULLIK_JOY_belgisi_bor`, `test_ORGANIK_orindagi_boostli_post_BELGISIZ_va_TAKRORLANMAYDI`.",
+          "lentada_boost_ulushi_cheklangan": "✅ «Qaynoq»ning birinchi sahifasida ajratilgan joylar — 3, 8, 13, 18-o'rinlar: ketma-ket istalgan 5 kartada ko'pi bilan BITTA boost. Joylar soni sahifa hajmidan hisoblanadi (20 // 5 = 4), alohida sozlama emas. `test_ULUSH_qoidasi_HAMMA_kombinatsiyada` organik 0..25 × boost 0..6 ning HAR kombinatsiyasini tekshiradi; jonli lentada 10 ta faol boost bilan ham 4 ta joy."
+        },
+        "tekshirilgan": [
+          "⭐⭐ kursor oxirgi ORGANIK postdan quriladi — ikkinchi sahifa birinchisi to'xtagan joydan davom etadi",
+          "⭐⭐ ikkinchi sahifada va «Yangi» / «Eng yaxshi» / «Yechilgan» da joy YO'Q",
+          "⭐⭐ yashirilgan, tekshiruvdagi, yechilgan, yopilgan va inqiroz belgili postning boosti joyga chiqmaydi; bloklangan muallifning boosti bloklagan odamga chiqmaydi; kategoriya filtrida faqat mos boost",
+          "⭐⭐ buyurtmadan keyin yashirilgan post: Click Prepare `-9` qaytaradi va to'lov `YANGI` holatda qoladi (pul yechilmaydi); yechilgan post: Payme CheckPerform `-31051` + `data`",
+          "⭐⭐ Payme `CancelTransaction` (pul qaytarildi) -> boost oralig'i darhol yopiladi; navbatdagisi nol uzunlikka tushadi va sotib olish sahifasida «ko'tarilgan» deb ko'rinmaydi",
+          "⭐ faol boost ustiga to'lov uning OXIRIDAN davom etadi, tugagandan keyin — hozirdan; takroriy Click Complete oraliqni ikki marta bermaydi",
+          "⭐ `faol()` va `faolmi` chegaralari bir xil: boshlanish KIRADI, tugash KIRMAYDI",
+          "⭐ ko'tarib bo'lmaydi: begona post, yashirilgan, o'chirilgan, yechilgan/yopilgan, cheklangan muallif, joriy shartlarga rozilik bermagan muallif, inqiroz belgili post; inqiroz sababi matnda AYTILMAYDI",
+          "⭐ summa formadan olinmaydi; begona post 404; GET 405; nomalum provayder 500 bermaydi; mehmon kirishga yo'naltiriladi",
+          "boost so'rovi boostlar soniga bog'liq emas (1 va 10 ta faol boost — bir xil so'rov soni)",
+          "boost `hot_score` ga tegmaydi — qayta hisoblash vazifasidan keyin ham",
+          "uchala maqsad lug'ati har `TolovMaqsadi` ni qamraydi; har `Sabab` ikkala provayder kodiga aylanadi (Click'da `BAND` ataylab yo'q)",
+          "🧪 MUTATSIYA: 15 ta ataylab buzish (ulush, oraliq, 2-sahifa, OPEN/inqiroz filtri, o'chirilganlik, navbat, tayyorlashdagi tekshiruv, pul qaytarish, nol oraliq, belgi atributi va shabloni, Payme `data`, tugma sharti, lug'at) — 15/15 USHLANDI",
+          "🌐 JONLI (dev server): lentada 21 karta (20 organik + 1), belgi aynan 3-o'rinda, «Yana yuklash» joyida, kontrast yorug'da 4.84 / qorong'ida 9.58; batafsil sahifada muallifga bitta «Ko'tarish» havolasi; `/kotarish/` sahifasida narx `5 000` (uzilmas bo'shliq U+00A0), sarlavhalar h1→h2→h3, «Hozir 1 ta post ko'tarilgan… 4 ta joy», faqat sozlangan provayder tugmasi, `noindex`; faol boostda «Post ko'tarilgan … gacha» Toshkent vaqtida (+05:00) va «Muddatni uzaytirish»"
+        ],
+        "qarorlar": [
+          "⭐⭐ FOYDALANUVCHI QARORI (2026-09-11): sotuv CHEKLANMAGAN — faol boost joylardan ko'p bo'lsa joylar tasodifiy navbat bilan bo'linadi (`ORDER BY random()`), sotib olish sahifasi esa hozir nechta post ko'tarilganini TO'LOVDAN OLDIN ochiq yozadi. Rad etilgan variantlar: qat'iy cheklov (shoshilayotgan odam kutib qoladi, tayyorlashda joyni band qilish kerak) va navbatga qo'yish («shoshilinch» va'dasiga zid).",
+          "⭐⭐ FOYDALANUVCHI QARORI (2026-09-11): birinchi boost 3-o'rinda — lenta pullik karta bilan BOSHLANMAYDI.",
+          "⭐⭐ BOOST `hot_score` GA QO'SHILMAYDI — task tavsifidan ONGLI chekinish. Qo'shimcha ball qabul mezonidagi ulushni kafolatlay olmaydi (o'nta boost — o'ntasi tepada). Ikkinchi sabab: `hot_score` lenta kursorida (D1-T12) va Telegram kanal avto-postida (D5-T3) qayta ishlatiladi — pullik ball kanalga belgisiz reklama bo'lib tushardi, boost tugagach esa kursor chegaralari siljirdi.",
+          "⭐⭐ TANLASH `payments/selectors.py` DA, `complaints` DA EMAS — README qoidasi: bog'liqlik bir tomonlama (`payments` -> `complaints`). `complaints.views.feed` natijani birlashtiradi (`oylik_reyting` bilan bir xil naqsh).",
+          "⭐⭐ KURSOR BIRLASHTIRISHDAN OLDIN olinadi va boost hech qachon ro'yxat oxirida turmaydi — organik tartib o'zgarmaydi, hech bir organik karta tushib qolmaydi.",
+          "⭐⭐ NOMZODLAR `lenta_queryset` DAN: ko'rinish invarianti (D2-T3), foydalanuvchi bloki (D2-T11) va URL filtrlari pullik joyda ham kuchda. Qo'shimcha: faqat `OPEN` (yechilgan savol «shoshilinch» emas — sahifa buni oldindan aytadi) va inqiroz belgisisiz (D5-T3 tamoyili: kontentni cheklamaymiz, lekin kuchaytirmaymiz ham).",
+          "⭐⭐ UCHINCHI LUG'AT `_MAQSAD_TEKSHIRUVCHILARI` — pul yechilishidan OLDINGI tekshiruv (Prepare / CreateTransaction / CheckPerform). Complete / Perform da ATAYLAB yo'q: xizmat berish yo'li sodda va idempotent qolsin; o'sha soniyalarda yashirilgan post baribir lentaga chiqmaydi.",
+          "⭐ `BoostOrder` da `amount` va `user` YO'Q (tavsifdagi ro'yxatdan chekinish) — ikkalasi `tolov` da; nusxa ikkinchi haqiqat manbai bo'lardi. Holat maydoni ham yo'q: faqat vaqt oralig'i, pul qaytarilsa `ends_at` kesiladi.",
+          "⭐ Buyurtma to'lovdan OLDIN yaratiladi (sanalar bo'sh) — webhook qaysi postni ko'tarishni shu qatordan biladi; `Tolov` ga `complaint` FK qo'shish provayderdan mustaqil yadroni bitta maqsadga bog'lab qo'yardi.",
+          "⭐ Muddat KUNDA (`BOOST_MUDDATI_KUN = 1`), soatda emas — `Tolov.berilgan_kun` birligi bilan bir xil.",
+          "⭐ Belgi FAQAT joydagi kartada; matnda «pullik» so'zi ATAYLAB bor — yolg'iz «Shoshilinch» (maket) platforma belgisidek o'qilardi.",
+          "⭐ Lentaga +1 so'rov (kirgan 8 / mehmon 3) ONGLI: nomzodlar organik sahifadan tashqarida. So'rov faol boost bo'lmasa ham ketadi — shartli so'rov testlarni jonli holatdan uzardi. Kesh rad etildi: so'rov-sanog'i testlarini bu loyihada ikki marta buzgan, pul qaytarilgan boost esa kesh muddati davomida lentada qolardi.",
+          "⭐ Ko'tarish batafsil sahifada, muallifga, post e'lon qilingandan KEYIN; yozish formasidagi maket bloki olib tashlandi (post hali yo'q, og'ir holatini yozayotgan odamga pullik taklif ham kerak emas).",
+          "⭐ Inqiroz sababi matnda AYTILMAYDI («Bu post uchun ko'tarish mavjud emas») — D2-T6: aniqlangan post muallifi hech qanday ogohlantirish olmaydi."
+        ],
+        "topilgan_xatolar": [
+          "⭐⭐ MAKETDA SOXTA TUGMA: yozish formasidagi «5 000 so'm — Ko'tarish» `data-toast` bilan serverga hech narsa yubormasdi, lentadagi karta esa hech qachon to'ldirilmaydigan `is_boosted` ni tekshirardi (D1-T9 dagi soxta muvaffaqiyat ishlovchilari bilan bir turdagi topilma).",
+          "⭐⭐ ZAIF TEST rejalashtirishda topildi: «ikkinchi sahifada joy yo'q» testi PASTKI boostli post bilan BUZILGAN kodda ham o'tardi (post ikkinchi sahifaning organik qismida turib nomzodlardan chiqarilardi). Boostli post birinchi sahifadagi organik post qilindi — mutatsiya yangi shaklni tasdiqladi.",
+          "⭐ ROZILIK TEKSHIRILMAGAN edi (birinchi versiyada): shartlar yangilangach qayta rozilik bermagan odam pullik xizmat sotib olardi — `rozilik_bormi` sharti qo'shildi (D2-T10).",
+          "⭐ `is_publicly_visible` `deleted_at` ni KO'RMAYDI, FK orqali olingan post (`boost.complaint`) esa yumshoq o'chirilgan bo'lsa ham keladi — yaroqlilikda alohida shart.",
+          "⭐ Payme webhook `data` ni faqat `-31050` da qo'yardi; `-31051` ham `account` xatosi — `ACCOUNT_XATOLARI` oralig'i bilan tuzatildi.",
+          "IKKINCHI qat'iy so'rov chegarasi (`test_feed.py`, sessiya ilitilmagan) +1 bilan yiqildi — `test_n_plus_1.test_QATIY_sonlar` dan alohida; ikkalasi ham izoh bilan yangilandi.",
+          "`makemigrations` system check URLconf'ni yuklaydi — ko'rinish hali yozilmagan bo'lsa `AttributeError`; migratsiya `--skip-checks` bilan yaratildi.",
+          "Jonli tekshiruvda qorong'i rejim `html.dark` SINFI orqali ishlashi aniqlandi (`data-theme` emas) — yorug' kontrastni o'lchash uchun sinfni vaqtincha olib tashlash kerak bo'ldi."
+        ],
+        "olchangan_holat": {
+          "testlar": 1576,
+          "qamrov_foiz": 95.1,
+          "d6_t4_testlari": 69,
+          "mutatsiyalar_ushlandi": "15/15",
+          "lenta_sorovlari": "kirgan 8, mehmon 3 (D6-T4 da +1)"
+        },
+        "keyingi_uchun_eslatma": [
+          "⚠️⚠️ Yangi to'lov maqsadi — UCHTA lug'at (`_MAQSAD_BAJARUVCHILARI`, `_MAQSAD_BEKOR_QILUVCHILARI`, `_MAQSAD_TEKSHIRUVCHILARI`); guard test uchalasini `TolovMaqsadi.values` bilan solishtiradi.",
+          "⚠️ Talab oshsa birinchi qadam — `BOOST_NARXI`; qat'iy cheklov kerak bo'lsa u tayyorlash bosqichidagi tekshiruvchiga ulanadi (joyni band qilish bilan).",
+          "⚠️ Pul avtomatik qaytarilmaydigan holatlar (to'lovdan keyin post yashirilsa yoki o'chirilsa) — qaror odamniki; DEPLOY.md 9.6.",
+          "⚠️ D6-T6 (reklama): inqirozli sahifada reklama chiqmasligi qabul mezoni — boostdagi `inqiroz_aniqlandi` filtri shu naqshning namunasi."
+        ]
+      }
     },
     {
       "id": "D6-T5",

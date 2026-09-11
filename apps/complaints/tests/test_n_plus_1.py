@@ -122,14 +122,23 @@ def test_MEHMON_uchun_ortiqcha_sorov_YOQ():
 
 
 def test_filtrlangan_lenta_ham_barqaror(user):
+    """⚠️ D6-T4 dan keyin IKKI tekshiruv.
+
+    Filtr (kategoriya, avlod) so'rov QO'SHMAYDI. Saralash esa bittasini
+    OLIB TASHLAYDI: ko'tarilgan postlar joyi faqat «Qaynoq»da, ya'ni
+    «Yangi» da boost so'rovi umuman ketmaydi. Ilgari ikkalasi bitta
+    taqqoslashda edi va bu farq ko'rinmasdi.
+    """
     c = Client()
     c.force_login(user)
     lenta_toldirish(soni=20, user=user)
 
     oddiy = sorovlar(c, "/")
-    filtrli = sorovlar(c, "/", sort="new", category="kat-1", generation="genz")
+    filtrli = sorovlar(c, "/", category="kat-1", generation="genz")
+    yangi = sorovlar(c, "/", sort="new", category="kat-1", generation="genz")
 
     assert filtrli == oddiy
+    assert yangi == oddiy - 1
 
 
 def test_ikkinchi_sahifa_faqat_BITTA_qoshimcha_sorov(user):
@@ -143,8 +152,12 @@ def test_ikkinchi_sahifa_faqat_BITTA_qoshimcha_sorov(user):
     c.force_login(user)
     muammolar = lenta_toldirish(soni=25, user=user)
 
-    birinchi = sorovlar(c, "/")
-    ikkinchi = sorovlar(c, "/", after=muammolar[5].pk)
+    # ⚠️ D6-T4: «Yangi» saralashida o'lchanadi. «Qaynoq»ning birinchi
+    #    sahifasida boost joylari so'rovi bor, ikkinchisida yo'q — ya'ni
+    #    u yerda +1 (kursor) va −1 (boost) bir-birini yeb, test kursor
+    #    narxini KO'RSATMAY qo'yardi.
+    birinchi = sorovlar(c, "/", sort="new")
+    ikkinchi = sorovlar(c, "/", sort="new", after=muammolar[5].pk)
 
     assert ikkinchi == birinchi + 1
 
@@ -266,8 +279,8 @@ def test_QATIY_sonlar(user, django_assert_num_queries):
     har relizda bittadan so'rov qo'shilsa, bir yildan keyin lenta
     ikki barobar sekin bo'ladi va hech kim buni payqamaydi.
 
-    Joriy holat (2026-08-29):
-      lenta (kirgan) — 7 ta:
+    Joriy holat (2026-09-11):
+      lenta (kirgan) — 8 ta:
         1. muammolar (select_related: author, category)
         2. sessiya
         3. foydalanuvchi
@@ -275,16 +288,26 @@ def test_QATIY_sonlar(user, django_assert_num_queries):
         5. saqlanganlar (bitta to'plamli so'rov)
         6. yon panel kategoriyalari (annotate)
         7. bloklangan mualliflar ro'yxati (D2-T11)
+        8. ko'tarilgan postlar uchun joylar (D6-T4)
 
     ⚠️ 7-so'rov D2-T11 da qo'shildi va ONGLI qaror: bloklangan
        mualliflarni lentadan chiqarish uchun ro'yxat kerak. U BIR
        MARTA olinadi va so'rovga qiymat sifatida tushadi — ichma-ich
        `QuerySet` bo'lsa PostgreSQL uni har sahifada qayta bajarardi.
+
+    ⚠️ 8-so'rov D6-T4 da qo'shildi va u ham ONGLI: boost nomzodlari
+       organik sahifadan TASHQARIDAN olinadi, ya'ni ularni birinchi
+       so'rovga qo'shib bo'lmaydi. U faqat «Qaynoq»ning BIRINCHI
+       sahifasida ishlaydi va faol boost bo'lmasa HAM ketadi — shartli
+       so'rov bu testni jonli holatdan uzib qo'yardi (sinovda boost yo'q,
+       prodda bor). Kesh RAD ETILDI: kesh so'rov-sanog'i testlarini bu
+       loyihada ikki marta buzgan, pul qaytarilgan boost esa kesh
+       muddati davomida lentada qolardi.
     """
     c = Client()
     c.force_login(user)
     lenta_toldirish(soni=20, user=user)
     c.get("/")  # sessiyani ilitamiz
 
-    with django_assert_num_queries(7):
+    with django_assert_num_queries(8):
         c.get("/")

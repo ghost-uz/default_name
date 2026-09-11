@@ -21,10 +21,22 @@
 {% endcomment %}
 <article class="card card-hover stagger stagger-{{ index|default:0 }} overflow-hidden" data-vote-group>
 
-  {% if complaint.is_boosted %}
+  {% comment %}
+    ⚠️⚠️ PULLIK JOY OCHIQ BELGILANADI (D6-T4 qabul mezoni).
+       `kotarilgan` faqat AJRATILGAN JOYGA qo'yilgan kartada `True`
+       (`payments.selectors`). Xuddi shu post organik o'rnida turganda
+       belgi yo'q — u o'sha joyni pul bilan olmagan va belgi yolg'on
+       bo'lardi.
+
+    ⚠️ Matnda «pullik» so'zi ATAYLAB bor: yolg'iz «Shoshilinch» (maketdagi
+       matn) yoki «Ko'tarilgan» platformaning o'z belgisidek o'qilardi.
+       Belgida `aria-hidden` YO'Q — ekran o'quvchi ham uni sarlavhadan
+       OLDIN eshitadi.
+  {% endcomment %}
+  {% if complaint.kotarilgan %}
     <div class="flex items-center gap-1.5 border-b border-line bg-karma-bg px-4 py-1.5 text-[11px] font-bold uppercase tracking-wider text-karma">
       <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m13 2-9 12h7l-1 8 9-12h-7z"/></svg>
-      Shoshilinch — muallif tomonidan ko'targan
+      Ko'tarilgan — pullik joy
     </div>
   {% endif %}
 

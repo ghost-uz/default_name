@@ -475,6 +475,9 @@ D2-T6 rasmiy ishonch telefonini talab qiladi, D2-T10 — yurist xulosasini.
 | D6-T1 | Obuna modeli va PRO cheklovlari — `user.has_pro` yagona manba |
 | D6-T5 | Kontakt almashinuvi — yopiq suhbat, ikki tomonlama rozilik |
 | D7-T4 | Ish faoliyati byudjeti — so'rov/hajm QAT'IY, vaqt ogohlantiradi |
+| D6-T2 | Click — webhook, imzo XOM satrlar ustidan, idempotentlik `click_trans_id` bo'yicha |
+| D6-T3 | Payme — JSON-RPC, summa tiyinda, pul qaytarilsa xizmat ham qaytariladi (**qisman**: sandbox kalitsiz) |
+| D6-T4 | Boost — «Qaynoq»ning 1-sahifasida ajratilgan joylar (3, 8, 13, 18); `hot_score` ga TEGMAYDI |
 
 ---
 
@@ -552,6 +555,63 @@ Ikkalasi ham `ComplaintQuerySet` da yopildi. Bu teshik tanlangan dizayndan
 kelib chiqadi: `search_vector` GENERATED ustun bo'lgani uchun uni unutish
 mumkin emas, lekin **normallashtirish baribir Python'da qoladi** — trigger
 bermaydigan bo'shliq aynan shu yerda.
+
+### Postni ko'tarish — boost (D6-T4) — `/kotarish/<pk>/`
+
+Muallif o'z ochiq postini «Qaynoq» lentasining birinchi sahifasida
+ko'taradi: 1 kun, `BOOST_NARXI` (standart 5 000 so'm). To'lov —
+Click/Payme'ning mavjud webhook'lari orqali (`TolovMaqsadi.BOOST`),
+yangi manzil yo'q.
+
+### ⚠️⚠️ Boost `hot_score` ga qo'shilMAYDI — task tavsifidan ongli chekinish
+
+Tavsif «faol boost hot_score'ga qo'shiladi» degan, qabul mezoni esa
+«lentada boost ulushi cheklangan (har 5 postdan 1 tasi)». Qo'shimcha
+ball ulushni kafolatlay olmaydi: o'nta boost bo'lsa o'ntasi ham tepaga
+chiqadi. Ulushni faqat **ajratilgan joylar** kafolatlaydi — 3, 8, 13,
+18-o'rinlar (`BOOST_BIRINCHI_JOY`, `BOOST_ORALIQ`), ya'ni ketma-ket
+istalgan 5 kartada ko'pi bilan bitta.
+
+Ikkinchi sabab: `hot_score` lenta kursorida (D1-T12) va Telegram kanal
+avto-postida (D5-T3) qayta ishlatiladi. Pullik ball kanalga belgisiz
+reklama bo'lib tushardi, boost tugagach esa kursor chegaralari siljirdi.
+
+### ⚠️ Kursor oxirgi ORGANIK postdan
+
+Boostlar organik sahifaga kursor olingandan **keyin** qo'shiladi
+(`complaints.views.feed`). Organik tartib o'zgarmaydi va hech bir karta
+tushib qolmaydi — boost faqat qo'shiladi. Tanlash `payments.selectors`
+da: README qoidasi bo'yicha `complaints` to'lov haqida bilmaydi.
+
+### ⚠️ Pullik joy hech bir invariantni chetlab o'tmaydi
+
+Nomzodlar `lenta_queryset` dan olinadi: ko'rinish (D2-T3), bloklangan
+mualliflar (D2-T11) va URL filtrlari kuchda. Qo'shimcha: faqat `OPEN`
+va inqiroz belgisisiz post — kontentni cheklamaymiz, lekin
+kuchaytirmaymiz ham (D5-T3 tamoyili). Organik o'rni birinchi sahifada
+bo'lgan post joy olmaydi, belgi ham olmaydi.
+
+### ⚠️ Sotuv cheklanmagan — shuning uchun raqam ochiq
+
+Foydalanuvchi qarori (2026-09-11): faol boost joylardan ko'p bo'lsa
+joylar tasodifiy navbat bilan bo'linadi (`ORDER BY random()`), sotib
+olish sahifasi esa hozir nechta post ko'tarilganini to'lovdan OLDIN
+yozadi. Kartadagi belgi — «Ko'tarilgan — pullik joy».
+
+### ⚠️ Pul yechilishidan oldingi tekshiruv
+
+Buyurtma bilan to'lov orasida post yashirilishi yoki yechilishi mumkin.
+`services._MAQSAD_TEKSHIRUVCHILARI` (uchinchi lug'at, kalitlari test
+bilan qotirilgan) Prepare / CreateTransaction / CheckPerformTransaction
+da ishlaydi va provayderni pulni yechmasdan to'xtatadi.
+
+### ⚠️ Lentaga +1 so'rov
+
+«Qaynoq»ning birinchi sahifasi endi 8 so'rov (kirgan) / 3 so'rov
+(mehmon): boost nomzodlari organik sahifadan tashqarida, ularni
+birinchi so'rovga qo'shib bo'lmaydi. So'rov faol boost bo'lmasa ham
+ketadi — shartli so'rov testlarni jonli holatdan uzardi. Kesh rad
+etildi: pul qaytarilgan boost kesh muddati davomida lentada qolardi.
 
 ### Ish faoliyati byudjeti (D7-T4)
 
@@ -1903,7 +1963,7 @@ normalizatsiyasi, slug URL, sitemap, Schema.org).
 
 | Sahifa | Mehmon | Kirgan |
 |---|---|---|
-| Lenta (20 karta) | 2 | 7 |
+| Lenta (20 karta) | 3 | 8 |
 | Lenta, 2-sahifa | — | 8 |
 | Batafsil (15 yechim) | 3 | 9 |
 | Saqlanganlar | — | 4 |
@@ -1917,6 +1977,10 @@ marta olinadi va so'rovga **qiymat** sifatida tushadi — ichma-ich
 `QuerySet` bo'lsa PostgreSQL uni har sahifada qayta bajarardi.
 Cheklov banneri esa so'rov **qo'shmaydi**: u `request.user` dagi
 maydonlarni o'qiydi.
+
+⚠️ «Qaynoq»ning **birinchi sahifasiga D6-T4 da yana bitta so'rov
+qo'shildi** (boost joylari, mehmon va kirgan uchun). Ikkinchi sahifada
+u yo'q, shuning uchun 2-sahifa soni o'zgarmadi: +1 kursor, −1 boost.
 
 ### ⚠️ Telegram login uchun sozlash
 

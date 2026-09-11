@@ -32,6 +32,12 @@ from apps.common.vote_views import (
 from apps.common.voting import cast_vote, user_votes_for
 from apps.gamification.services import oylik_reyting
 from apps.moderation.services import avtomatik_belgilash, inqirozni_belgilash
+from apps.payments.selectors import (
+    boost_joyi_bormi,
+    boostlarni_joylash,
+    lenta_boostlari,
+)
+from apps.payments.services import kotarish_taklif_qilinadimi
 from apps.solutions.forms import SolutionForm
 from apps.solutions.models import Solution, SolutionVote
 
@@ -78,11 +84,28 @@ def feed(request: HttpRequest) -> HttpResponse:
     #    yubormaydi (thundering herd sababi `services` da).
     reyting = oylik_reyting()
 
+    after_pk = kursorni_oqish(request.GET)
     muammolar, keyingi_kursor = lenta_sahifasi(
         filtr,
-        after_pk=kursorni_oqish(request.GET),
+        after_pk=after_pk,
         bloklanganlar=bloklanganlar,
     )
+
+    # ⚠️⚠️ KO'TARILGAN POSTLAR (D6-T4) kursor ALLAQACHON olingandan KEYIN
+    #    qo'shiladi. `keyingi_kursor` oxirgi ORGANIK postniki bo'lib
+    #    qolishi shart: boost postining `hot_score` idan qurilgan kursor
+    #    ikkinchi sahifada organik postlarni tushirib qoldirardi yoki
+    #    takrorlardi.
+    #
+    # ⚠️ Tanlash `payments` da (README: bog'liqlik bir tomonlama) — bu
+    #    yerda faqat birlashtiriladi, `oylik_reyting` bilan bir xil naqsh.
+    if boost_joyi_bormi(filtr, after_pk=after_pk):
+        boostlar = lenta_boostlari(
+            filtr, organik=muammolar, bloklanganlar=bloklanganlar
+        )
+        for boost in boostlar:
+            boost.kotarilgan = True
+        muammolar = boostlarni_joylash(muammolar, boostlar)
 
     # ⚠️ Ovozlar BITTA so'rovda olinadi va obyektlarga YOPISHTIRILADI.
     #    Shablonga lug'at berib `user_votes[complaint.pk]` deb yozib
@@ -416,6 +439,10 @@ def complaint_detail(
             "solution_form": solution_form or SolutionForm(),
             "muallifmi": ozinikimi,
             "tahrirlay_oladi": muammo.tahrirlay_oladimi(request.user),
+            # ⚠️ D6-T4: «Ko'tarish» tugmasi — bazaga BORMAYDI (so'rov byudjeti).
+            "kotarish_mumkin": kotarish_taklif_qilinadimi(
+                user=request.user, muammo=muammo
+            ),
             "inqiroz": inqiroz,
             **inqiroz_konteksti(),
         },

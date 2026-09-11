@@ -44,14 +44,19 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
 from apps.common.ratelimit import mijoz_ip, tezlik_cheklovi
+from apps.complaints.models import Complaint
 
 from . import click, payme
-from .models import Provayder, Tolov, TolovHolati, TolovMaqsadi
+from .models import BoostOrder, Provayder, Tolov, TolovHolati, TolovMaqsadi
+from .selectors import boost_joylari_soni
 from .services import (
     Sabab,
     TolovXatosi,
+    boost_buyurtmasi_yaratish,
+    kotarib_bolmaslik_sababi,
     sorovni_jurnalga,
     tolov_yaratish,
+    tolov_yaroqliligini_tekshirish,
     tolovni_bekor_qilish,
     tolovni_qaytarish,
     tolovni_tayyorlash,
@@ -75,12 +80,21 @@ SABAB_KODI = {
     Sabab.ALLAQACHON: click.ALLAQACHON_TOLANGAN,
     Sabab.TAYYORLANMAGAN: click.TRANZAKSIYA_TOPILMADI,
     Sabab.BEKOR: click.BEKOR_QILINGAN,
+    # ⚠️ D6-T4: buyurtma bor, lekin xizmatni endi berib bo'lmaydi
+    #    (ko'tarilayotgan post shu orada yashirildi yoki yechildi). Prepare
+    #    bosqichidagi xato — Click to'lovni PUL YECHMASDAN yopadi.
+    Sabab.YAROQSIZ: click.BEKOR_QILINGAN,
 }
 
 
 def obuna_narxi() -> Decimal:
     """PRO narxi — SOZLAMADAN, formadan emas."""
     return Decimal(settings.OBUNA_NARXI)
+
+
+def boost_narxi() -> Decimal:
+    """Ko'tarish narxi — SOZLAMADAN, formadan emas (`obuna_narxi` bilan bir xil)."""
+    return Decimal(settings.BOOST_NARXI)
 
 
 def sotib_ololadimi(user) -> bool:
@@ -247,7 +261,9 @@ def natija(request: HttpRequest, pk: int) -> HttpResponse:
        emas: odamga muvaffaqiyatli to'lovni muvaffaqiyatsiz deb
        ko'rsatish yordam bo'limiga qo'ng'iroqni kafolatlaydi.
     """
-    tolov = get_object_or_404(Tolov, pk=pk)
+    # ⚠️ `boost__complaint` — boost to'lovida matn postga havola beradi;
+    #    `select_related` siz bu ikkita qo'shimcha so'rov bo'lardi (D6-T4).
+    tolov = get_object_or_404(Tolov.objects.select_related("boost__complaint"), pk=pk)
     if tolov.user_id != request.user.pk:
         # 404, 403 emas: begona buyurtmaning MAVJUDLIGI ham
         # oshkor qilinmaydi (D6-T5 dagi bilan bir xil qaror).
@@ -259,8 +275,108 @@ def natija(request: HttpRequest, pk: int) -> HttpResponse:
         {
             "active_nav": "profile",
             "tolov": tolov,
+            # ⚠️ Teskari OneToOne yo'q bo'lsa `RelatedObjectDoesNotExist`
+            #    otiladi — u `AttributeError` dan meros oladi, ya'ni
+            #    `getattr(..., None)` to'g'ri ishlaydi.
+            "boost": getattr(tolov, "boost", None),
             "kutilmoqda": tolov.holat in {TolovHolati.YANGI, TolovHolati.TAYYOR},
         },
+    )
+
+
+# ---------------------------------------------------------------------------
+# Postni ko'tarish (D6-T4)
+# ---------------------------------------------------------------------------
+def _oz_postini_olish(request: HttpRequest, pk: int) -> Complaint:
+    """Faqat MUALLIFNING ko'rinadigan posti; qolgan hamma holatda 404.
+
+    ⚠️ 404, 403 EMAS — begona buyurtma sahifasi (`natija`) bilan bir xil
+       qaror: begona postga ko'tarish sahifasi borligi ham oshkor
+       qilinmaydi.
+    """
+    return get_object_or_404(
+        Complaint.objects.visible().select_related("category"),
+        pk=pk,
+        author=request.user,
+    )
+
+
+@login_required
+def kotarish(request: HttpRequest, pk: int) -> HttpResponse:
+    """Postni ko'tarish: qoidalar, joriy holat va to'lov tugmalari (D6-T4).
+
+    ⚠️⚠️ SOTUV CHEKLANMAGAN (foydalanuvchi qarori, 2026-09-11), shuning
+       uchun hozir nechta post ko'tarilgani OCHIQ yoziladi: joylar
+       navbat bilan bo'linishini odam pul to'lashdan OLDIN bilsin.
+
+    ⚠️ `faol_soni` ko'rinish filtrisiz sanaladi — yashirilgan postning
+       boosti ham kiradi. Ya'ni raqam raqobatni OSHIRIB ko'rsatadi,
+       kamaytirib emas: xato ehtiyotkor tomonda.
+    """
+    muammo = _oz_postini_olish(request, pk)
+    joriy = (
+        BoostOrder.objects.tugamagan()
+        .filter(complaint=muammo)
+        .order_by("-ends_at")
+        .first()
+    )
+    return render(
+        request,
+        "payments/kotarish.html",
+        {
+            "active_nav": "feed",
+            "muammo": muammo,
+            "narx": boost_narxi(),
+            "kun": settings.BOOST_MUDDATI_KUN,
+            "sabab": kotarib_bolmaslik_sababi(user=request.user, muammo=muammo),
+            "tugashi": joriy.ends_at if joriy else None,
+            "faol_soni": BoostOrder.objects.faol().count(),
+            "joylar_soni": boost_joylari_soni(),
+            "birinchi_joy": settings.BOOST_BIRINCHI_JOY,
+            "oraliq": settings.BOOST_ORALIQ,
+            "click_yoqilganmi": settings.CLICK_YOQILGANMI,
+            "payme_yoqilganmi": settings.PAYME_YOQILGANMI,
+            "yoqilganmi": settings.CLICK_YOQILGANMI or settings.PAYME_YOQILGANMI,
+        },
+    )
+
+
+@login_required
+@require_POST
+@tezlik_cheklovi("tolov_boshlash")
+def kotarish_sotib_olish(request: HttpRequest, pk: int, provayder: str) -> HttpResponse:
+    """Ko'tarish buyurtmasini yaratadi va odamni provayder sahifasiga yuboradi.
+
+    ⚠️ `sotib_olish` (PRO) dagi himoyalarning hammasi: POST majburiy,
+       provayder ro'yxat bilan tekshiriladi (qo'lda terilgan nom 500
+       bermaydi), summa SOZLAMADAN.
+
+    ⚠️ Yaroqlilik bu yerda VA to'lovni tayyorlash bosqichida
+       tekshiriladi. Bu ikki nusxa emas: bu yerdagisi odamga TUSHUNARLI
+       xabar beradi, webhook'dagisi esa buyurtma bilan to'lov orasidagi
+       o'zgarishni ushlaydi (`services._MAQSAD_TEKSHIRUVCHILARI`).
+    """
+    muammo = _oz_postini_olish(request, pk)
+
+    if not _provayder_yoqilganmi(provayder):
+        messages.error(request, "Bu to'lov tizimi hozircha ulanmagan.")
+        return redirect("kotarish", pk=muammo.pk)
+
+    sabab = kotarib_bolmaslik_sababi(user=request.user, muammo=muammo)
+    if sabab is not None:
+        messages.error(request, sabab)
+        return redirect("kotarish", pk=muammo.pk)
+
+    tolov = boost_buyurtmasi_yaratish(
+        user=request.user, muammo=muammo, provayder=provayder, summa=boost_narxi()
+    )
+    return redirect(
+        _tolov_manzili(
+            tolov,
+            qaytish_manzili=request.build_absolute_uri(
+                reverse("tolov_natijasi", args=[tolov.pk])
+            ),
+        )
     )
 
 
@@ -435,6 +551,11 @@ PAYME_SABAB_KODI = {
     Sabab.TAYYORLANMAGAN: payme.AMAL_BAJARILMAYDI,
     Sabab.BEKOR: payme.AMAL_BAJARILMAYDI,
     Sabab.BAND: payme.AMAL_BAJARILMAYDI,
+    # ⚠️ D6-T4: xizmatni endi berib bo'lmaydi — bu `account` (buyurtma)
+    #    xatosi, shuning uchun `-31050..-31099` oralig'idan va javobda
+    #    `data` bilan. `-31008` EMAS: u `CheckPerformTransaction` uchun
+    #    hujjatda sanab o'tilmagan (D6-T3 dagi qaror).
+    Sabab.YAROQSIZ: payme.BUYURTMA_YAKUNLANGAN,
 }
 
 
@@ -511,6 +632,10 @@ def _payme_check_perform(params: dict) -> dict:
         raise payme.PaymeXatosi(payme.SUMMA_XATO)
     if tolov.yakunlanganmi:
         raise payme.PaymeXatosi(payme.BUYURTMA_YAKUNLANGAN, data=payme.ACCOUNT_MAYDONI)
+    # ⚠️ D6-T4: maqsadga xos shart (`TolovXatosi` -> `PAYME_SABAB_KODI`).
+    #    Odam aynan shu paytda Payme sahifasida summani ko'rib turibdi —
+    #    xizmatni endi berib bo'lmasa, bu pul yechilishidan OLDIN aytiladi.
+    tolov_yaroqliligini_tekshirish(tolov)
     return {"allow": True}
 
 
@@ -768,7 +893,7 @@ def payme_webhook(request: HttpRequest) -> JsonResponse:
         return chiqish(payme.xato_javobi(xato.kod, sorov_id=sorov_id, data=xato.data))
     except TolovXatosi as xato:
         kod = PAYME_SABAB_KODI[xato.sabab]
-        data = payme.ACCOUNT_MAYDONI if kod == payme.BUYURTMA_TOPILMADI else None
+        data = payme.ACCOUNT_MAYDONI if kod in payme.ACCOUNT_XATOLARI else None
         log.warning("payme/%s: %s -> %s", metod, xato.sabab, kod)
         return chiqish(payme.xato_javobi(kod, sorov_id=sorov_id, data=data))
 

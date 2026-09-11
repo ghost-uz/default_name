@@ -211,8 +211,10 @@ def test_kirgan_foydalanuvchida_ham_sorov_soni_barqaror(
     auth_client, django_assert_max_num_queries
 ):
     ComplaintFactory.create_batch(15)
-    # +1 ovozlar so'rovi, +2 sessiya/foydalanuvchi
-    with django_assert_max_num_queries(8):
+    # +1 ovozlar so'rovi, +2 sessiya/foydalanuvchi, +1 boost joylari (D6-T4).
+    # ⚠️ Sessiya ILITILMAGAN o'lchov — `test_n_plus_1.test_QATIY_sonlar`
+    #    (ilitilgan, aniq 8) dan shuning uchun bittaga ko'p.
+    with django_assert_max_num_queries(9):
         assert auth_client.get(LENTA).status_code == 200
 
 

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from django.contrib import admin
 
-from .models import Subscription, Tolov, TolovSorovi
+from .models import BoostOrder, Subscription, Tolov, TolovSorovi
 
 
 @admin.register(Subscription)
@@ -132,6 +132,50 @@ class TolovSoroviAdmin(admin.ModelAdmin):
         return False
 
     def has_change_permission(self, request, obj=None) -> bool:
+        return False
+
+    def has_delete_permission(self, request, obj=None) -> bool:
+        return False
+
+
+@admin.register(BoostOrder)
+class BoostOrderAdmin(admin.ModelAdmin):
+    """⚠️⚠️ FAQAT O'QISH — `TolovAdmin` bilan bir xil sabab (D6-T4).
+
+    Har qator HAQIQIY to'lovga bog'langan. Qo'lda «ko'tarib qo'yish»
+    pulsiz pullik joy degani: kartada «pullik joy» belgisi turadi, pul
+    esa to'lanmagan — lentadagi ulush hisobiga YASHIRIN reklama.
+
+    ⚠️ `faolmi` HISOBLANADI (`SubscriptionAdmin` dagi kabi) — vaqt
+       oralig'idan, holat maydonidan emas.
+    """
+
+    list_display = (
+        "id",
+        "complaint",
+        "tolov",
+        "starts_at",
+        "ends_at",
+        "faol_belgisi",
+    )
+    list_select_related = ("complaint", "tolov")
+    search_fields = ("complaint__title", "tolov__provayder_trans_id")
+    date_hierarchy = "created_at"
+    readonly_fields = (
+        "tolov",
+        "complaint",
+        "starts_at",
+        "ends_at",
+        "faol_belgisi",
+        "created_at",
+        "updated_at",
+    )
+
+    @admin.display(description="hozir faolmi", boolean=True)
+    def faol_belgisi(self, obj: BoostOrder) -> bool:
+        return obj.faolmi
+
+    def has_add_permission(self, request) -> bool:
         return False
 
     def has_delete_permission(self, request, obj=None) -> bool:
