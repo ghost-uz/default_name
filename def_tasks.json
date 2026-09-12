@@ -3789,10 +3789,65 @@
       "bogliq": [
         "D1-T8"
       ],
-      "holat": "todo",
+      "holat": "done",
       "qabul_mezoni": [
         "1000 parallel ovozda ma'lumot yo'qolmaydi va sanoq to'g'ri qoladi"
-      ]
+      ],
+      "tugatilgan": "2026-09-12",
+      "natija": {
+        "yaratilgan": [
+          "apps/complaints/tests/test_ovoz_parallel.py — parallel butunlik testlari (5 ta): 1000 ovoz, bir odamning bir vaqtdagi bosishlari, karma atomarligi, yechimga parallel ovoz",
+          "apps/complaints/yuk_testi.py — YANGI: yuk testi moduli (thread + Django `Client`, paketsiz). Har odamga alohida `REMOTE_ADDR`, `ip_soni` bilan CGNAT taqlidi, deterministik reja, butunlik tekshiruvi, o'zidan keyin tozalash",
+          "apps/complaints/management/commands/ovoz_yuk_testi.py — `manage.py ovoz_yuk_testi` (DEBUG o'chiq muhitda `--prod-ham` talab qiladi)",
+          "apps/complaints/tests/test_yuk_testi.py — vositaning o'zi uchun 8 ta test (butunlik hisobi, tozalash, CGNAT, buyruq)",
+          "apps/common/voting.py — `_juftlikni_qulflash()` (pg_advisory_xact_lock) va `cast_vote` da qulf",
+          "apps/solutions/services.py — `yechimga_ovoz` endi `@transaction.atomic`",
+          "config/settings/base.py — ovoz uchun IP chegarasi 120 -> 600 (foydalanuvchi qarori)",
+          "DEPLOY.md 10-bo'lim, README"
+        ],
+        "qabul_mezonlari": {
+          "1000_parallel_ovozda_malumot_yoqolmaydi_va_sanoq_togri_qoladi": "✅ IKKI DARAJADA. (1) Xizmat darajasi: `test_1000_PARALLEL_OVOZDA_hech_narsa_YOQOLMAYDI` — 1000 xil odam 16 oqimda bitta postga ovoz beradi, xato yo'q, sanoq qatorlarga aynan teng (800/200). (2) HTTP darajasi: `manage.py ovoz_yuk_testi --ovozlar 1000 --parallel 50` — 1050 so'rov, 43.4 s, 24 so'rov/s, p50 1785 ms, hammasi 200, 5xx 0, sanoq 750/200 = qatorlar 750/200, kutilganidan farq qilgan odam 0."
+        },
+        "tekshirilgan": [
+          "⭐⭐ bir odamning BIR VAQTDAGI ikki bosishi 500 bermaydi va natija KETMA-KETLIK bilan bir xil (deterministik test: `delete()` sekinlashtiriladi, B faqat A qulflagandan keyin boshlanadi)",
+          "⭐⭐ bitta odamdan 60 ta bosish 16 oqimda: xato yo'q, qator 0 yoki 1 ta, sanoq qatorlarga teng",
+          "⭐⭐ karma yozilmasa OVOZ ham saqlanmaydi (yechim ovozi endi atomar)",
+          "⭐⭐ yechimga 250 ta parallel bosish: sanoq qatorlarga, muallif karmasi esa plus ovozlar soniga mos; `karma_cached` jurnal yig'indisiga teng",
+          "⭐ CGNAT: 1000 odam 5 ta IP ortida — 600 ta so'rov o'tdi, 450 tasi 429 oldi, BUTUNLIK saqlandi (sanoq = qatorlar, farq 0)",
+          "⭐ vosita o'zidan keyin hech narsa qoldirmaydi (foydalanuvchi, post, ovoz, sessiya sanoqlari testdan oldingi holatga qaytadi)",
+          "⭐ buyruq DEBUG o'chiq muhitda `--prod-ham` siz ISHLAMAYDI",
+          "429 javob butunlikni buzmaydi: kutilgan holat FAQAT o'tgan bosishlardan hisoblanadi"
+        ],
+        "qarorlar": [
+          "⭐⭐ LOCUST/K6 RAD ETILDI — `requirements/base.txt` qoidasi («yangi paketdan oldin: stdlib yoki Django bilan bo'ladimi?»). Qabul mezoni ma'lumot BUTUNLIGI haqida va uni isbotlash uchun tarmoq emas, parallel so'rovlar kerak. Thread + Django `Client` middleware, tezlik cheklovi, ko'rinish, `cast_vote` va bazani qamraydi; server ham kerak emas (D0-T10 bloklangan). O'lchanmaydigan qism — gunicorn va tarmoq: u server olingach k6 bilan staging'da yopiladi (DEPLOY.md 10).",
+          "⭐⭐ POYGA QAYTA URINISH BILAN EMAS, ADVISORY QULF BILAN YOPILDI. Avval 5 martalik qayta urinish yozilgan edi va u adversar sinovda (16 oqim, bitta odam) 20 ta so'rovga yetmadi — chegaralangan urinish KAFOLAT bermaydi, faqat ehtimolni siljitadi. `pg_advisory_xact_lock` esa bir (odam, kontent) juftligidagi amallarni qat'iy ketma-ket qiladi.",
+          "⭐⭐ KONTENT QATORI QULFLANMADI: `SELECT ... FOR UPDATE` ni postga qo'yish ham poygani yopardi, lekin qulf tartibini teskari qilardi — hisobni o'chirish yo'li (D2-T8) avval ovoz qatorlarini, keyin sanoqchilarni qulflaydi. Advisory qulfda esa har tranzaksiya AYNAN BITTA qulfni ENG BIRINCHI oladi, ya'ni deadlock sikli hosil bo'lmaydi.",
+          "⭐⭐ TESTLAR `transaction=True`: oddiy `django_db` hammasini bitta tranzaksiyaga o'raydi va boshqa oqim uni ko'rmaydi — poyga umuman yuz bermasdi, test esa yashil bo'lardi.",
+          "⭐ HAR ODAMGA ALOHIDA IP: bitta mashinadan yuborilgan yuk bitta IP'dan kelardi va test viral trafikni emas, tezlik cheklovini o'lchagan bo'lardi. `--ip-soni` esa ataylab CGNAT stsenariysini beradi.",
+          "⭐ REJA DETERMINISTIK (tasodif yo'q): har N-odam minus bosadi, har M-odam ikki marta bosadi — bir xil parametr bir xil natija beradi va o'lchovlarni solishtirsa bo'ladi.",
+          "⭐ Vosita o'zidan keyin TOZALAYDI va `DEBUG` o'chiq muhitda ruxsatsiz ishlamaydi: u vaqtinchalik post yaratadi va u lentada KO'RINADI.",
+          "⭐ Har ishchi o'z DB ulanishini yopadi (`connections.close_all()`): Django ulanishni oqimga bog'laydi, `CONN_MAX_AGE=60` esa uni ochiq qoldirardi va test bazasini o'chirishga xalaqit berardi."
+        ],
+        "topilgan_xatolar": [
+          "⭐⭐⭐ POYGA: tugmani tez ikki marta bosish 500 berardi. A so'rovi ovoz qatorini qulflab o'chiradi; B ning `INSERT` i noyoblik xatosini oladi va `select_for_update()` da A ni kutadi; A commit qilgach qator YO'Q (READ COMMITTED o'chirilgan qatorni natijadan tushiradi) va `.get()` `DoesNotExist` otardi. 16 oqimli sinovda 60 bosishdan 48 tasi shunday yiqildi. Ma'lumot buzilmasdi (tranzaksiya orqaga qaytardi), lekin foydalanuvchi xato ko'rardi va bosgan amali yo'qolardi.",
+          "⭐⭐ ATOMARLIK: `yechimga_ovoz` ovozni va karmani IKKI alohida tranzaksiyada yozardi (`ATOMIC_REQUESTS` yoqilmagan) — oradagi xato ovozni saqlab, muallif karmasini yo'qotardi.",
+          "⭐⭐ CGNAT: ovoz uchun IP chegarasi 120/daqiqa edi va 1000 odam 5 ta IP ortidan ovoz berganda 450 ta so'rov (43%) 429 oldi. O'zbekistonda mobil operatorlar CGNAT ishlatadi — viral postda bu HAQIQIY odamlarni to'sardi. Foydalanuvchi qarori bilan 600/daqiqa qilindi (har hisob baribir 30/daqiqa)."
+        ],
+        "olchangan_holat": {
+          "testlar": 1589,
+          "qamrov_foiz": 94.92,
+          "d7_t5_testlari": 13,
+          "http_yuk_1000_ovoz": "1050 so'rov / 50 parallel / 43.4 s / 24 so'rov-s / p50 1785 ms / p95 4230 ms / 5xx 0",
+          "http_yuk_cgnat_5_ip": "1050 so'rov / 27.9 s / 200: 600, 429: 450 / butunlik saqlandi"
+        },
+        "keyingi_uchun_eslatma": [
+          "⚠️⚠️ Ovoz yo'liga qo'shiladigan HAR QANDAY yangi qulf `_juftlikni_qulflash` dan KEYIN olinsin — tartib buzilsa deadlock paydo bo'ladi.",
+          "⚠️ `manage.py ovoz_yuk_testi` PROD bazasida `--prod-ham` bilan ishlaydi, lekin post lentada ko'rinadi: staging'da ishlating.",
+          "⚠️ Server olingach (D0-T10) HTTP darajasidagi k6 sinovini staging'da yurgizing: bu buyruq gunicorn ishchilarini va tarmoqni O'LCHAMAYDI.",
+          "⚠️ 1000 ovozli test `slow` markeri bilan, lekin CI uni ham yurgizadi (`pytest --create-db`) — CI vaqti shu qadar o'sadi.",
+          "⚠️ IP chegarasi (600/daqiqa) D7-T8 metrikalari paydo bo'lgach haqiqiy CGNAT ulushi bilan qayta ko'rilsin."
+        ]
+      }
     },
     {
       "id": "D7-T6",

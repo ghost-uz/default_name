@@ -17,9 +17,48 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Any
 
-from django.db import IntegrityError, models, transaction
+from django.db import IntegrityError, connection, models, transaction
 
 from apps.common.models import VotableModel, VoteModel, VoteValue
+
+
+def _juftlikni_qulflash(*, user_pk: int, target_pk: int) -> None:
+    """(odam, kontent) juftligini TRANZAKSIYA OXIRIGACHA qulflaydi (D7-T5).
+
+    ⚠️⚠️ NEGA KERAK — O'LCHANGAN POYGA
+       Ovozni qaytarib olish qatorni O'CHIRADI, ya'ni «qator bor / yo'q»
+       holati tebranadi. Qulfsiz ikkita parallel so'rov shu tebranishga
+       tushib qolardi: biri qatorni qulflab o'chiradi va commit qiladi,
+       ikkinchisi esa uni kutib turib BO'SH natija oladi
+       (`DoesNotExist` -> 500, bosilgan tugma esa yo'qoladi). 16 oqimli
+       sinovda 60 bosishdan 48 tasi aynan shunday yiqilgan.
+
+    ⚠️⚠️ NEGA QAYTA URINISH EMAS
+       Chegaralangan qayta urinish KAFOLAT BERMAYDI, u faqat ehtimolni
+       siljitadi: o'sha sinovda 5 ta urinish ham 20 ta so'rovga yetmadi
+       (har raundda faqat bittasi yutadi, qolganlari qaytadan uriniladi).
+       Qulf esa bir juftlikdagi amallarni QAT'IY KETMA-KET qiladi.
+
+    ⚠️⚠️ NEGA KONTENT QATORI QULFLANMAYDI
+       `SELECT ... FOR UPDATE` ni postga qo'yish ham poygani yopardi, lekin
+       qulf tartibini TESKARI qilardi: hisobni o'chirish yo'li (D2-T8)
+       avval ovoz qatorlarini, keyin sanoqchilarni qulflaydi. Bir-biriga
+       teskari ikki tartib — deadlock uchun klassik retsept.
+
+    ⚠️ DEADLOCK BO'LMAYDI: har tranzaksiya AYNAN BITTA advisory qulf oladi
+       va uni ENG BIRINCHI bo'lib oladi — kutish sikli hosil bo'lmaydi.
+
+    ⚠️ Kalit `user_pk` va `target_pk` dan yig'ilgan 63-bitli son.
+       `ComplaintVote` va `SolutionVote` da bir xil juftlik uchrashi mumkin:
+       u faqat ikkita aloqasiz amalni ketma-ket qilib qo'yadi, xato bermaydi.
+
+    ⚠️ `pg_advisory_xact_lock` — PostgreSQL funksiyasi va u tranzaksiya
+       tugashi bilan O'ZI bo'shaydi. Loyiha baribir faqat Postgres'da
+       ishlaydi (GENERATED ustun, FTS, trigram).
+    """
+    kalit = ((user_pk & 0x7FFFFFFF) << 32) | (target_pk & 0xFFFFFFFF)
+    with connection.cursor() as kursor:
+        kursor.execute("SELECT pg_advisory_xact_lock(%s)", [kalit])
 
 
 @dataclass(frozen=True)
@@ -60,7 +99,7 @@ def cast_vote(
     Oxirgi qatordagi "−2" tasodif emas: bitta ovoz `+1` dan `−1` ga
     o'tayotgani uchun farq ikki birlik. Bu D1-T5 qabul mezoni.
 
-    ⚠️ POYGA HOLATI (race) — IKKI QATLAMLI HIMOYA
+    ⚠️ POYGA HOLATI (race) — UCH QATLAMLI HIMOYA
        1. Yangi ovoz DARHOL `INSERT` qilinadi va noyoblik cheklovi
           buzilishiga TAYANILADI ("avval so'rab ko'rish" o'rniga). Ikki
           bir vaqtli so'rov "hozircha ovoz yo'q" deb ko'rishi mumkin,
@@ -68,6 +107,10 @@ def cast_vote(
        2. Mavjud ovoz `select_for_update()` bilan QULFLANADI, ya'ni
           ikkinchi so'rov birinchisi tugagunicha kutadi va uning
           natijasini ko'radi.
+       3. ⚠️⚠️ (ODAM, KONTENT) JUFTLIGI TRANZAKSIYA BOSHIDA QULFLANADI —
+          `_juftlikni_qulflash()`. Shu bilan bir juftlikdagi barcha amallar
+          QAT'IY KETMA-KET bo'ladi va quyidagi `.get()` hech qachon bo'sh
+          qaytmaydi.
 
        Ichki `atomic()` — savepoint. Usiz `IntegrityError` butun
        tranzaksiyani yaroqsiz holga keltirardi va `except` bloki ichida
@@ -76,14 +119,24 @@ def cast_vote(
     if value not in (VoteValue.UP, VoteValue.DOWN):
         raise ValueError(f"Ovoz qiymati faqat +1 yoki -1 bo'ladi, berilgan: {value!r}")
 
-    lookup = {"user": user, target_field: target}
+    lookup: dict[str, Any] = {"user": user, target_field: target}
 
     with transaction.atomic():
+        _juftlikni_qulflash(user_pk=user.pk, target_pk=target.pk)
+
         try:
             with transaction.atomic():
                 vote_model._default_manager.create(**lookup, value=value)
             mavjud = None
         except IntegrityError:
+            # ⚠️⚠️ `.get()` BU YERDA XAVFSIZ — FAQAT juftlik qulfi tufayli.
+            #    Qulfsiz bu qator D7-T5 da o'lchangan poygani berardi: A
+            #    so'rovi ovozni qulflab O'CHIRADI, B ning `INSERT` i noyoblik
+            #    xatosini oladi va `select_for_update()` da A ni kutadi; A
+            #    commit qilgach qator YO'Q (READ COMMITTED o'chirilganini
+            #    natijadan tushiradi) va `.get()` `DoesNotExist` otardi —
+            #    foydalanuvchiga 500, bosgan tugmasi esa yo'qolardi. 16 oqimli
+            #    sinovda 60 bosishdan 48 tasi aynan shunday yiqilgan.
             mavjud = vote_model._default_manager.select_for_update().get(**lookup)
 
         if mavjud is None:

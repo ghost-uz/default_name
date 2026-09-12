@@ -348,7 +348,18 @@ TEZLIK_CHEKLOVLARI = {
     # ⚠️ Ovoz — eng arzon va eng ko'p suiiste'mol qilinadigan nuqta
     #    (task tavsifi): cheklovsiz bitta skript reytingni butunlay
     #    buzadi. Shuning uchun oyna daqiqa, soat emas.
-    "ovoz": {"foydalanuvchi": "30/m", "ip": "120/m"},
+    #
+    # ⚠️⚠️ IP CHEGARASI 120 -> 600 (D7-T5 yuk testi; foydalanuvchi qarori,
+    #    2026-09-12). O'LCHANGAN SABAB: 1000 odam 5 ta CGNAT IP ortidan bir
+    #    daqiqada ovoz berganda 450 ta so'rov (43%) 429 oldi — arifmetikasi
+    #    aniq: 5 × 120. O'zbekistonda mobil operatorlar CGNAT ishlatadi,
+    #    ya'ni viral postda bitta IP ortida yuzlab HAQIQIY odam bo'ladi va
+    #    ular «Juda tez yuboryapsiz» xabarini BIRINCHI bosishdayoq ko'rardi.
+    #
+    #    600 skriptni baribir to'sadi: har HISOB 30/daqiqa bilan
+    #    cheklangan, ya'ni 600 ga yetish uchun kamida 20 ta hisob kerak.
+    #    Haqiqiy trafik kelgach D7-T8 metrikalari bilan qayta ko'riladi.
+    "ovoz": {"foydalanuvchi": "30/m", "ip": "600/m"},
     "shikoyat": {"foydalanuvchi": "10/h", "ip": "40/h"},
     # Xatcho'p — task ro'yxatida yo'q edi, lekin bu ham yozish amali va
     # xuddi ovoz kabi arzon. Ochiq qoldirish ma'nosiz.

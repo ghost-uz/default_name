@@ -555,7 +555,39 @@ oralig'i darhol yopiladi (navbatdagisi — nol uzunlikka tushadi).
 
 ---
 
-## 10. Hali qilinmagan
+## 10. Yuk testi — ovoz endpoint'i (D7-T5)
+
+Viral post stsenariysi (task `nega` bo'limi: TikTok trafiki bir tekis emas,
+portlash shaklida keladi; sanoqchi yangilanishi eng zaif nuqta):
+
+```bash
+# DEBUG yoqiq muhitda (dev). Aks holda --prod-ham talab qilinadi.
+python manage.py ovoz_yuk_testi --ovozlar 1000 --parallel 50
+
+# CGNAT: 1000 odam 5 ta IP ortida (mobil operatorlardagi holat)
+python manage.py ovoz_yuk_testi --ovozlar 1000 --ip-soni 5
+```
+
+Buyruq vaqtinchalik post va odamlarni yaratadi, ovozlarni PARALLEL yuboradi,
+so'ng keshlangan sanoqchilarni ovoz jadvaliga VA har odamning muvaffaqiyatli
+bosishlariga solishtiradi. Butunlik buzilsa `1` kodi bilan chiqadi. Ortidan
+hamma narsani o'chiradi (`--saqla` berilmasa).
+
+⚠️ **Nimani o'lchamaydi:** gunicorn ishchilari va tarmoq — buyruq jarayon
+ichida `Client` bilan ishlaydi. Server olingach (D0-T10) staging'da HTTP
+darajasidagi vosita (k6) bilan takrorlang: bu buyruq ma'lumot BUTUNLIGINI,
+k6 esa server va tarmoq chegarasini o'lchaydi.
+
+⚠️ `--parallel` ni PostgreSQL `max_connections` (standart 100) dan past
+tuting — har ishchi o'z ulanishini oladi.
+
+⚠️ **429 xato EMAS** — tezlik cheklovi ishlagan. `--ip-soni` bilan CGNAT
+ortidagi portlashni taqlid qilib, `TEZLIK_CHEKLOVLARI["ovoz"]["ip"]`
+chegarasi haqiqiy trafikka mos kelishini tekshiring.
+
+---
+
+## 11. Hali qilinmagan
 
 | Nima | Faza |
 |---|---|

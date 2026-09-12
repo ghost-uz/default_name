@@ -195,8 +195,16 @@ def unaccept_solution(*, solution: Solution, by_user) -> Solution:
     return solution
 
 
+@transaction.atomic
 def yechimga_ovoz(*, solution: Solution, user, qiymat: int) -> VoteResult:
     """Yechimga ovoz beradi VA muallif karmasini yangilaydi (D3-T1).
+
+    ⚠️⚠️ ATOMAR — OVOZ VA KARMA BITTA TRANZAKSIYADA (D7-T5 da topildi).
+       `ATOMIC_REQUESTS` yoqilmagan, ya'ni dekoratorsiz `cast_vote()` o'z
+       tranzaksiyasini COMMIT qilib bo'lardi va karma undan KEYIN, alohida
+       yozilardi. Ular orasidagi har qanday xato ovozni saqlab, muallif
+       karmasini yo'qotardi — sanoq bilan karma jurnali jimgina bir-biridan
+       uzilardi va buni faqat `karmani_qayta_hisoblash()` fosh qilardi.
 
     ⚠️ YAGONA KIRISH NUQTASI — ko'rinish `cast_vote()` ni to'g'ridan-to'g'ri
        chaqirmasligi kerak. Aks holda karma "ovoz ko'rinishida" turardi va

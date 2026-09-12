@@ -478,6 +478,7 @@ D2-T6 rasmiy ishonch telefonini talab qiladi, D2-T10 — yurist xulosasini.
 | D6-T2 | Click — webhook, imzo XOM satrlar ustidan, idempotentlik `click_trans_id` bo'yicha |
 | D6-T3 | Payme — JSON-RPC, summa tiyinda, pul qaytarilsa xizmat ham qaytariladi (**qisman**: sandbox kalitsiz) |
 | D6-T4 | Boost — «Qaynoq»ning 1-sahifasida ajratilgan joylar (3, 8, 13, 18); `hot_score` ga TEGMAYDI |
+| D7-T5 | Ovoz yuk testi — advisory qulf poygani yopdi; IP chegarasi 120 -> 600 (CGNAT o'lchovi) |
 
 ---
 
@@ -555,6 +556,86 @@ Ikkalasi ham `ComplaintQuerySet` da yopildi. Bu teshik tanlangan dizayndan
 kelib chiqadi: `search_vector` GENERATED ustun bo'lgani uchun uni unutish
 mumkin emas, lekin **normallashtirish baribir Python'da qoladi** — trigger
 bermaydigan bo'shliq aynan shu yerda.
+
+### Ovoz yuk testi (D7-T5) — `manage.py ovoz_yuk_testi`
+
+Viral post stsenariysi: ko'p odam bitta postga bir vaqtda ovoz beradi.
+Vosita — `apps/complaints/yuk_testi.py`: thread'lar va Django `Client`,
+qo'shimcha paketsiz.
+
+```bash
+python manage.py ovoz_yuk_testi --ovozlar 1000 --parallel 50  # alohida IP
+python manage.py ovoz_yuk_testi --ovozlar 1000 --ip-soni 5    # CGNAT
+```
+
+O'lchangan (2026-09-12, dev mashina: Windows + Docker Postgres, `DEBUG=True`):
+
+| stsenariy | so'rov | davomiylik | o'tkazuvchanlik | p50 / p95 | holatlar | butunlik |
+|---|---|---|---|---|---|---|
+| alohida IP | 1050 | 43.4 s | 24/s | 1785 / 4230 ms | 200: 1050 | sanoq = qatorlar |
+| 5 ta IP (CGNAT) | 1050 | 27.9 s | 38/s | 991 / 3562 ms | 200: 600, 429: 450 | sanoq = qatorlar |
+
+⚠️ Bu raqamlar SERVER ko'rsatkichi EMAS: vosita jarayon ichida ishlaydi va
+gunicorn ishchilarini ham, tarmoqni ham o'lchamaydi. U ma'lumot
+BUTUNLIGINI o'lchaydi; tezlik uchun server olingach staging'da k6
+ishlatiladi (DEPLOY.md 10-bo'lim).
+
+### ⚠️⚠️ Nega Locust/k6 emas
+
+`requirements/base.txt` qoidasi: yangi paketdan oldin «buni stdlib yoki
+Django bilan qilib bo'ladimi?». Qabul mezoni ma'lumot butunligi haqida va
+uni isbotlash uchun tarmoq emas, **parallel so'rovlar** kerak. Thread'lar
+va `Client` to'liq yo'lni bosib o'tadi (middleware, tezlik cheklovi,
+ko'rinish, `cast_vote`, baza) va server ham talab qilmaydi — D0-T10
+bloklangan bo'lsa ham yuk testi bor.
+
+### ⚠️⚠️ Topilgan poyga: ikki marta bosish 500 berardi
+
+Ovozni qaytarib olish qatorni **o'chiradi**, ya'ni «qator bor / yo'q»
+holati tebranadi. A so'rovi qatorni qulflab o'chiradi; B ning `INSERT` i
+noyoblik xatosini oladi va `select_for_update()` da A ni kutadi. A commit
+qilgach qator yo'q — READ COMMITTED o'chirilgan qatorni natijadan tushiradi
+va `.get()` `DoesNotExist` otardi. **16 oqimli sinovda 60 bosishdan 48
+tasi** shunday yiqildi: ma'lumot buzilmasdi, lekin foydalanuvchi 500 ko'rardi
+va bosgan amali yo'qolardi.
+
+Yechim — `_juftlikni_qulflash()`: (odam, kontent) juftligi
+`pg_advisory_xact_lock` bilan qulflanadi va shu juftlikdagi amallar qat'iy
+ketma-ket bo'ladi.
+
+⚠️ **Qayta urinish yetmadi.** Avval 5 martalik qayta urinish yozildi va u
+adversar sinovda 20 ta so'rovga yetmadi — chegaralangan urinish kafolat
+bermaydi, faqat ehtimolni siljitadi.
+
+⚠️ **Kontent qatori qulflanmadi.** `SELECT ... FOR UPDATE` ni postga qo'yish
+ham poygani yopardi, lekin qulf tartibini teskari qilardi: hisobni o'chirish
+yo'li (D2-T8) avval ovoz qatorlarini, keyin sanoqchilarni qulflaydi.
+Advisory qulfda har tranzaksiya aynan bitta qulfni eng birinchi oladi, ya'ni
+deadlock sikli hosil bo'lmaydi.
+
+### ⚠️ Ovoz va karma endi bitta tranzaksiyada
+
+`yechimga_ovoz` ularni ikki alohida tranzaksiyada yozardi (`ATOMIC_REQUESTS`
+yoqilmagan) — oradagi xato ovozni saqlab, muallif karmasini yo'qotardi.
+
+### ⚠️ IP chegarasi 120 -> 600 (CGNAT o'lchovi)
+
+1000 odam 5 ta IP ortidan ovoz berganda **450 so'rov (43%) 429 oldi** —
+arifmetikasi aniq: 5 × 120. O'zbekistonda mobil operatorlar CGNAT ishlatadi,
+ya'ni viral postda bir IP ortida yuzlab haqiqiy odam bo'ladi. Chegara
+foydalanuvchi qarori bilan 600/daqiqa qilindi; skript baribir shiftga uriladi,
+chunki har hisob 30/daqiqa bilan cheklangan.
+
+### ⚠️ Parallel testlar `transaction=True` bilan
+
+Oddiy `django_db` butun testni bitta tranzaksiyaga o'raydi: boshqa oqim uni
+ko'rmaydi, `select_for_update` va noyoblik cheklovlari to'qnashmaydi — poyga
+umuman yuz bermasdi va test yashil bo'lardi. Har ishchi o'z DB ulanishini
+yopadi (`connections.close_all()`), aks holda `CONN_MAX_AGE` davomida ochiq
+qolib, test bazasini o'chirishga xalaqit berardi.
+
+⚠️ 1000 ovozli test `slow` markeri bilan, lekin CI uni ham yurgizadi
+(`pytest --create-db`) — CI vaqti shu qadar o'sadi.
 
 ### Postni ko'tarish — boost (D6-T4) — `/kotarish/<pk>/`
 
