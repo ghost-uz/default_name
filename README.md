@@ -2198,7 +2198,20 @@ konsolida qoladi.
 
 ## Vaqtinchalik fayllar
 
-- `apps/common/maket.py` — maket sahifalarini ko'rish uchun dev URL'lari.
-  M1 oxirida **o'chiriladi**; URL nomlari (`feed`, `complaint_detail`, ...)
-  o'sha nomlar bilan ilova `urls.py` fayllariga ko'chadi, ya'ni shablonlarga
-  qayta tegilmaydi.
+- `apps/common/maket.py` — hali haqiqiy ko'rinishi yozilmagan sahifalarning
+  maketi. **Uchtasi qoldi:** `landing` (`/tanishuv/`), `category_list`
+  (`/kategoriyalar/`) va `expert_list` (`/ekspertlar/`).
+
+  Fayl **birdan emas, birma-bir** bo'shatiladi: har safar haqiqiy ko'rinish
+  yozilganda tegishli yo'l maketdan olib tashlanadi (`feed`,
+  `complaint_create`, `complaint_detail` allaqachon shunday ko'chgan). URL
+  **nomi** o'zgarmaydi, ya'ni shablonlardagi `{% url %}` larga qayta
+  tegilmaydi.
+
+  ⚠️ Maket yo'llari `config/urls.py` da **haqiqiy ko'rinishlardan KEYIN**
+  ulanadi: ikkalasida bir xil nom bo'lsa `reverse()` **oxirgisini** oladi
+  va maket haqiqiy sahifani jimgina bosib qo'yardi.
+
+  ⚠️ Maket sahifasi **0 ta so'rov** qiladi — shuning uchun u so'rov
+  byudjetiga (D7-T4) qo'yilmaydi: u yerda byudjet hech qachon hech narsani
+  ushlamasdi.

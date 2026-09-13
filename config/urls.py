@@ -45,9 +45,15 @@ urlpatterns += [
     path("", include("apps.common.huquqiy")),
 ]
 
-# ⚠️ VAQTINCHALIK (D0-T6): hali yozilmagan sahifalarning maketi.
-#    M1 oxirida butunlay o'chiriladi.
-#    Qolgani: category_list, expert_list, landing.
+# ⚠️ VAQTINCHALIK (D0-T6): hali haqiqiy ko'rinishi yozilmagan sahifalarning
+#    maketi. Qolgani: category_list, expert_list, landing.
+#
+#    ⚠️ Fayl BIRDAN emas, BIRMA-BIR bo'shatiladi: har safar haqiqiy
+#       ko'rinish yozilganda tegishli yo'l maketdan olib tashlanadi
+#       (`feed`, `complaint_create`, `complaint_detail` shunday ko'chgan).
+#       Ya'ni "M1 oxirida o'chiriladi" degan dastlabki reja amalda
+#       bajarilmadi va bajarilishi ham shart emas — bu uchta sahifa
+#       o'z taskini kutadi.
 urlpatterns += [path("", include("apps.common.maket"))]
 
 if settings.DEBUG:
