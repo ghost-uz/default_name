@@ -3629,11 +3629,68 @@
       "ustuvorlik": "P3",
       "hajm": "M",
       "bogliq": [],
-      "holat": "todo",
+      "holat": "done",
       "qabul_mezoni": [
         "'Reklama' yorlig'i majburiy",
         "inqirozli kontent sahifasida reklama KO'RSATILMAYDI"
-      ]
+      ],
+      "tugatilgan": "2026-09-13",
+      "natija": {
+        "yaratilgan": [
+          "apps/reklama/ — YANGI app: models (AdSlot + AdSlotQuerySet.faol()), selectors (sahifa_reklamasi), services (kesh oynasi bilan ko'rsatish sanog'i + yig'ish), tasks (Celery beat), views (bosish -> yo'naltirish), urls, admin, factories",
+          "apps/reklama/migrations/0001_initial.py — AdSlot + reklama_faol_idx",
+          "templates/components/_reklama.html — «Reklama» yorlig'i SHARTSIZ, rel=sponsored nofollow noopener",
+          "templates/complaints/detail.html — yon panelga blok (organik kontentdan KEYIN)",
+          "templates/huquqiy/maxfiylik.html — yangi «9. Reklama» bo'limi (10-bo'lim qayta raqamlandi)",
+          "apps/complaints/views.py — complaint_detail: sahifa_reklamasi(inqiroz=...) + korsatishni_qayd_etish",
+          "config/settings/base.py — LOCAL_APPS ga apps.reklama, beat vazifasi reklama-korsatishlari (300s), HUQUQIY_VERSIYA 2026-08-29 -> 2026-09-13",
+          "config/urls.py — apps.reklama.urls",
+          "apps/reklama/tests_reklama.py — 47 test",
+          "README.md (yangi bo'lim + ilovalar ro'yxati + byudjet jadvali), DEPLOY.md 11-bo'lim (12 qayta raqamlandi)"
+        ],
+        "qabul_mezonlari": {
+          "reklama_yorligi_majburiy": "BAJARILDI. Yorliq blok ICHIDA, sarlavhadan OLDIN va hech qanday shartga bog'lanmagan. Uch test: test_YORLIQ_blok_ichida_BOR (sahifada), test_YORLIQ_sarlavhadan_OLDIN_keladi (tartib), test_yorliqsiz_reklama_KORSATILMAYDI (KOMPONENT darajasida — shablon boshqa sahifaga ulansa ham yorliq u bilan keladi). Mutatsiya M1 (yorliqni o'chirish) uchalasini ham yiqitdi.",
+          "inqirozli_kontent_sahifasida_reklama_korsatilmaydi": "BAJARILDI va UCH darajada qotirilgan: selektorda (sof funksiya), ko'rinishda (kontekst), sahifada (HTML). Yechimdagi belgi ham yopadi (test_inqirozli_YECHIM_ham_reklamani_YOPADI). Mutatsiya M2 (selektordagi shart) va M3 (ko'rinish bayroqni uzatmaydi) ikkalasi ham ushlandi."
+        },
+        "tekshirilgan": [
+          "MUTATSIYA TESTI: 16 mutatsiya, 16 tasi ham USHLANDI (0 o'tib ketdi) — yorliq, inqiroz (selektor VA ko'rinish), maqsadlash ustunligi, faollik, ikkala muddat chegarasi, standart nofaol holat, joriy-oyna poygasi, fail open, bosish sanog'i, nofaol reklamaga bosish, OCHIQ YO'NALTIRISH, rel=sponsored, maxfiylik bo'limi",
+          "inqirozda bazaga UMUMAN borilmaydi (0 so'rov) — tekshiruv ORM'dan oldin",
+          "reklama tanlash AYNAN 1 so'rov, reklama soni (1 yoki 11) ta'sir qilmaydi",
+          "so'rov reklama BO'LMAGANDA ham ketadi — doimiy xarajat, test bilan qotirilgan",
+          "ochiq yo'naltirish YO'Q: ?url=zararli bergan so'rov baribir bazadagi manzilga ketadi",
+          "reklama matni EKRANLANADI (script tegi)",
+          "blokda tashqi script/iframe/img YO'Q — maxfiylik va'dasi test bilan bog'langan",
+          "kesh nosozligida sahifa ochiladi va reklama BARIBIR ko'rsatiladi (fail open)",
+          "yig'uvchi joriy oynaga TEGMAYDI va bir necha o'tgan oynani qamraydi",
+          "sanoqchilar editable=False VA adminda readonly"
+        ],
+        "qarorlar": [
+          "REKLAMA O'ZIMIZNIKI, TARMOQ EMAS — uch mustaqil sabab bir yo'nalishga ishora qildi: (1) maxfiylik siyosati (D2-T10) «reklama tarmoqlari ishlatilmaydi» deb va'da bergan; (2) CSP (D2-T9) tashqi skriptni baribir bloklaydi — blok JIMGINA ishlamasdi; (3) tarmoq sahifa manzilini oladi, ya'ni KIM QAYSI DARDNI o'qiganini. Narxi ochiq: reklamani qo'lda sotish kerak.",
+          "INQIROZ TEKSHIRUVI SELEKTORDA, KO'RINISHDA EMAS — reklama ikkinchi sahifaga qo'shilganda qoida O'ZI BILAN keladi. Ko'rinishga yozilsa u yerda bir kuni unutilardi va aynan o'zini zarar yetkazish haqida yozgan odam reklama ko'rardi. D5-T3 tamoyilining davomi: kontentni CHEKLAMAYMIZ, lekin uning yonida PUL HAM ISHLAMAYMIZ.",
+          "KO'RSATISH KESHDA SANALADI, BAZAGA YOZILMAYDI — har ochilishda UPDATE qilish o'qish sahifasini YOZISH sahifasiga aylantirardi. Kesh kalitida VAQT OYNASI (D2-T4 naqshi), Celery beat har 5 daqiqada ko'chiradi. Yig'uvchi FAQAT o'tgan oynalarni o'qiydi: joriy oynani o'qib-o'chirish o'sha lahzadagi ko'rsatishni yo'qotardi — jimgina, chunki sanoq shunchaki bir oz kam bo'lardi.",
+          "BOSISH esa BAZAGA DARHOL yoziladi (F() bilan): u kam uchraydi va aynan shu son reklama beruvchi bilan hisob-kitobda ishlatiladi. Kesh yo'qolsa ko'rsatish yo'qoladi — ONGLI qaror: statistika taxminiy o'lchov, pul harakati emas (pul payments.Tolov da).",
+          "RASM YO'Q, FAQAT MATN — tashqi rasm CSP img-src ni ochishni talab qilardi (va tarmoqqa eshik ochardi), o'z media'miz esa moderatsiya/o'lcham/WebP masalasini keltirardi.",
+          "faolmi STANDART False — adminda yaratilgan zahoti saytga chiqib ketadigan reklama «hali tayyor emas» holatini umuman qoldirmasdi.",
+          "kategoriya FK PROTECT (SET_NULL emas) — kategoriya o'chirilishi maqsadli reklamani JIMGINA «hammaga» aylantirmasin.",
+          "MAQSADLI reklama UMUMIYDAN ustun, tenglar orasida TASODIFIY (D6-T4 boost navbati bilan bir xil mulohaza). BITTA blok qaytariladi: yon panelda ikkitasi ketma-ket tursa sahifa reklama lentasiga o'xshab qolardi.",
+          "MANZIL BAZADAN, so'rovdan EMAS va faqat FAOL reklama yo'naltiradi — ochiq yo'naltirish reklama havolalarining klassik teshigi; muddati tugagan shartnomaning havolasi esa saytda yashab qolardi.",
+          "HUQUQIY_VERSIYA YANGILANDI (2026-09-13): maxfiylik siyosatiga «9. Reklama» qo'shildi. Bu IMLO TUZATISHI EMAS — saytda endi reklama bor va odam buni BILIB rozilik berishi kerak. Oqibati ongli: barcha foydalanuvchilar qayta rozilik beradi."
+        ],
+        "topilgan_xatolar": [
+          "SO'ROV-SANOQ CHEGARALARI: batafsil sahifa +1 so'rov oldi va IKKITA test yiqildi — test_n_plus_1.py::BATAFSIL_CHEGARASI (10 -> 11) va test_solution_flow.py dagi sovuq-kesh chegarasi (11 -> 12). ⚠️ IKKALASINI HAM FAQAT TO'LIQ TO'PLAM TOPDI: apps/reklama/ yolg'iz yurgizilganda yashil edi. Chegaralar «yetmadi» deb emas, izoh bilan ko'tarildi — qo'shimcha so'rov elementlar soniga BOG'LIQ EMAS va buni bog'liqlik testi alohida qo'riqlaydi.",
+          "TESTNING O'Z NUQSONI (fail open testi): monkeypatch «apps.reklama.services.cache.add» ni almashtirgandi — u Django'ning UMUMIY kesh proxy'sini o'zgartiradi va butun loyihaga tegadi. Sahifa boshqa sababdan yiqildi (oxshash_muammolar ham cache.add chaqiradi), test esa «fail open ishlamayapti» degan YOLG'ON xulosa berardi. Tuzatish: modul nomiga soxta kesh obyektini bog'lash.",
+          "APOSTROF TUZOG'I: o'zbekcha matnda apostrof ko'p (bo'yicha) va Django uni &#x27; ga aylantiradi — xom satr bilan solishtirgan test yiqildi va sababi «reklama chiqmadi» deb noto'g'ri o'qilardi. Yechim: escape() orqali solishtirish.",
+          "ANIQLANDI, DOIRADAN TASHQARI: apps/complaints/selectors.py::oxshash_muammolar (D4-T7) cache.get/cache.add ni try/except SIZ chaqiradi. Redis o'chsa batafsil sahifa 500 beradi. D2-T4 va D6-T6 fail open bo'lgani holda bu yo'l emas — alohida taskda yopilsin."
+        ],
+        "olchangan_holat": {
+          "testlar": 1636,
+          "qamrov_foiz": 95.02,
+          "reklama_testlari": 47,
+          "mutatsiyalar_ushlandi": "16/16",
+          "batafsil_sahifa_sorovlari": "5 -> 6 (byudjet 8, o'zgarmadi)",
+          "yangi_paketlar": 0
+        }
+      }
     },
     {
       "id": "D7-T1",

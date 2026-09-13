@@ -587,7 +587,58 @@ chegarasi haqiqiy trafikka mos kelishini tekshiring.
 
 ---
 
-## 11. Hali qilinmagan
+## 11. Kontekstual reklama (D6-T6)
+
+Reklama bloklari **adminda** yaratiladi: `/<ADMIN_URL>/reklama/adslot/`.
+Kod tegilmaydi, deploy talab qilinmaydi.
+
+| Maydon | Izoh |
+|---|---|
+| `nom` | faqat adminda ko'rinadi (masalan «Uy-joy — sentabr») |
+| `sarlavha` / `matn` / `tugma_matni` | sahifada chiqadigan matn |
+| `manzil` | `http(s)` havola — bosish shu yerga yo'naltiradi |
+| `kategoriya` | **bo'sh = barcha kategoriyalarda** |
+| `boshlanish` / `tugash` | bo'sh = «hoziroq» / «muddatsiz» |
+| `faolmi` | **standart `False`** — yoqilmaguncha saytda ko'rinmaydi |
+
+⚠️ **Yangi sozlama yoki sir kerak emas.** Reklama tarmog'i ishlatilmaydi:
+matn ham, havola ham bazada. Shuning uchun CSP (D2-T9) ga ham tegilmaydi —
+tashqi host qo'shilsa, u ham, maxfiylik siyosati ham qayta yozilishi kerak
+bo'lardi.
+
+⚠️ Reklama **inqiroz belgisi aniqlangan** sahifada ko'rsatilmaydi. Buni
+sozlama boshqarmaydi — qoida kodda (`apps/reklama/selectors.py`).
+
+### Celery beat vazifasi
+
+`reklama-korsatishlari` (har 5 daqiqada) keshdagi ko'rsatish sanog'ini
+bazaga ko'chiradi. **Beat ishlab turishi shart**, aks holda `korsatishlar`
+ustuni nolda qoladi. Bosishlar bunga bog'liq emas — ular bazaga darhol
+yoziladi.
+
+```bash
+docker compose logs -f celery-beat | grep reklama
+```
+
+⚠️ Redis qayta ishga tushsa o'sha oynadagi ko'rsatishlar yo'qoladi — bu
+ongli qaror: statistika taxminiy o'lchov, pul harakati emas (pul
+`payments.Tolov` da).
+
+### Hisobot
+
+Admin ro'yxatida `korsatishlar`, `bosishlar` va `CTR, %`. Ular **faqat
+o'qish uchun**: qo'lda «tuzatilgan» son reklama beruvchi bilan
+hisob-kitobni asossiz qilardi.
+
+### ⚠️ Rozilik versiyasi yangilandi
+
+`HUQUQIY_VERSIYA = "2026-09-13"` — maxfiylik siyosatiga «9. Reklama»
+bo'limi qo'shilgani uchun. Deploy'dan keyin **barcha foydalanuvchilar**
+rozilik ekranini qayta ko'radi. Bu kutilgan holat, nosozlik emas.
+
+---
+
+## 12. Hali qilinmagan
 
 | Nima | Faza |
 |---|---|
@@ -595,4 +646,4 @@ chegarasi haqiqiy trafikka mos kelishini tekshiring.
 | Tashqi zaxira + tiklash mashqi | D7-T3 |
 | Sentry (xatolar) | D7-T1 |
 | Tashqi uptime monitoring | D7-T2 |
-| Yuk testi | D7-T5 |
+| Staging'da HTTP yuk testi (k6) | server olingach — 10-bo'lim |

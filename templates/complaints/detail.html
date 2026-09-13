@@ -358,6 +358,20 @@
           </section>
         {% endif %}
 
+        {% comment %}
+          ---------- Reklama (D6-T6) ----------
+
+          ⚠️ ORGANIK KONTENTDAN KEYIN: statistika va «O'xshash dardlar»
+             avval turadi. Reklama yon panelning BIRINCHI bloki bo'lsa,
+             sahifa ochilishi bilan ko'zga tushadigan narsa pullik
+             bo'lardi.
+
+          ⚠️ Blok INQIROZLI sahifada umuman kelmaydi — `reklama` o'sha
+             yerda `None` bo'ladi (qoida `apps/reklama/selectors.py` da,
+             bu shablonda EMAS).
+        {% endcomment %}
+        {% include "components/_reklama.html" %}
+
         <section class="card border-primary/30 bg-primary/5 p-4">
           <h2 class="text-sm font-bold">Sizda ham shunday muammo bormi?</h2>
           <p class="mt-1.5 text-[13px] text-fg-muted">Yozing — jamoa javob beradi.</p>

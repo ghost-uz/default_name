@@ -38,6 +38,8 @@ from apps.payments.selectors import (
     lenta_boostlari,
 )
 from apps.payments.services import kotarish_taklif_qilinadimi
+from apps.reklama.selectors import sahifa_reklamasi
+from apps.reklama.services import korsatishni_qayd_etish
 from apps.solutions.forms import SolutionForm
 from apps.solutions.models import Solution, SolutionVote
 
@@ -411,6 +413,20 @@ def complaint_detail(
     #    mumkin. Yechimlardan birida belgi bo'lsa ham blok chiqadi.
     inqiroz = muammo.inqiroz_aniqlandi or any(y.inqiroz_aniqlandi for y in yechimlar)
 
+    # ⚠️⚠️ D6-T6: INQIROZ BAYROG'I SELEKTORGA BERILADI, shu yerda `if`
+    #    yozilmaydi. Qoida (`inqirozli sahifada reklama YO'Q`) reklama
+    #    tanlanadigan YAGONA joyda turadi — ikkinchi sahifa qo'shilganda
+    #    u o'zi bilan keladi.
+    #
+    # ⚠️ Yuqoridagi `inqiroz` yechimlarni ham hisobga oladi: postning
+    #    o'zi toza bo'lib, javoblardan birida belgi bo'lsa ham reklama
+    #    chiqmaydi.
+    reklama = sahifa_reklamasi(kategoriya_id=muammo.category_id, inqiroz=inqiroz)
+    if reklama is not None:
+        # ⚠️ Ko'rsatish KESHDA sanaladi — bazaga YOZILMAYDI. Sabab
+        #    `apps/reklama/services.py` da.
+        korsatishni_qayd_etish(reklama.pk)
+
     # ⚠️ QAPage JSON-LD FAQAT OMMAVIY KO'RINADIGAN postda (D4-T6).
     #    Muallif o'z yashirilgan postini ko'ra oladi (yuqoridagi
     #    avtorizatsiya) — lekin o'sha sahifada strukturaviy ma'lumot
@@ -444,6 +460,8 @@ def complaint_detail(
                 user=request.user, muammo=muammo
             ),
             "inqiroz": inqiroz,
+            # ⚠️ `None` bo'lsa shablon blokni UMUMAN chizmaydi (D6-T6).
+            "reklama": reklama,
             **inqiroz_konteksti(),
         },
     )

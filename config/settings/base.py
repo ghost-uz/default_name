@@ -83,6 +83,7 @@ LOCAL_APPS = [
     "apps.notifications",
     "apps.payments",
     "apps.suhbat",
+    "apps.reklama",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -253,7 +254,11 @@ CHEKLOV_MUDDATI_KUN = 7
 #    Imlo tuzatish uchun o'zgartirmang: har o'zgarish butun bazani
 #    "rozilik bermagan" holatga tushiradi va odamlar yozishdan
 #    to'xtaydi.
-HUQUQIY_VERSIYA = "2026-08-29"
+#    ⚠️ 2026-09-13 (D6-T6): maxfiylik siyosatiga «9. Reklama» bo'limi
+#       qo'shildi. Bu IMLO TUZATISHI EMAS — saytda endi reklama bor va
+#       odam buni BILIB rozilik berishi kerak. Shuning uchun versiya
+#       yangilandi va hamma qayta rozilik beradi.
+HUQUQIY_VERSIYA = "2026-09-13"
 
 # ⚠️⚠️ MATNLAR YURIST TOMONIDAN KO'RILDIMI (D2-T10 qabul mezoni).
 #    `False` bo'lsa har bir huquqiy sahifada ochiq ogohlantirish
@@ -670,6 +675,20 @@ CELERY_BEAT_SCHEDULE = {
         "task": "apps.gamification.tasks.reytingni_yangilash",
         "schedule": 3600.0,
         "options": {"expires": 3000},
+    },
+    # ⚠️ Reklama ko'rsatishlari KESHDA yig'iladi, shu vazifa esa ularni
+    #    bazaga ko'chiradi (D6-T6). Sabab: batafsil sahifa har ochilganda
+    #    `UPDATE` qilinsa, o'qish sahifasi YOZISH sahifasiga aylanardi.
+    #
+    # ⚠️ Oraliq `apps.reklama.services.OYNA` bilan TENG (5 daqiqa). Vazifa
+    #    faqat O'TGAN oynalarni o'qiydi — ya'ni bir-ikki marta o'tkazib
+    #    yuborilgan yurish sanoqni yo'qotmaydi (uchta oyna saqlanadi).
+    #    `expires` oraliqdan qisqa: kechikkan nusxa keyingisi bilan
+    #    ustma-ust tushmasin.
+    "reklama-korsatishlari": {
+        "task": "apps.reklama.tasks.korsatishlarni_yigish",
+        "schedule": 300.0,
+        "options": {"expires": 240},
     },
 }
 

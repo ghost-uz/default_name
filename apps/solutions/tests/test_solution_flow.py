@@ -387,14 +387,18 @@ def test_batafsil_sahifa_sorov_soni_YECHIMLAR_SONIGA_BOGLIQ_EMAS(
        bitta indeksli `COUNT` qiladi. Iliq keshda u NOL so'rov, ya'ni
        11 — eng yomon holat, odatdagi emas.
 
-       Chegara "shunchaki yetmadi" deb ko'tarilmadi: qo'shimcha so'rov
-       yechimlar soniga BOG'LIQ EMAS va uni `test_n_plus_1.py` dagi
-       bog'liqlik testi alohida qo'riqlaydi.
+    ⚠️ CHEGARA 11 -> 12 (D6-T6). Yon paneldagi reklama tanlash bitta
+       so'rov qiladi va u reklama BO'LMAGANDA ham ketadi
+       (`apps/reklama/selectors.py`).
+
+       Ikkala ko'tarish ham "shunchaki yetmadi" deb qilinmagan:
+       qo'shimcha so'rovlar yechimlar soniga BOG'LIQ EMAS va uni
+       `test_n_plus_1.py` dagi bog'liqlik testi alohida qo'riqlaydi.
     """
     muammo = ComplaintFactory(author=user)
     for _ in range(10):
         ExpertSolutionFactory(complaint=muammo)
     Complaint.objects.filter(pk=muammo.pk).update(solutions_count=10)
 
-    with django_assert_max_num_queries(11):
+    with django_assert_max_num_queries(12):
         assert auth_client.get(muammo.get_absolute_url()).status_code == 200

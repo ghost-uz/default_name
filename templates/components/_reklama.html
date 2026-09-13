@@ -1,0 +1,36 @@
+{% comment %}
+  Reklama bloki (D6-T6).
+
+  ⚠️⚠️ «REKLAMA» YORLIG'I MAJBURIY — qabul mezoni. U blokning ICHIDA,
+     sarlavhadan OLDIN turadi va hech qanday shartga bog'lanmagan: reklama
+     ko'rinsa, yorliq ham ko'rinadi. Guard test buni shablon RENDERIDA
+     tekshiradi (sozlamada emas — D2-T1 dagi «flash xabarlar» saboqi).
+
+  ⚠️⚠️ TASHQI RASM VA SKRIPT YO'Q. Matn va havola bazadan keladi; sahifa
+     uchinchi tomonga hech narsa yubormaydi. Maxfiylik siyosati (8-bo'lim)
+     va CSP (D2-T9) aynan shu holatni tasvirlaydi.
+
+  ⚠️ Havola BIZNING endpoint orqali (`reklama_bosildi`) — bosish shu yerda
+     sanaladi. `rel="sponsored nofollow"` — Google talabi (pullik havola
+     reyting uzatmasin), `noopener` — yangi oynadagi sahifa bizning
+     `window.opener` imizga tegmasin.
+{% endcomment %}
+{% if reklama %}
+  <section class="card overflow-hidden" aria-labelledby="reklama-h">
+    <h2 id="reklama-h" class="border-b border-line px-4 py-2 text-[11px] font-bold uppercase tracking-wider text-fg-muted">
+      Reklama
+    </h2>
+    <div class="px-4 py-3">
+      <p class="text-[15px] font-bold leading-snug">{{ reklama.sarlavha }}</p>
+      <p class="mt-1 text-[13px] leading-relaxed text-fg-muted">{{ reklama.matn }}</p>
+      <a
+        href="{% url 'reklama_bosildi' reklama.pk %}"
+        class="btn-outline btn-sm mt-3 w-full"
+        target="_blank"
+        rel="sponsored nofollow noopener"
+      >
+        {{ reklama.tugma_matni }}
+      </a>
+    </div>
+  </section>
+{% endif %}

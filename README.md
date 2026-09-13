@@ -85,12 +85,17 @@ apps/            domen ilovalari
   moderation/    Report, ModerationAction, AuditLog
   gamification/  KarmaEvent, Badge, reyting
   notifications/ Notification, Telegram dispatch
-  payments/      Subscription, BoostOrder, Click/Payme
+  payments/      Subscription, BoostOrder, Tolov, Click/Payme
+  suhbat/        KontaktSorovi, Suhbat, Xabar — yopiq suhbat (D6-T5)
+  reklama/       AdSlot — kontekstual reklama joylari (D6-T6)
 templates/
   base.html      umumiy skelet — barcha sahifalar shundan meros oladi
-  components/    _header, _drawer, _bottom_nav, _complaint_card, _vote, ...
+  components/    _header, _drawer, _bottom_nav, _complaint_card, _vote, _reklama, ...
   complaints/    feed, detail, create, category_list
   accounts/      login, profile, expert_list
+  suhbat/        royxat, sorov, suhbat
+  payments/      obuna, kotarish, natija
+  huquqiy/       shartlar, maxfiylik, qoidalar, boglanish
   pages/         landing
 static/          css/app.css (QURILGAN — tahrirlamang), js/app.js
 tailwind/        input.css — dizayn tizimi MANBAI
@@ -104,6 +109,12 @@ frontend/        faqat dizayn hujjatlari (design-system/)
 1. `common` boshqa ilovalarga **bog'lanmaydi** — u eng quyi qatlam.
 2. Bog'liqlik **bir tomonlama**: `solutions` → `complaints` mumkin, teskarisi
    yo'q. Aylanma import Django'da tez paydo bo'ladi va uni keyin yechish qiyin.
+3. **Ko'rinish qatlami istisno** — u ilovalar ustida turadi va ularni
+   bir-biriga bog'lamasdan birlashtiradi. `complaints.views.feed`
+   `payments.selectors` dan boost joylarini, `complaints.views.complaint_detail`
+   esa `reklama.selectors` dan blokni oladi. Teskarisi hech qachon
+   bo'lmaydi: `payments` va `reklama` `complaints` ni biladi, `complaints`
+   ularni bilmaydi.
 
 ---
 
@@ -268,7 +279,7 @@ topadi — pytest uslubidagi funksiya-testlar tashqarida qoladi. Har doim
   `banned_user`, `auth_client`, `staff_client`).
 - **Test ma'lumoti** — fabrikalar orqali (`apps/accounts/factories.py`),
   `objects.create()` emas: testda faqat sinalayotgan maydon ko'rinib tursin.
-- **Qamrov 70% dan past bo'lsa** `pytest` yiqiladi (hozir 94%).
+- **Qamrov 70% dan past bo'lsa** `pytest` yiqiladi (hozir 95%).
 - **Ogohlantirishlar = xato** (`filterwarnings = ["error"]`) — eskirgan
   Django API'ni yangilanishdan oldin ko'rish uchun.
 
@@ -479,6 +490,7 @@ D2-T6 rasmiy ishonch telefonini talab qiladi, D2-T10 — yurist xulosasini.
 | D6-T3 | Payme — JSON-RPC, summa tiyinda, pul qaytarilsa xizmat ham qaytariladi (**qisman**: sandbox kalitsiz) |
 | D6-T4 | Boost — «Qaynoq»ning 1-sahifasida ajratilgan joylar (3, 8, 13, 18); `hot_score` ga TEGMAYDI |
 | D7-T5 | Ovoz yuk testi — advisory qulf poygani yopdi; IP chegarasi 120 -> 600 (CGNAT o'lchovi) |
+| D6-T6 | Kontekstual reklama — o'zimizniki (tarmoq EMAS), «Reklama» yorlig'i majburiy, inqirozli sahifada ko'rsatilmaydi |
 
 ---
 
@@ -694,6 +706,92 @@ birinchi so'rovga qo'shib bo'lmaydi. So'rov faol boost bo'lmasa ham
 ketadi — shartli so'rov testlarni jonli holatdan uzardi. Kesh rad
 etildi: pul qaytarilgan boost kesh muddati davomida lentada qolardi.
 
+### Kontekstual reklama (D6-T6) — `/admin/…/adslot/`
+
+Batafsil sahifaning yon panelida **bitta** matnli blok, postning
+kategoriyasiga mos. Adminda yaratiladi va standart holatda **o'chiq**
+(`faolmi=False`) — yaratilgan zahoti saytga chiqib ketadigan reklama
+«hali tayyor emas» holatini umuman qoldirmasdi.
+
+### ⚠️⚠️ Reklama o'zimizniki — tarmoq EMAS
+
+Sahifada uchinchi tomonning skripti, rasmi yoki kuzatuv pikseli
+**yo'q**: matn ham, havola ham bizning bazamizda. Uch mustaqil sabab
+bitta yo'nalishga ishora qildi:
+
+| Sabab | Aks holda |
+|---|---|
+| Maxfiylik siyosati (D2-T10) | «reklama tarmoqlari ishlatilmaydi» — yozilgan va'da buzilardi |
+| CSP (D2-T9) | tashqi host `script-src` da yo'q → blok **jimgina** ishlamasdi |
+| Anonimlik | tarmoq sahifa manzilini oladi — ya'ni kim qaysi dardni o'qiganini |
+
+Narxi ochiq: reklamani qo'lda sotish kerak. M6 hajmida bu qabul
+qilinadigan narx.
+
+### ⚠️⚠️ Inqirozli sahifada reklama ko'rsatilmaydi
+
+Qabul mezoni. Tekshiruv **selektorda** (`apps/reklama/selectors.py`),
+ko'rinishda **emas**: reklama ikkinchi sahifaga qo'shilganda qoida o'zi
+bilan keladi — ko'rinishga yozilsa, u yerda bir kuni unutilardi.
+
+Bayroq yechimlarni ham qamraydi (`complaint_detail` dagi `inqiroz`):
+postning o'zi toza bo'lib, javoblardan birida belgi bo'lsa ham blok
+chiqmaydi. Bu D5-T3 tamoyilining davomi — kontentni **cheklamaymiz**,
+lekin uning yonida **pul ham ishlamaymiz**.
+
+⚠️ Inqirozda bazaga **umuman borilmaydi**: tekshiruv ORM'dan oldin
+turadi, ya'ni eng og'ir sahifada bitta so'rov ham tejaladi.
+
+### ⚠️ «Reklama» yorlig'i majburiy
+
+Yorliq blokning ichida, sarlavhadan **oldin** va hech qanday shartga
+bog'lanmagan: reklama ko'rinsa, yorliq ham ko'rinadi. Guard shablonning
+**renderini** tekshiradi, sozlamani emas (D2-T1 dagi flash xabarlar
+saboqi).
+
+Havola `rel="sponsored nofollow noopener"` bilan va **bizning**
+`/reklama/<pk>/` manzilimiz orqali ketadi. Manzil **bazadan** olinadi,
+so'rovdan emas — `?url=` parametri e'tiborsiz qoldiriladi: ochiq
+yo'naltirish (open redirect) reklama havolalarining klassik teshigi.
+
+⚠️ Faqat **faol** reklama yo'naltiradi; muddati tugaganiga bosilsa 404.
+Aks holda eskirgan shartnomaning havolasi saytda yashab qolardi.
+
+### ⚠️⚠️ Ko'rsatish keshda sanaladi, bazaga yozilmaydi
+
+Batafsil sahifa ko'p ochiladi. Har ochilishda `UPDATE` qilish **o'qish
+sahifasini yozish sahifasiga** aylantirardi — har ko'rish bitta qator
+qulfi. Sanoq kesh kalitida **vaqt oynasi** bilan yig'iladi (D2-T4 dagi
+tezlik cheklovining aynan o'sha naqshi), Celery beat esa har 5 daqiqada
+uni bazaga ko'chiradi.
+
+⚠️ Yig'uvchi **faqat o'tgan oynalarni** o'qiydi. Joriy oyna hali to'lib
+turibdi: uni o'qib-o'chirish o'sha lahzada kelgan ko'rsatishni
+ikkalasining orasiga tushirib **yo'qotardi** — va buni hech kim
+payqamasdi, chunki sanoq shunchaki bir oz kam bo'lardi.
+
+⚠️ Kesh yo'qolsa (Redis qayta ishga tushsa) o'sha oynadagi ko'rsatishlar
+yo'qoladi. **Ongli qaror:** reklama statistikasi — taxminiy o'lchov, pul
+harakati emas (pul `payments.Tolov` da va u bazada). **Bosish** esa
+bazaga darhol yoziladi: u kam uchraydi va aynan shu son reklama
+beruvchi bilan hisob-kitobda ishlatiladi.
+
+⚠️ Kesh nosozligi sahifani **yiqitmaydi** (fail open) — D2-T4 bilan bir
+xil qaror.
+
+### ⚠️ Batafsil sahifaga +1 so'rov
+
+So'rov reklama **bo'lmaganda ham** ketadi: shartli so'rov testlarni
+jonli holatdan uzardi (D6-T4 dagi boost bilan bir xil qaror). Byudjet
+o'zgarmadi — 6 / **8**.
+
+### ⚠️ Maxfiylik siyosati va rozilik versiyasi
+
+Mahsulot o'zgargani uchun siyosatga **9. Reklama** bo'limi qo'shildi va
+`HUQUQIY_VERSIYA` `2026-09-13` ga yangilandi — ya'ni barcha
+foydalanuvchilar qayta rozilik beradi. Bu imlo tuzatishi emas: saytda
+endi reklama bor va odam buni **bilib** rozilik berishi kerak.
+
 ### Ish faoliyati byudjeti (D7-T4)
 
 Byudjet **bitta jadvalda**: `apps/common/byudjet.py`. Uning o'zgarishi
@@ -707,7 +805,7 @@ manage.py byudjet          # HAQIQIY ma'lumot ustida hisobot
 |---|---|---|
 | lenta (mehmon) | 2 / **4** | 128 KB / **150 KB** |
 | lenta (kirgan) | 7 / **9** | 135 KB / **160 KB** |
-| dard (batafsil) | 5 / **8** | 44 KB / **60 KB** |
+| dard (batafsil) | 6 / **8** | 44 KB / **60 KB** |
 | qidiruv | 3 / **5** | 123 KB / **145 KB** |
 
 ### ⚠️⚠️ Qaysi o'lcham yiqitadi, qaysi biri ogohlantiradi
@@ -2037,8 +2135,9 @@ hammasi yozildi. Ikkitasining ochiq qismi koddan tashqarida:
 - **D2-T10** — matnlarni yurist ko'rishi kerak (`HUQUQIY_KORILDI = False`,
   har sahifada ochiq belgi turadi).
 
-Keyingi: **M4 — qidiruv va SEO** (PostgreSQL FTS, lotin/kiril
-normalizatsiyasi, slug URL, sitemap, Schema.org).
+⚠️ Bu xulosa M2 tugagan paytda yozilgan. M3, M4 va M5 o'shandan keyin
+**to'liq tugadi**; joriy holat yuqoridagi «Bajarilgan ishlar»
+jadvallarida va [`def_tasks.json`](def_tasks.json) da.
 
 ### So'rov sonlari (D1-T14 da o'lchangan)
 
@@ -2062,6 +2161,13 @@ maydonlarni o'qiydi.
 ⚠️ «Qaynoq»ning **birinchi sahifasiga D6-T4 da yana bitta so'rov
 qo'shildi** (boost joylari, mehmon va kirgan uchun). Ikkinchi sahifada
 u yo'q, shuning uchun 2-sahifa soni o'zgarmadi: +1 kursor, −1 boost.
+
+⚠️ **Batafsil sahifaga D6-T6 da bitta so'rov qo'shildi** (reklama
+tanlash) va u reklama bo'lmaganda ham ketadi. Shuning uchun ikkita
+chegara **ongli ravishda** bittaga ko'tarildi: `BATAFSIL_CHEGARASI`
+10 → 11 va D5-T1 dagi sovuq-kesh chegarasi 11 → 12. Asosiy himoya
+tegilmadi — qo'shimcha so'rov yechimlar soniga bog'liq emas va buni
+bog'liqlik testi (`kam == kop`) alohida qo'riqlaydi.
 
 ### ⚠️ Telegram login uchun sozlash
 

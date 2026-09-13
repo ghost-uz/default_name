@@ -33,7 +33,17 @@ pytestmark = pytest.mark.django_db
 
 # Qabul mezoni: "lenta sahifasi <= 8 so'rov".
 LENTA_CHEGARASI = 8
-BATAFSIL_CHEGARASI = 10
+
+# ⚠️ 10 -> 11 (D6-T6). Sabab ANIQ va bir martalik: batafsil sahifa
+#    yon panelida reklama tanlash BITTA so'rov qiladi
+#    (`apps/reklama/selectors.py`). So'rov reklama BO'LMAGANDA ham
+#    ketadi — shartli so'rov testlarni jonli holatdan uzardi.
+#
+#    Chegara «shunchaki yetmadi» deb ko'tarilmadi: qo'shimcha so'rov
+#    yechimlar soniga BOG'LIQ EMAS va buni shu fayldagi bog'liqlik
+#    testi (`kam == kop`) alohida qo'riqlaydi. Ya'ni bu yerda asosiy
+#    himoya yo'qolmadi — faqat doimiy xarajat bittaga o'sdi.
+BATAFSIL_CHEGARASI = 11
 
 
 def lenta_toldirish(*, soni: int, user=None, kategoriyalar: int = 4) -> list:
