@@ -20,9 +20,9 @@ docker compose up -d --build
 
 | Manzil | Nima |
 |---|---|
-| http://127.0.0.1:8001/ | Lenta (hozircha maket ma'lumoti) |
-| http://127.0.0.1:8001/health/ | Tiriklik tekshiruvi |
-| http://127.0.0.1:8001/admin/ | Admin panel |
+| http://127.0.0.1:18001/ | Lenta (hozircha maket ma'lumoti) |
+| http://127.0.0.1:18001/health/ | Tiriklik tekshiruvi |
+| http://127.0.0.1:18001/admin/ | Admin panel |
 
 ```bash
 docker compose logs -f web              # loglar
@@ -31,21 +31,63 @@ docker compose down                     # to'xtatish (ma'lumot saqlanadi)
 docker compose down -v                  # ma'lumot ham O'CHADI
 ```
 
-### ⚠️ Portlar standart emas
+### ⚠️ Portlar standart emas — va 15000 dan yuqori
 
-`5432 / 6379 / 8000` **ishlatilmaydi**. Bu mashinada boshqa Docker stek'lari
-shu portlarni band qilishi mumkin va o'shanda
-`Bind for 0.0.0.0:5432 failed: port is already allocated` xatosi chiqadi —
-u qurilish (build) xatosiga o'xshab ko'rinadi, aslida esa konteyner yaratish
-bosqichida yiqiladi.
+`5432 / 6379 / 8000` **ishlatilmaydi**, host portlari esa ataylab **15000 dan
+yuqori** olingan.
 
 | Xizmat | Host porti | Konteyner ichida |
 |---|---|---|
-| PostgreSQL | `5434` | `db:5432` |
-| Redis | `6381` | `redis:6379` |
-| Django | `8001` | `web:8000` |
+| PostgreSQL | `15434` | `db:5432` |
+| Redis | `16379` | `redis:6379` |
+| Django | `18001` | `web:8000` |
 
 `.env` orqali o'zgartirsa bo'ladi — konteyner ichidagi portlar o'zgarmaydi.
+Yangi port tanlasangiz **15000 dan yuqorisini** oling (sababi quyida).
+
+#### Ikkita butunlay boshqa nosozlik, belgilari o'xshash
+
+Konteyner ko'tarilmaganda xato matnini diqqat bilan o'qing — ikki sabab bor
+va yechimlari har xil:
+
+| Xato matni | Sabab | Yechim |
+|---|---|---|
+| `port is already allocated` | Port **haqiqatan** band — odatda boshqa stek (eco-platform, drama) | O'sha stek'ni to'xtating yoki `.env` da portni o'zgartiring |
+| `An attempt was made to access a socket in a way forbidden by its access permissions` | Windows/Hyper-V portni **rezerv** qilib olgan | 15000 dan yuqori port oling (pastga qarang) |
+
+Ikkinchisi chalg'ituvchi, chunki:
+
+* konteyner `Exited` emas, **`Created`** holatida qotib qoladi — log YO'Q,
+  shuning uchun `docker compose logs web` hech nima ko'rsatmaydi;
+* `netstat` o'sha portni **bo'sh** ko'rsatadi, ya'ni "kim band qilgan?" deb
+  qidirish natija bermaydi;
+* `docker compose up --build` paytida chiqqani uchun **qurilish xatosiga
+  o'xshaydi**, aslida obraz muvaffaqiyatli qurilgan — yiqilish konteynerni
+  ISHGA TUSHIRISH bosqichida.
+
+Rezerv qilingan oraliqlarni ko'rish:
+
+```powershell
+netsh interface ipv4 show excludedportrange protocol=tcp
+netsh interface ipv4 show dynamicport tcp
+```
+
+Agar `dynamicport` oralig'i `1024`dan boshlansa (Windows standarti
+`49152-65535`), Hyper-V/WinNAT `8000`, `8001`, `5432` kabi odatiy dev
+portlarini har qayta yuklashdan keyin **tasodifiy** rezerv qilib olishi
+mumkin. Ikki yechim bor:
+
+* **Loyiha darajasida** (administrator shart emas) — shu yerda tanlangani:
+  host portlarini `15000` dan yuqori olish. Rezerv oralig'i u yerga
+  yetmaydi.
+* **Mashina darajasida** (administrator kerak, qayta yuklash tavsiya
+  etiladi) — standart oraliqni tiklash, shunda barcha loyihalarda muammo
+  yo'qoladi:
+
+  ```powershell
+  netsh int ipv4 set dynamicport tcp start=49152 num=16384
+  netsh int ipv6 set dynamicport tcp start=49152 num=16384
+  ```
 
 ---
 
@@ -65,7 +107,7 @@ python manage.py migrate
 python manage.py runserver
 ```
 
-Host'dan ulanganda `.env` dagi `POSTGRES_PORT=5434` va `REDIS_URL=...:6381`
+Host'dan ulanganda `.env` dagi `POSTGRES_PORT=15434` va `REDIS_URL=...:16379`
 ishlatiladi (konteyner ichidagi `5432/6379` emas).
 
 ⚠️ **Windows'da Celery worker:** `celery -A config worker --pool=solo -l info`
@@ -393,7 +435,7 @@ Bitta manba — ikki joyda bir xil natija.
 
 ### ⚠️ CI'da portlar boshqacha
 
-Loyiha sozlamasida `POSTGRES_PORT` standarti **5434** (lokal Docker
+Loyiha sozlamasida `POSTGRES_PORT` standarti **15434** (lokal Docker
 stack'lar to'qnashmasligi uchun). GitHub Actions xizmatlari esa runner'da
 `localhost:5432` da turadi — shuning uchun workflow'da ochiq beriladi.
 

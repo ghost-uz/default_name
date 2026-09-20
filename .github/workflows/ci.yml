@@ -60,7 +60,7 @@ jobs:
           --health-retries 10
 
     env:
-      # Loyiha standarti 5434 (lokal Docker stack'lar to'qnashmasligi uchun),
+      # Loyiha standarti 15434 (lokal to'qnashuv + Windows port rezervi uchun),
       # GitHub xizmati esa runner'da localhost:5432 da turadi.
       POSTGRES_HOST: localhost
       POSTGRES_PORT: "5432"
@@ -134,8 +134,8 @@ jobs:
           --health-retries 10
 
     env:
-      # ⚠️ MUHIM: loyiha sozlamasida POSTGRES_PORT standarti 5434 (lokal
-      #    Docker stack'lar to'qnashmasligi uchun). GitHub xizmatlari esa
+      # ⚠️ MUHIM: loyiha sozlamasida POSTGRES_PORT standarti 15434 (lokal
+      #    to'qnashuv + Windows port rezervi uchun). GitHub xizmatlari esa
       #    runner'da localhost:5432 da turadi — shuning uchun bu yerda
       #    ochiq berilishi SHART.
       POSTGRES_HOST: localhost

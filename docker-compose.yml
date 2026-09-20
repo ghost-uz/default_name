@@ -5,10 +5,25 @@
 # To'xtatish:       docker compose down          (ma'lumot saqlanadi)
 #                   docker compose down -v       (ma'lumot ham O'CHADI)
 #
-# ⚠️ HOST PORTLARI standart 5432/6379/8000 EMAS. Sabab: bu mashinada boshqa
-#    Docker stek'lari shu portlarni band qilishi mumkin va o'shanda
-#    "Bind for 0.0.0.0:5432 failed" xatosi chiqadi. Kerak bo'lsa .env da
-#    o'zgartiring — konteyner ichidagi portlar o'zgarmaydi.
+# ⚠️ HOST PORTLARI standart 5432/6379/8000 EMAS, va ataylab 15000 dan
+#    YUQORI. Ikkita alohida sabab bor — ikkalasi ham shu mashinada uchragan:
+#
+#    1) Boshqa Docker stek'lari (eco-platform, drama) 5432/6379/8000 ni band
+#       qiladi. Belgisi: "Bind for 0.0.0.0:5432 failed: port is already
+#       allocated". Bu holatda port haqiqatan ishlatilayotgan bo'ladi.
+#
+#    2) Windows/Hyper-V port rezervi. Bu mashinada dinamik port oralig'i
+#       1024-15000 ga qo'yilgan (standart 49152-65535 emas), shuning uchun
+#       WinNAT 8000/8001 kabi portlarni blok-blok rezerv qilib oladi.
+#       Belgisi BOSHQACHA va chalg'ituvchi: konteyner "Created" holatida
+#       qotib qoladi va xato "listen tcp 0.0.0.0:8001: bind: An attempt was
+#       made to access a socket in a way forbidden by its access
+#       permissions" bo'ladi. netstat bu portni BO'SH ko'rsatadi — aynan
+#       shuning uchun sabab darhol topilmaydi.
+#       Tekshirish: netsh interface ipv4 show excludedportrange protocol=tcp
+#
+#    Kerak bo'lsa .env da o'zgartiring — konteyner ichidagi portlar
+#    o'zgarmaydi. Yangi port tanlasangiz 15000 dan yuqorisini oling.
 
 name: dard
 
@@ -25,7 +40,7 @@ x-django: &django
   environment: &django-env
     DJANGO_SETTINGS_MODULE: config.settings.dev
     # ⚠️ ENG MUHIM QATOR. Konteyner ichida `db` xizmatiga ICHKI port (5432)
-    #    orqali ulaniladi — host'dagi 5434 EMAS. Bu sozlamasiz Django
+    #    orqali ulaniladi — host'dagi 15434 EMAS. Bu sozlamasiz Django
     #    "connection refused" beradi va sababi darhol ko'rinmaydi.
     POSTGRES_HOST: db
     POSTGRES_PORT: "5432"
@@ -61,7 +76,7 @@ services:
       # Ma'lumotlar buzilishini erta aniqlash
       POSTGRES_INITDB_ARGS: "--data-checksums"
     ports:
-      - "${POSTGRES_HOST_PORT:-5434}:5432"
+      - "${POSTGRES_HOST_PORT:-15434}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -81,7 +96,7 @@ services:
     # appendonly: qayta ishga tushganda navbatdagi vazifalar yo'qolmasin
     command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy noeviction
     ports:
-      - "${REDIS_HOST_PORT:-6381}:6379"
+      - "${REDIS_HOST_PORT:-16379}:6379"
     volumes:
       - redis_data:/data
     healthcheck:
@@ -101,7 +116,7 @@ services:
       RUN_MIGRATIONS: "1"
     command: python manage.py runserver 0.0.0.0:8000
     ports:
-      - "${WEB_HOST_PORT:-8001}:8000"
+      - "${WEB_HOST_PORT:-18001}:8000"
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/health/"]
       interval: 15s

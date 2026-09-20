@@ -150,9 +150,13 @@ else:
         "USER": env("POSTGRES_USER", "dard"),
         "PASSWORD": env("POSTGRES_PASSWORD", "dard"),
         "HOST": env("POSTGRES_HOST", "127.0.0.1"),
-        # ⚠️ Standart 5434, 5432 EMAS. Bu mashinada boshqa Docker stack'lar
-        #    5432 ni band qilishi mumkin — to'qnashuvni oldindan chetlab o'tamiz.
-        "PORT": env("POSTGRES_PORT", "5434"),
+        # ⚠️ Standart 15434, 5432 EMAS. Ikki sabab bor:
+        #    1) bu mashinada boshqa Docker stack'lar 5432 ni band qiladi;
+        #    2) Windows dinamik port oralig'i 1024-15000 — Hyper-V shu
+        #       zonadagi portlarni rezerv qilib oladi va bog'lanish
+        #       "access permissions" xatosi bilan yiqiladi.
+        #    Batafsil: docker-compose.yml boshidagi izoh.
+        "PORT": env("POSTGRES_PORT", "15434"),
     }
 
 _db["CONN_MAX_AGE"] = env_int("DB_CONN_MAX_AGE", 60)
@@ -164,7 +168,7 @@ DATABASES = {"default": _db}
 # --------------------------------------------------------------------------
 # Kesh (D0-T3 da Redis konteyneri qo'shiladi)
 # --------------------------------------------------------------------------
-REDIS_URL = env("REDIS_URL", "redis://127.0.0.1:6381/0")
+REDIS_URL = env("REDIS_URL", "redis://127.0.0.1:16379/0")
 
 CACHES = {
     "default": {
