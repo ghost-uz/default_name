@@ -5,6 +5,9 @@
    pytest DEV sozlamani oladi va email/kesh testlari yolg'ondan yiqiladi.
 """
 
+import tempfile
+from pathlib import Path
+
 from .base import *
 from .base import LOGGING
 
@@ -35,3 +38,25 @@ CELERY_TASK_EAGER_PROPAGATES = True
 
 # Migratsiyalar testni sekinlashtiradi; kerak bo'lsa yoqiladi
 LOGGING["root"]["level"] = "WARNING"
+
+
+# --------------------------------------------------------------------------
+# Maxfiy fayllar — VAQTINCHALIK katalogga
+# --------------------------------------------------------------------------
+# ⚠️⚠️ Busiz testlar repo ichidagi `maxfiy/` ga yozadi va TOZALAMAYDI.
+#    Amalda 1118 ta soxta PDF yig'ilgan edi. Ular `.gitignore` da, ya'ni
+#    git'da ko'rinmasdi — lekin `.dockerignore` da bo'lmagani uchun prod
+#    obraziga tushib ketardi. Ikkala teshik ham yopildi; bu esa
+#    manbasini yopadi.
+MAXFIY_ROOT = Path(tempfile.gettempdir()) / "dard-test-maxfiy"
+
+# ⚠️ `STORAGES` ni butunlay qayta yozmaymiz — faqat `maxfiy` kalitini.
+#    Aks holda `default`/`staticfiles` yo'qoladi (prod.py da aynan shu
+#    xato bo'lgan va prod konteyneri ko'tarilmasdi).
+STORAGES = {
+    **STORAGES,
+    "maxfiy": {
+        "BACKEND": "apps.common.storage.MaxfiyStorage",
+        "OPTIONS": {"location": MAXFIY_ROOT},
+    },
+}

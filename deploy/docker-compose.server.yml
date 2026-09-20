@@ -30,6 +30,11 @@ x-app: &app
   volumes:
     - static_data:/app/staticfiles
     - media_data:/app/media
+    # ⚠️ Ekspert tasdiqlash hujjatlari. Volume BO'LMASA har deploy'da
+    #    yo'qolardi: konteyner qaytadan yaratiladi, bazadagi yozuv esa
+    #    mavjud bo'lmagan faylga ishora qilib qolardi — moderator
+    #    arizani ko'ra olmaydi.
+    - maxfiy_data:/app/maxfiy
   depends_on:
     db: { condition: service_healthy }
     redis: { condition: service_healthy }
@@ -159,3 +164,4 @@ volumes:
   redis_data:
   static_data:
   media_data:
+  maxfiy_data:

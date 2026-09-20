@@ -31,10 +31,17 @@ x-django-prod: &django-prod
     DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS}
     DJANGO_ADMIN_URL: ${DJANGO_ADMIN_URL:-admin}
     DJANGO_HSTS_SECONDS: ${DJANGO_HSTS_SECONDS:-3600}
-  volumes:
-    # ⚠️ Kod volume'i YO'Q — obrazdagi kod ishlatiladi.
+  # ⚠️⚠️ `!override` SHART. Usiz `docker-compose.yml` dagi `.:/app` bind
+  #    birikmasi merge paytida SAQLANIB QOLADI va pastdagi "kod obraz
+  #    ichida" da'vosi yolg'on bo'ladi — host kodi obraz ustiga yopishadi,
+  #    ya'ni bu fayl o'zi sinamoqchi bo'lgan narsani sinamaydi.
+  #    Tekshirish:
+  #      docker compose -f docker-compose.yml -f docker-compose.prod.yml config
+  volumes: !override
+    # Kod volume'i YO'Q — obrazdagi kod ishlatiladi.
     - static_data:/app/staticfiles
     - media_data:/app/media
+    - maxfiy_data:/app/maxfiy
   restart: always
 
 services:
@@ -105,3 +112,7 @@ services:
       timeout: 5s
       retries: 3
     restart: always
+
+# `docker-compose.yml` dagilarga qo'shimcha
+volumes:
+  maxfiy_data:

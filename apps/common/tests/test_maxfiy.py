@@ -71,8 +71,20 @@ def test_MAXFIY_katalog_GITIGNORE_da():
     ⚠️ `.gitignore` matnini o'qish yetarli emas — `git check-ignore`
        HAQIQIY qarorni beradi (naqsh noto'g'ri yozilgan bo'lishi
        mumkin: `maxfiy` va `/maxfiy/` bir xil ishlamaydi).
+
+    ⚠️⚠️ `settings.MAXFIY_ROOT` EMAS, `base.MAXFIY_ROOT`.
+       Test sozlamasi `MAXFIY_ROOT` ni vaqtinchalik katalogga ko'chiradi
+       (aks holda har test yugurishi repo ichiga PDF qoldiradi). Bu
+       qo'riqchi esa aynan REPO ichidagi katalog haqida — ya'ni
+       `base.py` sozlagan haqiqiy yo'lni tekshirishi SHART.
+
+       Ilgari bu farq yo'q edi va qo'riqchi faqat "testlar haqiqiy
+       yo'lni ishlatadi" degan tasodifga tayanardi. Endi u prod
+       konfiguratsiyasini to'g'ridan-to'g'ri tekshiradi.
     """
-    sinov = Path(settings.MAXFIY_ROOT) / "guard" / "sinov.pdf"
+    from config.settings import base
+
+    sinov = Path(base.MAXFIY_ROOT) / "guard" / "sinov.pdf"
     sinov.parent.mkdir(parents=True, exist_ok=True)
     sinov.write_bytes(b"x")
     try:

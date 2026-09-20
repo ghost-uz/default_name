@@ -100,8 +100,12 @@ COPY --chown=dard:dard . .
 #    qurilgan CSS ni qayta yozib yuborardi.
 COPY --from=css --chown=dard:dard /css/static/css/app.css /app/static/css/app.css
 
-# Statik va media uchun kataloglar (volume ulanmasa ham mavjud bo'lsin)
-RUN mkdir -p /app/staticfiles /app/media && chown -R dard:dard /app
+# Statik, media va maxfiy uchun kataloglar (volume ulanmasa ham mavjud
+# bo'lsin). ⚠️ `/app/maxfiy` shu yerda YARATILISHI SHART: u endi
+#    `.dockerignore` da, ya'ni `COPY . .` uni keltirmaydi. Katalog
+#    obrazda bo'lmasa, Docker uni volume uchun root egaligida yaratadi
+#    va konteyner `dard` (1001) foydalanuvchisi u yerga YOZA OLMAYDI.
+RUN mkdir -p /app/staticfiles /app/media /app/maxfiy && chown -R dard:dard /app
 
 USER dard
 

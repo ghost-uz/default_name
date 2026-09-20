@@ -32,6 +32,13 @@ frontend/node_modules/
 # Qurilish natijalari — konteynerda qaytadan yaratiladi
 staticfiles/
 media/
+# ⚠️⚠️ MAXFIY HUJJATLAR obrazga TUSHMASLIGI SHART.
+#    Bu katalog `.gitignore` da bor, lekin bu yerda YO'Q edi va
+#    `COPY . .` uni obraz ichiga ko'chirardi — 1105 ta fayl. Ular
+#    sinov to'ldirmasi edi (hammasi 21 bayt, "soxta diplom"), lekin
+#    lokalda haqiqiy hujjat turgan kunda u GHCR'ga ketadigan obrazga
+#    tushardi. Prod'da bu katalog volume'dan keladi.
+maxfiy/
 
 # Hujjatlar va maket skrinshotlari
 *.md
