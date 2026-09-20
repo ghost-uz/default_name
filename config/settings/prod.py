@@ -104,8 +104,26 @@ if not SECURE_HSTS_PRELOAD:
 # --------------------------------------------------------------------------
 # Statik fayllar — hash bilan (uzoq muddatli kesh xavfsiz bo'lsin)
 # --------------------------------------------------------------------------
+# ⚠️⚠️ LUG'ATNI QAYTA YOZMAYMIZ — FAQAT BITTA KALITNI ALMASHTIRAMIZ.
+#
+#    Ilgari bu yerda to'liq `STORAGES` lug'ati turardi va `base.py` dagi
+#    `maxfiy` kaliti jim tushib qolardi. Oqibati og'ir edi:
+#
+#      apps/accounts/models.py modul yuklanayotganda `storages["maxfiy"]`
+#      ni so'raydi -> InvalidStorageError: Could not find config for
+#      'maxfiy' -> prod konteyneri UMUMAN ko'tarilmaydi.
+#
+#    Xato NA testlarda, NA CI'da ko'rinmasdi:
+#      · testlar `config.settings.test` da ishlaydi — u `base.py` dan
+#        meros oladi, ya'ni `maxfiy` o'z joyida;
+#      · CI prod obrazini QURADI, lekin ISHGA TUSHIRMAYDI.
+#    Ya'ni u faqat serverda, birinchi deploy paytida chiqardi.
+#
+#    `**STORAGES` — `base.py` dagi lug'at (`from .base import *`).
+#    Prod'ga kerak bo'lgan yagona farq: statik fayllar hash bilan
+#    (uzoq muddatli kesh xavfsiz bo'lsin).
 STORAGES = {
-    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    **STORAGES,
     "staticfiles": {
         "BACKEND": "django.contrib.staticfiles.storage.ManifestStaticFilesStorage",
     },
