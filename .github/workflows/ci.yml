@@ -384,19 +384,36 @@ jobs:
       #    Ilgari deploy ham qurardi — ikki marta qurish vaqt yeydi VA
       #    deploy'da manba kodini checkout qilishni talab qilardi, bu esa
       #    "pwn request" hujum yuzasini ochardi (deploy.yml izohiga qarang).
+      # ⚠️ NASHR SHARTI BIR JOYDA HISOBLANADI.
+      #    Ilgari u ikki qadamda takrorlangan edi (`GHCR ga kirish` va
+      #    `Obrazni qurish`) va ikkalasi ham `refs/heads/main` ni tekshirardi.
+      #    Bu repo'ning branchi esa `master` — natijada obraz GHCR ga
+      #    HECH QACHON yuborilmasdi, deploy esa tortadigan obraz topolmasdi.
+      #    Xato jim edi: CI yashil bo'lardi, chunki qurish o'zi muvaffaqiyatli.
       - name: Teg
         id: teg
         env:
           REPO: ${{ github.repository }}
           SHA: ${{ github.sha }}
+          HODISA: ${{ github.event_name }}
+          REF: ${{ github.ref }}
         run: |
           echo "image=ghcr.io/$(echo "$REPO" | tr '[:upper:]' '[:lower:]'):${SHA:0:12}" >> "$GITHUB_OUTPUT"
 
-      # Obraz GHCR ga FAQAT `main`ga push bo'lganda yuboriladi.
-      # PR'larda u faqat quriladi (Dockerfile buzilmaganini tekshirish
-      # uchun) — lekin registry'ga tushmaydi.
+          # Obraz GHCR ga FAQAT asosiy branchga push bo'lganda yuboriladi.
+          # PR'larda u faqat quriladi (Dockerfile buzilmaganini tekshirish
+          # uchun) — lekin registry'ga tushmaydi.
+          NASHR=false
+          if [ "$HODISA" = "push" ]; then
+            case "$REF" in
+              refs/heads/master|refs/heads/main) NASHR=true ;;
+            esac
+          fi
+          echo "nashr=$NASHR" >> "$GITHUB_OUTPUT"
+          echo "GHCR ga yuboriladimi: $NASHR  (ref=$REF)"
+
       - name: GHCR ga kirish
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: steps.teg.outputs.nashr == 'true'
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -407,7 +424,7 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: .
-          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          push: ${{ steps.teg.outputs.nashr == 'true' }}
           target: runtime
           build-args: REQUIREMENTS=prod
           tags: ${{ steps.teg.outputs.image }}

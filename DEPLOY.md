@@ -103,8 +103,14 @@ noto'g'ri" bo'lib ko'rinadi.
 
 ```bash
 git remote add origin git@github.com:<egangiz>/dard.git
-git push -u origin main
+git push -u origin master
 ```
+
+⚠️ Asosiy branch — **`master`** (`main` emas). CI ham, Deploy ham shu
+nomga sozlangan. Branchni qayta nomlasangiz `.github/workflows/ci.yml`
+(`nashr` sharti) va `.github/workflows/deploy.yml` (`branches:`) ni ham
+yangilang — aks holda obraz GHCR ga yuborilmay qoladi va deploy jim
+ishga tushmaydi.
 
 ### Secrets (`Settings → Secrets and variables → Actions`)
 
@@ -134,7 +140,7 @@ bilan kiradi.
 ## 4. Birinchi deploy
 
 ```bash
-git push origin main
+git push origin master
 ```
 
 Ketma-ketlik: **CI** (sifat + testlar + obraz → GHCR) → yashil bo'lsa
